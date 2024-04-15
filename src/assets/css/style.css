@@ -1,0 +1,63 @@
+body::-webkit-scrollbar {
+  display: none;
+}
+
+body {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+body, h1, h2, h3, p, ul, li {
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  overflow-x: hidden;
+  background-color: #121212;
+  color: #ffffff;
+}
+
+header {
+  background-color: #1c1c1c;
+  display: flex;
+  justify-content: center;
+  padding: 1rem 0;
+  position: fixed;
+  top: 0;
+  width: 100%;
+  z-index: 100;
+}
+
+header nav ul {
+  list-style: none;
+  display: flex;
+  gap: 2rem;
+}
+
+header nav ul li a {
+  text-decoration: none;
+  color: #ffffff;
+  font-weight: bold;
+}
+
+.container {
+  padding-top: 3rem;
+  padding-bottom: 3rem;
+  padding-left: 2rem;
+  padding-right: 2rem;
+}
+
+footer {
+  background-color: #1c1c1c;
+  position: fixed;
+  bottom: 0;
+  width: 100%;
+  padding: 1rem;
+  text-align: center;
+  z-index: 100;
+}
+
+footer a {
+  color: #ffffff; 
+}
