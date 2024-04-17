@@ -2,4 +2,5 @@
 deployment:
   tasks:
     - export DEPLOYPATH=/home/kakuggiy/public_html/
+    - rm -rf $DEPLOYPATH/*
     - /bin/cp -R src/* $DEPLOYPATH
