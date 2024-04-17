@@ -4,14 +4,14 @@
     <link rel="icon" href="assets/images/favicon.png" type="image/x-icon">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>404 Not Found</title>
+    <title>403 Forbidden</title>
     <link rel="stylesheet" href="assets/css/style.css">
 </head>
 <body class="error-page">
     <div class="container-error-page">
         <h1>Oops!</h1>
-        <p><strong>404 - Page not found</strong></p>
-        <p>It seems like either we can't code or you went to a page that doesn't exist...</p>
+        <p><strong>403 - Forbidden</strong></p>
+        <p>We don't think you're allowed to do that...</p>
         <a href="/" class="error-page-home-link">Return to Home</a>
         <a href="https://github.com/kakusui/kakusui-org/issues" target="_blank" class="error-page-broken-link">Something Broken? Tell us!</a>
     </div>

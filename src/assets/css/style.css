@@ -68,31 +68,31 @@ footer a {
   color: var(--text-highlight);
 }
 
-/* 404 Page */
+/* Error Page */
 
-.error-404-page {
+.error-page {
   background-color: var(--background-dark);
 }
 
-.container-404 {
+.container-error-page {
   margin: 50px auto;
   max-width: 600px;
   text-align: center;
   color: var(--white);
 }
 
-.container-404 h1 {
+.container-error-page h1 {
   margin: 50px 0;
   font-size: 5em;
   color: var(--white);
 }
 
-.container-404 p {
+.container-error-page p {
   margin: 20px 0;
   font-size: 1.25em;
 }
 
-.home-link {
+.error-page-home-link {
   display: block;
   margin-top: 20px;
   padding: 10px 20px;
@@ -103,15 +103,15 @@ footer a {
   transition: background-color 0.3s ease;
 }
 
-.home-link:hover {
+.error-page-home-link:hover {
   background-color: var(--text-highlight);
 }
 
-.broken-link {
+.error-page-broken-link {
   color: var(--light-blue);
   text-decoration: none;
 }
 
-.broken-link:hover {
+.error-page-broken-link:hover {
   color: var(--white);
 }
