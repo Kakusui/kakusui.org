@@ -1,3 +1,13 @@
+:root {
+  --background-dark: #000000;
+  --background-grey: #333333;
+  --accent-color: #8B0000;
+  --text-primary: #CCCCCC;
+  --text-highlight: #DAA520;
+  --light-blue: #add8e6;
+  --white: #ffffff;
+}
+
 body::-webkit-scrollbar {
   display: none;
 }
@@ -5,21 +15,20 @@ body::-webkit-scrollbar {
 body {
   -ms-overflow-style: none;
   scrollbar-width: none;
+  overflow-x: hidden;
+  margin: 0;
+  padding: 0;
+  background-color: var(--background-grey);
+  color: var(--text-primary);
 }
 
-body, h1, h2, h3, p, ul, li {
+h1, h2, h3, p, ul, li {
   margin: 0;
   padding: 0;
 }
 
-body {
-  overflow-x: hidden;
-  background-color: #121212;
-  color: #ffffff;
-}
-
 header {
-  background-color: #1c1c1c;
+  background-color: var(--background-dark);
   display: flex;
   justify-content: center;
   padding: 1rem 0;
@@ -37,19 +46,16 @@ header nav ul {
 
 header nav ul li a {
   text-decoration: none;
-  color: #ffffff;
+  color: var(--text-primary);
   font-weight: bold;
 }
 
 .container {
-  padding-top: 3rem;
-  padding-bottom: 3rem;
-  padding-left: 2rem;
-  padding-right: 2rem;
+  padding: 3rem 2rem;
 }
 
 footer {
-  background-color: #1c1c1c;
+  background-color: var(--background-dark);
   position: fixed;
   bottom: 0;
   width: 100%;
@@ -59,5 +65,53 @@ footer {
 }
 
 footer a {
-  color: #ffffff; 
+  color: var(--text-highlight);
+}
+
+/* 404 Page */
+
+.error-404-page {
+  background-color: var(--background-dark);
+}
+
+.container-404 {
+  margin: 50px auto;
+  max-width: 600px;
+  text-align: center;
+  color: var(--white);
+}
+
+.container-404 h1 {
+  margin: 50px 0;
+  font-size: 5em;
+  color: var(--white);
+}
+
+.container-404 p {
+  margin: 20px 0;
+  font-size: 1.25em;
+}
+
+.home-link {
+  display: block;
+  margin-top: 20px;
+  padding: 10px 20px;
+  background-color: var(--accent-color);
+  color: var(--text-highlight);
+  text-decoration: none;
+  border-radius: 5px;
+  transition: background-color 0.3s ease;
+}
+
+.home-link:hover {
+  background-color: var(--text-highlight);
+}
+
+.broken-link {
+  color: var(--light-blue);
+  text-decoration: none;
+}
+
+.broken-link:hover {
+  color: var(--white);
 }

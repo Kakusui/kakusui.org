@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <link rel="icon" href="assets/images/favicon.png" type="image/x-icon">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>404 Not Found</title>
+    <link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body class="error-404-page">
+    <div class="container-404">
+        <h1>Oops!</h1>
+        <p><strong>404 - Page not found</strong></p>
+        <p>It seems like either we can't code or you went to a page that doesn't exist...</p>
+        <a href="/" class="home-link">Return to Home</a>
+        <a href="https://github.com/kakusui/kakusui-org" target="_blank" class="broken-link">Something Broken? Tell us!</a>
+    </div>
+</body>
+</html>
