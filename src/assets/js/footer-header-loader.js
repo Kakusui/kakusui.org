@@ -11,8 +11,11 @@ function adjustPadding() {
 }
 
 document.addEventListener("DOMContentLoaded", function() {
+  // Determine the correct base path
+  let basePath = window.location.pathname.includes('okisouchi') ? '../../' : './';
+
   // Load Header
-  let headerPromise = fetch('/public_html/assets/html/includes/header.html')
+  let headerPromise = fetch(basePath + 'assets/html/includes/header.html')
     .then(response => response.text())
     .then(html => {
       document.getElementById('header-placeholder').innerHTML = html;
@@ -20,7 +23,7 @@ document.addEventListener("DOMContentLoaded", function() {
     .catch(err => console.error('Failed to load header:', err));
 
   // Load Footer
-  let footerPromise = fetch('/public_html/assets/html/includes/footer.html')
+  let footerPromise = fetch(basePath + 'assets/html/includes/footer.html')
     .then(response => response.text())
     .then(html => {
       document.getElementById('footer-placeholder').innerHTML = html;
