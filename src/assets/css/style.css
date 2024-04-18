@@ -10,9 +10,12 @@
 
 body::-webkit-scrollbar {
   display: none;
+  
 }
 
 body {
+  overflow-y: scroll; /* Force vertical scrollbar */
+  overflow-x: hidden; /* Prevent horizontal overflow */
   -ms-overflow-style: none;
   scrollbar-width: none;
   overflow-x: hidden;

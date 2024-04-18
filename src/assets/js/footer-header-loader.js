@@ -12,22 +12,23 @@ function adjustPadding() {
 
 document.addEventListener("DOMContentLoaded", function() {
   // Load Header
-  fetch('assets/html/includes/header.html')
+  let headerPromise = fetch('/src/assets/html/includes/header.html')
     .then(response => response.text())
     .then(html => {
       document.getElementById('header-placeholder').innerHTML = html;
-      adjustPadding(); // Adjust padding after header is loaded
     })
     .catch(err => console.error('Failed to load header:', err));
 
   // Load Footer
-  fetch('assets/html/includes/footer.html')
+  let footerPromise = fetch('/src/assets/html/includes/footer.html')
     .then(response => response.text())
     .then(html => {
       document.getElementById('footer-placeholder').innerHTML = html;
-      adjustPadding(); // Adjust padding after footer is loaded
     })
     .catch(err => console.error('Failed to load footer:', err));
+
+  // Call adjustPadding after both header and footer have loaded
+  Promise.all([headerPromise, footerPromise]).then(() => adjustPadding());
 });
 
 window.addEventListener("resize", adjustPadding);
