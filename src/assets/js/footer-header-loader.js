@@ -12,7 +12,18 @@ function adjustPadding() {
 
 document.addEventListener("DOMContentLoaded", function() {
   // Determine the correct base path
-  let basePath = window.location.pathname.includes('okisouchi') ? '../../' : './';
+  let path = window.location.pathname;
+  let basePath = './';
+
+  console.log(path);
+
+  if (path.includes('okisouchi')) {
+    basePath = '../';
+  } 
+  if (path.includes('tos') || path.includes('privacypolicy')) {
+    basePath = '../../';
+  }
+
 
   // Load Header
   let headerPromise = fetch(basePath + 'assets/html/includes/header.html')
@@ -30,7 +41,7 @@ document.addEventListener("DOMContentLoaded", function() {
     })
     .catch(err => console.error('Failed to load footer:', err));
 
-  // Call adjustPadding after both header and footer have loaded
+  // Call adjustPadding after both header and footer have loaded to avoid null values
   Promise.all([headerPromise, footerPromise]).then(() => adjustPadding());
 });
 
