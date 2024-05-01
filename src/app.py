@@ -16,7 +16,7 @@ def tos():
 
 @app.route('/okisouchi/privacypolicy/')
 def privacy_policy():
-    return render_template('okisouchi/privacypolicy/privacy_policy.html')
+    return render_template('okisouchi/privacypolicy/privacypolicy.html')
 
 ## for development
 if(__name__ == '__main__'):
