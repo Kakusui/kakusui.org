@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+
+{% block title %}
+Okisouchi | Privacy Policy
+{% endblock %}
+
+{% block content %}
+<div class="container">
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/load-markdown.js') }}"></script>
+<script>
+loadMarkdown("{{ url_for('static', filename='markdown/okisouchi/PRIVACYPOLICY.md')}}")
+</script>
+{% endblock %}
