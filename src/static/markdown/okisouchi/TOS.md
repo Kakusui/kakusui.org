@@ -7,9 +7,10 @@ Welcome to Okisouchi! By using our software, you agree to be bound by these Term
 You only need to be old enough to have a Google account to use Okisouchi, in accordance with Google's age requirements.
 
 #### 3. User Responsibilities
-- **Software Use and Distribution**: You are entitled to use, modify, and distribute Okisouchi under the GNU General Public License version 3 (GPLv3). The GPL is a copyleft license that promotes the principles of open-source software. It ensures that any derivative works based on this project must also be distributed under the same GPL license. This license grants you the freedom to use, modify, and distribute the software.
+
+3a. **Software Use and Distribution**: You are entitled to use, modify, and distribute Okisouchi under the GNU General Public License version 3 (GPLv3). The GPL is a copyleft license that promotes the principles of open-source software. It ensures that any derivative works based on this project must also be distributed under the same GPL license. This license grants you the freedom to use, modify, and distribute the software.
   
-  Please note that this information is a brief summary of the GPL. For a detailed understanding of your rights and obligations under this license, please refer to the full license text.
+Please note that this information is a brief summary of the GPL. For a detailed understanding of your rights and obligations under this license, please refer to the full license text.
 
 #### 4. Prohibited Activities
 You are prohibited from using the software in any way that interferes with its normal operation or with any other user's use and enjoyment of the software.
@@ -32,6 +33,6 @@ Kakusui reserves the right to modify or replace these Terms at any time, with or
 #### 10. Contact Information
 If you have any questions about these Terms, please contact us at [contact@kakusui.org](mailto:contact@kakusui.org).
 
-_Last updated: [2024-04-17]_
+_Last updated: [2024-05-01]_
 
 ---
