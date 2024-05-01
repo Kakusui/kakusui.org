@@ -57,8 +57,8 @@ header nav ul li a {
   font-weight: bold;
 }
 
-.container {
-  padding: 3rem 2rem;
+.container-home-page {
+  padding: 5rem 2rem 3rem 2rem;
 }
 
 footer {
