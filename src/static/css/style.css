@@ -8,6 +8,8 @@
   --white: #ffffff;
 }
 
+/* General Kakusui CSS */
+
 body::-webkit-scrollbar {
   display: none;
   
@@ -57,8 +59,12 @@ header nav ul li a {
   font-weight: bold;
 }
 
-.container-home-page {
+.container {
   padding: 5rem 2rem 3rem 2rem;
+}
+
+.container ul {
+  padding-left: 1em;
 }
 
 footer {
@@ -75,7 +81,8 @@ footer a {
   color: var(--text-highlight);
 }
 
-/* Error Page */
+/* Error Pages
+Universal Number Pages */
 
 .error-page {
   background-color: var(--background-dark);
