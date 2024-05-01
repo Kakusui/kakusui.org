@@ -1,11 +1,11 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <link rel="icon" href="assets/images/favicon.png" type="image/x-icon">
+    <link rel="icon" href="static/images/favicon.png" type="image/x-icon">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>403 Forbidden</title>
-    <link rel="stylesheet" href="assets/css/style.css">
+    <link rel="stylesheet" href="static/css/style.css">
 </head>
 <body class="error-page">
     <div class="container-error-page">
