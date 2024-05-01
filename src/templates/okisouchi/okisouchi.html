@@ -1,28 +1,22 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <link rel="icon" href="../assets/images/favicon.png" type="image/x-icon">
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Kakusui | Okisouchi </title>
-    <link rel="stylesheet" href="../assets/css/style.css">
-</head>
-<body>
-  <div id="header-placeholder"></div>
+{% extends "base.html" %}
 
+{% block title %}
+Kakusui | Okisouchi
+{% endblock %}
+
+{% block content %}
 <div class="container">
   <h1>Okisouchi</h1>
-  <p>Welcome to <a href="https://github.com/Kakusui/OSC_Interface", target="_blank">Okisouchi</a>, by using this service you agree to the 
-    <a href="tos/">terms of service</a> and 
-    <a href="privacypolicy/">privacy policy</a>.
+  <p>Welcome to <a href="https://github.com/Kakusui/OSC_Interface" target="_blank">Okisouchi</a>, by using this service you agree to the 
+    <a href="{{ url_for('tos') }}">terms of service</a> and 
+    <a href="{{ url_for('privacy_policy') }}">privacy policy</a>.
   </p>
 
-  <p><br></bl>Okisouchi is a robust, open-source tool for automating the transfer of files from Google Drive to designated locations, streamlining file management and organization with user-configured settings while ensuring data privacy and adherence to GPLv3 open-source licensing.</p>
+  <p>Okisouchi is a robust, open-source tool for automating the transfer of files from Google Drive to designated locations, streamlining file management and organization with user-configured settings while ensuring data privacy and adherence to GPLv3 open-source licensing.</p>
 
-  <p><br>To Use:</p>
-  <p><br>The whole process is detailed further on where the source code is located <a href="https://github.com/Kakusui/OSC_Interface" target="_blank">here</a> but put simply:</p>
-  <p><br>Simply download the source code, set up your LocalConfig file, and configure the following paths:<br></p>
-  <br>
+  <p>To Use:</p>
+  <p>The whole process is detailed further on where the source code is located <a href="https://github.com/Kakusui/OSC_Interface" target="_blank">here</a> but put simply:</p>
+  <p>Simply download the source code, set up your LocalConfig file, and configure the following paths:</p>
   <ul>
     <li>blacklist.txt (folder names to ignore when merging directories)</li>
     <li>file_names.txt (files to import from)</li>
@@ -30,14 +24,8 @@
     <li>folder_names.txt (those gfolder names)</li>
     <li>target_location.txt (where to put the files)</li>
   </ul>
-  <p><br>Once this is completed, you can simply run the run.py file and log in through Google, and your transfer will complete.</p>
+  <p>Once this is completed, you can simply run the run.py file and log in through Google, and your transfer will complete.</p>
 
-  <p><br>We recommend that you read the full README file on the GitHub repository to understand the full process at <a href="https://github.com/Kakusui/OSC_Interface/blob/main/README.md" target="_blank">this link</a>.</p>
-
+  <p>We recommend that you read the full README file on the GitHub repository to understand the full process at <a href="https://github.com/Kakusui/OSC_Interface/blob/main/README.md" target="_blank">this link</a>.</p>
 </div>
-
-  <div id="footer-placeholder"></div>
-
-  <script src="../assets/js/footer-header-loader.js"></script>
-</body>
-</html>
+{% endblock %}

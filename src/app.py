@@ -6,5 +6,17 @@ app = Flask(__name__)
 def home():
     return render_template('home.html')
 
+@app.route('/okisouchi')
+def okisouchi():
+    return render_template('okisouchi/okisouchi.html')
+
+@app.route('/okisouchi/tos/')
+def tos():
+    return render_template('okisouchi/tos/tos.html')
+
+@app.route('/okisouchi/privacypolicy/')
+def privacy_policy():
+    return render_template('okisouchi/privacypolicy/privacy_policy.html')
+
 if __name__ == '__main__':
     app.run(debug=True)
