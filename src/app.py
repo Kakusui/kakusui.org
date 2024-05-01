@@ -18,5 +18,6 @@ def tos():
 def privacy_policy():
     return render_template('okisouchi/privacypolicy/privacy_policy.html')
 
-if __name__ == '__main__':
+## for development
+if(__name__ == '__main__'):
     app.run(debug=True)
