@@ -24,5 +24,5 @@ def privacy_policy():
     app.logger.debug("Serving Privacy Policy Page")
     return render_template('okisouchi/privacypolicy/privacypolicy.html')
 
-if __name__ == '__main__':
+if(__name__ == '__main__'):
     app.run(debug=True)
