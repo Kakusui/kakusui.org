@@ -1,12 +1,10 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <link rel="icon" href="static/images/favicon.png" type="image/x-icon">
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>500 Server Error</title>
-    <link rel="stylesheet" href="static/css/style.css">
-</head>
+{% extends "base.html" %}
+
+{% block title %}
+500 Server Error
+{% endblock %}
+
+{% block content %}
 <body class="error-page">
     <div class="container-error-page">
         <h1>Oops!</h1>
@@ -16,4 +14,4 @@
         <a href="https://github.com/kakusui/kakusui-org/issues" target="_blank" class="error-page-broken-link">Something Broken? Tell us!</a>
     </div>
 </body>
-</html>
+{% endblock %}
