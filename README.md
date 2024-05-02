@@ -3,7 +3,9 @@ Source code for kakusui.org
 
 ## Requirements
 python (runs on 3.11.8 but should work on lower versions)
+
 flask==3.0.3
+
 waitress==3.0.0
 
 ## To build locally
