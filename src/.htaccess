@@ -1,0 +1,3 @@
+RewriteEngine On
+RewriteCond %{REQUEST_URI} !^/kakusui/
+RewriteRule ^(.*)$ kakusui/$1 [L]
