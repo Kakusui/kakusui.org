@@ -1,0 +1,66 @@
+<!-- 
+Copyright Kakusui LLC 2024 (https://kakusui.org) (https://github.com/Kakusui)
+Use of this source code is governed by a GNU General Public License v3.0
+license that can be found in the LICENSE file.
+-->
+
+{% extends "base.html" %}
+
+{% block title %}
+Kakusui | Kairyou
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h1>Kairyou</h1>
+    <div class="row">
+        <div class="col">
+            <h2>Text Input</h2>
+            <textarea class="form-control" id="textInput" rows="3"></textarea>
+            <input type="file" class="form-control" id="textFileInput">
+        </div>
+        <div class="col">
+            <h2>JSON Input</h2>
+            <textarea class="form-control" id="jsonInput" rows="3"></textarea>
+            <input type="file" class="form-control" id="jsonFileInput">
+        </div>
+    </div>
+    <div class="row">
+        <div class="col">
+            <button class="btn btn-primary" id="submitButton">Submit</button>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col">
+            <h2>Output</h2>
+            <textarea class="form-control" id="output" rows="3" readonly></textarea>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script type="text/javascript">
+    const apiKey = "{{ api_key }}";
+
+    function makeApiRequest() {
+        fetch('http://api.localhost:5000//v1/kairyou', {
+            method: 'POST',
+            headers: {
+                'Authorization': 'Bearer ' + apiKey,
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({}),  // Ignoring input
+        })
+        .then(response => response.json())
+        .then(data => {
+            document.getElementById('output').value = JSON.stringify(data, null, 2);
+        })
+        .catch(error => {
+            console.error('Error:', error);
+        });
+    }
+
+    document.getElementById('submitButton').addEventListener('click', makeApiRequest);
+</script>
+{% endblock %}

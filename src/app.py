@@ -10,6 +10,7 @@ import logging
 
 ## third-party libraries
 from flask import Flask, render_template, jsonify, request, abort
+from flask_cors import CORS, cross_origin
 from dotenv import load_dotenv
 
 ##-------------------start-of-setup_app()---------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -71,6 +72,8 @@ def require_api_key(func):
 
 app = Flask(__name__)
 
+CORS(app, resources={r"/v1/*": {"origins": ["https://kakusui.org", "http://localhost:5000"]}})
+
 setup_app(app)
 
 ## Routes
@@ -97,6 +100,13 @@ def privacy_policy():
     app.logger.debug("Serving Privacy Policy Page")
     return render_template('okisouchi/privacypolicy/privacypolicy.html')
 
+
+## Kairyou Pages
+@app.route('/kairyou/')
+def kairyou():
+    app.logger.debug("Serving Kairyou Page")
+    return render_template('kairyou/kairyou.html', api_key=os.getenv('ROOT_API_KEY'))
+
 ## Error Handlers
 @app.errorhandler(404)
 def page_not_found(e):
@@ -119,10 +129,11 @@ def forbidden(e):
 def api_home():
     return jsonify({"message": "Welcome to the API"})
 
-@app.route('/v1/kairyou', subdomain='api')
+@app.route('/v1/kairyou', subdomain='api', methods=["GET", "POST", "OPTIONS"])
+@cross_origin(origins=["https://kakusui.org", "http://localhost:5000"])
 @require_api_key
 def kairyou():
-    return jsonify({"message": "Kairyou API"})
+    return jsonify({"message": "Wow you have access to the API"})
 
 if(__name__ == '__main__'):
     app.run(debug=True)
