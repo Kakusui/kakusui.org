@@ -1,3 +1,9 @@
+/* 
+Copyright Kakusui LLC 2024 (https://kakusui.org) (https://github.com/Kakusui)
+Use of this source code is governed by a GNU General Public License v3.0
+license that can be found in the LICENSE file.
+*/
+
 :root {
   --background-dark: #000000;
   --background-grey: #333333;
@@ -36,6 +42,16 @@ h1, h2, h3, p, ul, li {
   padding: 0;
 }
 
+.container {
+  padding: 5rem 2rem 3rem 2rem;
+}
+
+.container ul {
+  padding-left: 1em;
+}
+
+/* Header */
+
 header {
   background-color: var(--background-dark);
   display: flex;
@@ -59,13 +75,39 @@ header nav ul li a {
   font-weight: bold;
 }
 
-.container {
-  padding: 5rem 2rem 3rem 2rem;
+header nav ul li a:hover {
+  color: var(--text-highlight);
 }
 
-.container ul {
-  padding-left: 1em;
+
+/* dropdown container */
+header nav ul li ul {
+  display: none;
+  position: absolute;
+  min-width: 160px;
+  z-index: 1;
+  background-color: var(--background-dark);
+  padding: 1rem;
+  gap: 1rem;
 }
+
+header nav ul li:hover ul {
+  display: block;
+}
+
+header nav ul li ul li {
+  float: none;
+}
+
+header nav ul li ul li a {
+  color: var(--text-primary);
+}
+
+header nav ul li ul li a:hover {
+  color: var(--text-highlight);
+}
+
+/* Footer */
 
 footer {
   background-color: var(--background-dark);
