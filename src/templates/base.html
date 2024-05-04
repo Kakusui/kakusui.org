@@ -14,21 +14,13 @@ license that can be found in the LICENSE file.
   <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
 <body>
-  <header>
-    <nav>
-        <ul>
-            <li><a href="/">Home</a></li>
-            <li><a href="/okisouchi">Okisouchi</a></li>
-        </ul>
-    </nav>
-  </header>
+
+  {% include 'includes/header.html' %}
 
   {% block content %}
   {% endblock %}
 
-  <footer>
-    Kakusui loves open source! <a href="https://github.com/kakusui/kakusui-org" target="_blank">This Website's Github!</a>
-  </footer>
+  {% include 'includes/footer.html' %}
 
   {% block scripts %}
   {% endblock %}
