@@ -141,6 +141,8 @@ def kairyou():
 
     ## kairyou receives a POST request with a JSON payload (textToPreprocess) and (replacementsJson)
     ## it returns a JSON response with the preprocessed text, preprocessing log, and error log
+    ## Possible status codes: 200, 400, 405, 500, 401
+    ## 200: Success, 400: Missing required data, 405: Method not allowed, 500: Internal Server Error, 401: Unauthorized
     if(request.method == 'POST'):
         data:dict = request.get_json()
 
