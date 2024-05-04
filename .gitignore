@@ -1,3 +1,5 @@
 __pycache__/
 *.log
 src/local_flag
+src/.env
+logs/

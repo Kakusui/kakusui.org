@@ -9,11 +9,16 @@ import os
 import logging
 
 ## third-party libraries
-from flask import Flask, render_template, jsonify
+from flask import Flask, render_template, jsonify, request, abort
+from dotenv import load_dotenv
 
 ##-------------------start-of-setup_app()---------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 def setup_app(app:Flask):
+
+    ## Load Environment Variables
+    load_dotenv()
+
     try:
         ## get the path to this file
         path_to_flag = os.path.join(os.path.dirname(__file__), 'local_flag')
@@ -29,6 +34,9 @@ def setup_app(app:Flask):
     else:
         app.config['SERVER_NAME'] = 'kakusui.org'
 
+    ## Store root API key
+    app.config['ROOT_API_KEY'] = os.getenv('ROOT_API_KEY')
+
     ## Setup logging
     if(not os.path.exists('logs')):
         os.mkdir('logs')
@@ -43,6 +51,21 @@ def setup_app(app:Flask):
 
     app.logger.setLevel(logging.DEBUG)
     app.logger.info('Application Startup')
+
+##-------------------start-of-require_api_key()---------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+## for now, as we don't want just anyone to access the API, we require root API key
+def require_api_key(func):
+
+    def decorated_function(*args, **kwargs):
+
+        api_key = request.headers.get('Authorization')
+        if(not api_key or api_key != f"Bearer {os.getenv('ROOT_API_KEY')}"):
+            abort(401)  ## Unauthorized
+
+        return func(*args, **kwargs)
+    
+    return decorated_function
 
 ##-----------------------------------------start-of-main----------------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -94,7 +117,12 @@ def forbidden(e):
 
 @app.route('/', subdomain='api')
 def api_home():
-    return jsonify({"message": "This is a work in progress"})
+    return jsonify({"message": "Welcome to the API"})
+
+@app.route('/v1/kairyou', subdomain='api')
+@require_api_key
+def kairyou():
+    return jsonify({"message": "Kairyou API"})
 
 if(__name__ == '__main__'):
     app.run(debug=True)
