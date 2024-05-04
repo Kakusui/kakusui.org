@@ -2,17 +2,25 @@
 Source code for kakusui.org
 
 ## Requirements
-python (runs on 3.11.8 but should work on lower versions)
+python (runs on 3.11.8, lowest tested version is 3.11.4)
 
 flask==3.0.3
 
 waitress==3.0.0
 
+python-dotenv==1.0.1
+
+flask-cors==4.0.0
+
+kairyou==1.6.1
+
+ja-core-news-lg==3.7.0 (this is not a pip package, it is a spacy model) Must be installed via spacy.
+
 ## To build locally
 1. Clone the repo, make sure you are using the development branch.
-2. Navigate to repository directory, install the requirements: `pip install -r requirements.txt`
-3. add the `local_flag` file to the src directory. This is to tell the app to run in development mode.
-4. Navigate to src directory: `cd src` and run the app: `python app.py`
+2. Navigate to the `src` directory. `cd src`
+3. Run the setup script with the local argument. This will install all requirements and flag the environment as local. `python setup.py local`
+4. Run the server. `python app.py`
 5. Website will be on localhost:5000
 
 ## Contributing

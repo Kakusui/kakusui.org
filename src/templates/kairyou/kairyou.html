@@ -16,12 +16,12 @@ Kakusui | Kairyou
     <div class="row">
         <div class="col">
             <h2>Text Input</h2>
-            <textarea class="form-control" id="textInput" rows="3"></textarea>
+            <textarea class="form-control" id="textToPreprocess" rows="3"></textarea>
             <input type="file" class="form-control" id="textFileInput">
         </div>
         <div class="col">
             <h2>JSON Input</h2>
-            <textarea class="form-control" id="jsonInput" rows="3"></textarea>
+            <textarea class="form-control" id="replacementsJson" rows="3"></textarea>
             <input type="file" class="form-control" id="jsonFileInput">
         </div>
     </div>
@@ -32,8 +32,16 @@ Kakusui | Kairyou
     </div>
     <div class="row">
         <div class="col">
-            <h2>Output</h2>
-            <textarea class="form-control" id="output" rows="3" readonly></textarea>
+            <h2>Preprocessed Text</h2>
+            <textarea class="form-control" id="preprocessedText" rows="3" readonly></textarea>
+        </div>
+        <div class="col">
+            <h2>Preprocessing Log</h2>
+            <textarea class="form-control" id="preprocessingLog" rows="3" readonly></textarea>
+        </div>
+        <div class="col">
+            <h2>Error Log</h2>
+            <textarea class="form-control" id="errorLog" rows="3" readonly></textarea>
         </div>
     </div>
 </div>
@@ -46,17 +54,32 @@ Kakusui | Kairyou
     const apiUrl = isLocal === 'true' ? "http://api.localhost:5000/v1/kairyou" : "https://api.kakusui.org/v1/kairyou";
 
     function makeApiRequest() {
+        const textToPreprocess = document.getElementById('textToPreprocess').value;
+        let replacementsJson;
+
+        try 
+        {
+            replacementsJson = JSON.parse(document.getElementById('replacementsJson').value || "{}");
+        } catch (error) 
+        {
+            console.error('Invalid JSON:', error);
+            document.getElementById('output').value = 'Invalid JSON. Please ensure that the JSON is valid.';
+            return;
+        }
+
         fetch(apiUrl, {
             method: 'POST',
             headers: {
                 'Authorization': 'Bearer ' + apiKey,
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify({}),  // Ignoring input
+            body: JSON.stringify({textToPreprocess, replacementsJson}),
         })
         .then(response => response.json())
         .then(data => {
-            document.getElementById('output').value = JSON.stringify(data, null, 2);
+            document.getElementById('preprocessedText').value = data.preprocessedText;
+            document.getElementById('preprocessingLog').value = data.preprocessingLog;
+            document.getElementById('errorLog').value = data.errorLog;
         })
         .catch(error => {
             console.error('Error:', error);

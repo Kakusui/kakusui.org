@@ -9,9 +9,10 @@ import os
 import logging
 
 ## third-party libraries
-from flask import Flask, render_template, jsonify, request, abort
+from flask import Flask, render_template, jsonify, request, abort, make_response
 from flask_cors import CORS, cross_origin
 from dotenv import load_dotenv
+from kairyou import Kairyou
 
 ##-------------------start-of-setup_app()---------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -133,11 +134,39 @@ def forbidden(e):
 def api_home():
     return jsonify({"message": "Welcome to the API"})
 
-@app.route('/v1/kairyou', subdomain='api', methods=["GET", "POST", "OPTIONS"])
+@app.route('/v1/kairyou', subdomain='api', methods=["POST"])
 @cross_origin(origins=["https://kakusui.org", "http://localhost:5000"])
 @require_api_key
 def kairyou():
-    return jsonify({"message": "Wow you have access to the API"})
+
+    ## kairyou receives a POST request with a JSON payload (textToPreprocess) and (replacementsJson)
+    ## it returns a JSON response with the preprocessed text, preprocessing log, and error log
+    if(request.method == 'POST'):
+        data:dict = request.get_json()
+
+        text_to_preprocess = data.get('textToPreprocess')
+        replacements_json = data.get('replacementsJson')
+
+        if(not text_to_preprocess or not replacements_json):
+            response = make_response(jsonify({"message": "Missing required data"}), 400)
+
+        else:
+            try:
+                preprocessed_text, preprocessing_log, error_log = Kairyou.preprocess(text_to_preprocess, replacements_json)
+
+                response = make_response(jsonify({
+                    "preprocessedText": preprocessed_text,
+                    "preprocessingLog": preprocessing_log,
+                    "errorLog": error_log
+                }), 200)
+
+            except Exception as e:
+                response = make_response(jsonify({"message": f"An error occurred: {e}"}), 500)        
+    
+    else:
+        response = make_response(jsonify({"message": "This endpoint only accepts POST requests"}), 405)
+    
+    return response
 
 if(__name__ == '__main__'):
     app.run(debug=True)
