@@ -15,7 +15,7 @@ from dotenv import load_dotenv
 
 ##-------------------start-of-setup_app()---------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-def setup_app(app:Flask):
+def setup_app(app:Flask) -> bool:
 
     ## Load Environment Variables
     load_dotenv()
@@ -26,9 +26,11 @@ def setup_app(app:Flask):
         assert os.path.exists(path_to_flag)
 
         os.environ['FLASK_ENV'] = 'development'
+
+        is_local = True
         
     except AssertionError:
-        pass
+        is_local = False
 
     if(os.getenv('FLASK_ENV') == 'development'):
         app.config['SERVER_NAME'] = 'localhost:5000'
@@ -53,6 +55,8 @@ def setup_app(app:Flask):
     app.logger.setLevel(logging.DEBUG)
     app.logger.info('Application Startup')
 
+    return is_local
+
 ##-------------------start-of-require_api_key()---------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 ## for now, as we don't want just anyone to access the API, we require root API key
@@ -74,7 +78,7 @@ app = Flask(__name__)
 
 CORS(app, resources={r"/v1/*": {"origins": ["https://kakusui.org", "http://localhost:5000"]}})
 
-setup_app(app)
+is_local = setup_app(app)
 
 ## Routes
 
@@ -105,7 +109,7 @@ def privacy_policy():
 @app.route('/kairyou/')
 def kairyou():
     app.logger.debug("Serving Kairyou Page")
-    return render_template('kairyou/kairyou.html', api_key=os.getenv('ROOT_API_KEY'))
+    return render_template('kairyou/kairyou.html', api_key=os.getenv('ROOT_API_KEY'), is_local=is_local)
 
 ## Error Handlers
 @app.errorhandler(404)

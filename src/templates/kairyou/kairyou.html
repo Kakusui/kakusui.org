@@ -42,9 +42,11 @@ Kakusui | Kairyou
 {% block scripts %}
 <script type="text/javascript">
     const apiKey = "{{ api_key }}";
+    const isLocal = " {{ is_local }}" ? 'true' : 'false';
+    const apiUrl = isLocal === 'true' ? "http://api.localhost:5000/v1/kairyou" : "https://api.kakusui.org/v1/kairyou";
 
     function makeApiRequest() {
-        fetch('http://api.localhost:5000//v1/kairyou', {
+        fetch(apiUrl, {
             method: 'POST',
             headers: {
                 'Authorization': 'Bearer ' + apiKey,
