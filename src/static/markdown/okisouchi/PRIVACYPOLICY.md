@@ -27,11 +27,11 @@ This Privacy Policy outlines how Okisouchi (OSC) interacts with your data, parti
 - All necessary privacy notifications are prominently displayed within the OSC Interface to ensure users are always informed about how their data is being handled.
 
 #### Hosting and Links
-- This Privacy Policy is hosted on our main website [www.kakusui.org](http://www.kakusui.org) and is linked both from [Okisouchi's homepage](http://www.kakusui.org/okisouchi) and within the OAuth consent screen on the Google API Console, ensuring consistency across all platforms and so you can access this policy at any time.
+- This Privacy Policy is hosted on our main website [www.kakusui.org](https://kakusui.org) and is linked both from [Okisouchi's homepage](https://kakusui.org/okisouchi) and within the OAuth consent screen on the Google API Console, ensuring consistency across all platforms and so you can access this policy at any time.
 
 #### Contact
 - If you have any questions regarding this Privacy Policy or the data practices of OSC, please contact us at [contact@kakusui.org](mailto:contact@kakusui.org).
 
-_Last updated: [2024-04-24]_
+_Last updated: [2024-05-03]_
 
 ---
