@@ -4,7 +4,8 @@ Use of this source code is governed by a GNU General Public License v3.0
 license that can be found in the LICENSE file.
 */
 
-:root {
+:root 
+{
   --background-dark: #000000;
   --background-grey: #333333;
   --accent-color: #8B0000;
@@ -16,12 +17,14 @@ license that can be found in the LICENSE file.
 
 /* General Kakusui CSS */
 
-body::-webkit-scrollbar {
+body::-webkit-scrollbar 
+{
   display: none;
   
 }
 
-body {
+body 
+{
   overflow-y: scroll; /* Force vertical scrollbar */
   overflow-x: hidden; /* Prevent horizontal overflow */
   -ms-overflow-style: none;
@@ -33,26 +36,106 @@ body {
   color: var(--text-primary);
 }
 
-body a {
+body a 
+{
   color: var(--text-highlight);
 }
 
-h1, h2, h3, p, ul, li {
+/* Home and Okisouchi Pages */
+
+.okisouchi-container h1, h2, h3, p, ul, li, .home-container h1, h2, h3, p, ul, li 
+{
   margin: 0;
   padding: 0;
 }
 
-.container {
+.okisouchi-container, .home-container 
+{
   padding: 5rem 2rem 3rem 2rem;
 }
 
-.container ul {
+.okisouchi-container ul, .home-container ul 
+{
   padding-left: 1em;
+}
+
+/* Kairyou Page */
+
+.kairyou-container 
+{
+  max-width: 800px;
+  margin: auto;
+  margin-top: 100px;
+  background-color: var(--background-dark);
+  padding: 2rem;
+  padding-top: 50;
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.kairyou-container h1 
+{
+  color: var(--white);
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.input-section, .output-section 
+{
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+}
+
+.input-block, .output-block 
+{
+  flex: 1;
+  margin-right: 20px;
+}
+
+.input-block:last-child, .output-block:last-child 
+{
+  margin-right: 0;
+}
+
+.form-control 
+{
+  margin-top: 10px;
+  background-color: var(--background-grey);
+  color: var(--text-primary);
+  border: none;
+  padding: 10px;
+  border-radius: 5px;
+}
+
+.file-input 
+{
+  background-color: var(--text-highlight);
+  color: var(--background-dark);
+}
+
+.submit-button 
+{
+  width: 100%;
+  padding: 10px;
+  font-size: 1.2rem;
+  background-color: var(--accent-color);
+  color: var(--white);
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.submit-button:hover 
+{
+  background-color: var(--text-highlight);
 }
 
 /* Header */
 
-header {
+header 
+{
   background-color: var(--background-dark);
   display: flex;
   justify-content: center;
@@ -63,25 +146,29 @@ header {
   z-index: 100;
 }
 
-header nav ul {
+header nav ul 
+{
   list-style: none;
   display: flex;
   gap: 2rem;
 }
 
-header nav ul li a {
+header nav ul li a 
+{
   text-decoration: none;
   color: var(--text-primary);
   font-weight: bold;
 }
 
-header nav ul li a:hover {
+header nav ul li a:hover 
+{
   color: var(--text-highlight);
 }
 
 
 /* dropdown container */
-header nav ul li ul {
+header nav ul li ul 
+{
   display: none;
   position: absolute;
   min-width: 160px;
@@ -91,25 +178,30 @@ header nav ul li ul {
   gap: 1rem;
 }
 
-header nav ul li:hover ul {
+header nav ul li:hover ul 
+{
   display: block;
 }
 
-header nav ul li ul li {
+header nav ul li ul li 
+{
   float: none;
 }
 
-header nav ul li ul li a {
+header nav ul li ul li a 
+{
   color: var(--text-primary);
 }
 
-header nav ul li ul li a:hover {
+header nav ul li ul li a:hover 
+{
   color: var(--text-highlight);
 }
 
 /* Footer */
 
-footer {
+footer
+{
   background-color: var(--background-dark);
   position: fixed;
   bottom: 0;
@@ -119,36 +211,42 @@ footer {
   z-index: 100;
 }
 
-footer a {
+footer a 
+{
   color: var(--text-highlight);
 }
 
 /* Error Pages
 Universal Number Pages */
 
-.error-page {
+.error-page 
+{
   background-color: var(--background-dark);
 }
 
-.container-error-page {
+.container-error-page 
+{
   margin: 50px auto;
   max-width: 600px;
   text-align: center;
   color: var(--white);
 }
 
-.container-error-page h1 {
+.container-error-page h1 
+{
   margin: 50px 0;
   font-size: 5em;
   color: var(--white);
 }
 
-.container-error-page p {
+.container-error-page p 
+{
   margin: 20px 0;
   font-size: 1.25em;
 }
 
-.error-page-home-link {
+.error-page-home-link 
+{
   display: block;
   margin-top: 20px;
   padding: 10px 20px;
@@ -159,15 +257,18 @@ Universal Number Pages */
   transition: background-color 0.3s ease;
 }
 
-.error-page-home-link:hover {
+.error-page-home-link:hover 
+{
   background-color: var(--text-highlight);
 }
 
-.error-page-broken-link {
+.error-page-broken-link 
+{
   color: var(--light-blue);
   text-decoration: none;
 }
 
-.error-page-broken-link:hover {
+.error-page-broken-link:hover 
+{
   color: var(--white);
 }
