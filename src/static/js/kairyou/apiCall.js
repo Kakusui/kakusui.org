@@ -15,18 +15,13 @@ function makeApiRequest(apiKey) {
 
     let replacementsJson;
 
-    try 
-    {
-        if(replacementsJsonInput === "") 
-        {
+    try {
+        if(replacementsJsonInput === "") {
             throw new Error('No JSON input');
         }
 
         replacementsJson = JSON.parse(replacementsJsonInput || "{}");
-
-    } 
-    catch (error) 
-    {
+    } catch (error) {
         console.error('Invalid JSON:', error);
         errorLog.value = 'Invalid JSON. Please ensure that the JSON is correctly formatted.';
         return;
@@ -40,22 +35,13 @@ function makeApiRequest(apiKey) {
         },
         body: JSON.stringify({textToPreprocess, replacementsJson}),
     })
-    .then(response => {
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        return response.json();
-    })
+    .then(response => response.json())
     .then(data => {
         if (data.preprocessedText) {
             preprocessedText.value = data.preprocessedText;
             preprocessingLog.value = data.preprocessingLog;
-            if (data.errorLog) {
-                errorLog.value = data.errorLog;
-            }
-        } 
-        else 
-        {
+            errorLog.value = data.errorLog || '';
+        } else {
             errorLog.value = data.message || 'An error occurred';
         }
     })

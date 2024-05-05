@@ -50,11 +50,18 @@ Kakusui | Kairyou
 {% block scripts %}
 <script src="{{ url_for('static', filename='js/clearInputs.js') }}"></script>
 <script src="{{ url_for('static', filename='js/kairyou/apiCall.js') }}"></script>
+<script src="{{ url_for('static', filename='js/kairyou/validateInputs.js') }}"></script>
 <script type="text/javascript">
-    window.onload = function() {
+    window.onload = function() 
+    {
         clearElements(['textToPreprocess', 'replacementsJson', 'textFileInput', 'jsonFileInput', 'preprocessedText', 'preprocessingLog', 'errorLog']);
-        document.getElementById('submitButton').addEventListener('click', function() {
-            makeApiRequest("{{ api_key }}");
+        
+        document.getElementById('submitButton').addEventListener('click', function() 
+        {
+            if (validateInputs()) 
+            {
+                makeApiRequest("{{ api_key }}");
+            }
         });
     };
 </script>
