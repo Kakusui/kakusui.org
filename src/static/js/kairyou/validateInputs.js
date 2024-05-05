@@ -1,3 +1,9 @@
+/* 
+Copyright Kakusui LLC 2024 (https://kakusui.org) (https://github.com/Kakusui)
+Use of this source code is governed by a GNU General Public License v3.0
+license that can be found in the LICENSE file.
+*/
+
 var kudasaiKeys = ["kutouten", "unicode", "phrases", "single_words", "enhanced_check_whitelist", "full_names", "single_names", "name_like", "honorifics"];
 var fukuinKeys = ["specials", "basic", "names", "single-names", "full-names", "name-like", "honorifics"];
 

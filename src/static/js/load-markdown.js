@@ -4,26 +4,33 @@ Use of this source code is governed by a GNU General Public License v3.0
 license that can be found in the LICENSE file.
 */
 
-function loadMarkdown(url) {
+function loadMarkdown(url) 
+{
   fetch(url)
-    .then(response => {
-      if (!response.ok) {
+    .then(response => 
+    {
+      if(!response.ok) 
+      {
         throw new Error('Network response was not ok');
       }
       return response.text();
     })
-    .then(text => {
+    .then(text => 
+    {
       document.querySelector('.container').innerHTML = markdownToHtml(text);
     })
-    .catch(error => {
+    .catch(error => 
+    {
       console.error('Error fetching or parsing the markdown file:', error);
       document.querySelector('.container').innerHTML = '<p>Error loading content.</p>';
     });
 }
 
-function markdownToHtml(markdown) {
+function markdownToHtml(markdown) 
+{
   // Convert headers
-  markdown = markdown.replace(/^(#{1,6})\s+(.*?)$/gm, (match, hashes, title) => {
+  markdown = markdown.replace(/^(#{1,6})\s+(.*?)$/gm, (match, hashes, title) => 
+  {
     return `<h${hashes.length}>${title.trim()}</h${hashes.length}>`;
   });
 
@@ -45,7 +52,10 @@ function markdownToHtml(markdown) {
   markdown = markdown.replace(/^\s*---\s*$/gm, '<hr>');
 
   // Wrap paragraphs around lines that aren't part of a block element
-  markdown = markdown.replace(/^(?!<h|<ul|<li|<\/ul|<a|<em|<strong|<hr|<code|<blockquote|<ol>)(.*?)$/gm, (match) => `<p>${match.trim()}</p>`);
+  markdown = markdown.replace(/^(?!<h|<ul|<li|<\/ul|<a|<em|<strong|<hr|<code|<blockquote|<ol>)(.*?)$/gm, (match) => 
+  {
+    return `<p>${match.trim()}</p>`;
+  });
   markdown = markdown.replace(/<p>(<ul>.*?<\/ul>)<\/p>/gm, '$1');
 
   // Convert inline code
@@ -55,12 +65,12 @@ function markdownToHtml(markdown) {
   markdown = markdown.replace(/^>\s+(.*)/gm, '<blockquote>$1</blockquote>');
 
   // Convert ordered lists
-// Convert ordered lists
-markdown = markdown.replace(/^(\d+)\.\s+(.*)/gm, (match, number, content) => {
-  return `<li value="${number}">${content.trim()}</li>`;
-});
-markdown = markdown.replace(/(<li\s+value="\d+">.*?<\/li>)/gm, '<ol>$1</ol>');
-markdown = markdown.replace(/<\/ol><ol>/gm, '');
+  markdown = markdown.replace(/^(\d+)\.\s+(.*)/gm, (match, number, content) => 
+  {
+    return `<li value="${number}">${content.trim()}</li>`;
+  });
+  markdown = markdown.replace(/(<li\s+value="\d+">.*?<\/li>)/gm, '<ol>$1</ol>');
+  markdown = markdown.replace(/<\/ol><ol>/gm, '');
 
   // Handle nested lists
   markdown = markdown.replace(/<ul>\s*<li>\s*<ul>/gm, '<ul><li><ul>');
@@ -71,13 +81,16 @@ markdown = markdown.replace(/<\/ol><ol>/gm, '');
   markdown = markdown.replace(/<\/h>\s*<\/li>/gm, '</h></li>');
 
   // Handle fenced code blocks
-  markdown = markdown.replace(/^```(.*?)\n([\s\S]*?)\n```/gm, (match, lang, code) => {
+  markdown = markdown.replace(/^```(.*?)\n([\s\S]*?)\n```/gm, (match, lang, code) => 
+  {
     return `<pre><code${lang ? ` class="${lang.trim()}"` : ''}>${code.trim()}</code></pre>`;
   });
 
   // Handle nested blockquotes
-  markdown = markdown.replace(/^>\s*(.*?)$/gm, (match, content) => {
-    const nestedBlockquotes = content.replace(/^>\s*(.*?)$/gm, (match, nestedContent) => {
+  markdown = markdown.replace(/^>\s*(.*?)$/gm, (match, content) => 
+  {
+    const nestedBlockquotes = content.replace(/^>\s*(.*?)$/gm, (match, nestedContent) => 
+    {
       return `<blockquote>${nestedContent.trim()}</blockquote>`;
     });
     return `<blockquote>${nestedBlockquotes.trim()}</blockquote>`;
