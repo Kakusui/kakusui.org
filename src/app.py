@@ -66,7 +66,7 @@ def require_api_key(func):
     def decorated_function(*args, **kwargs):
 
         api_key = request.headers.get('Authorization')
-        if(not api_key or api_key != f"Bearer {os.getenv('ROOT_API_KEY')}"):
+        if(not api_key or api_key != f"{os.getenv('ROOT_API_KEY')}"):
             abort(401)  ## Unauthorized
 
         return func(*args, **kwargs)
