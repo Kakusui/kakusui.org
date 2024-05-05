@@ -73,11 +73,17 @@ body a
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
 
-.kairyou-container h1 
+.kairyou-container h1
 {
   color: var(--white);
   text-align: center;
   margin-bottom: 2rem;
+}
+
+.kairyou-container h4
+{
+  color: var(#CCCCCC);
+  text-align: center;
 }
 
 .input-section, .output-section 
@@ -87,15 +93,22 @@ body a
   margin-bottom: 1rem;
 }
 
-.input-block, .output-block 
+.input-block
 {
   flex: 1;
-  margin-right: 20px;
+  margin-right: 440px;
+}
+
+.output-block 
+{
+  flex: 1;
+  margin-right: 115px;
 }
 
 .input-block:last-child, .output-block:last-child 
 {
   margin-right: 0;
+  text-align: center;
 }
 
 .form-control 
@@ -110,8 +123,29 @@ body a
 
 .file-input 
 {
+  display: none;
+}
+
+.custom-file-upload {
+  display: inline-block;
+  margin-top: 10px;
+  margin-left: 50px;
+  padding: 6px 12px;
+  cursor: pointer;
+  background-color: var(--accent-color);
+  color: var(--white);
+  border: none;
+  border-radius: 5px;
+  transition: background-color 0.3s ease;
+}
+
+.custom-file-upload:hover 
+{
   background-color: var(--text-highlight);
-  color: var(--background-dark);
+}
+
+.input-section .input-block:nth-child(2) .custom-file-upload {
+  margin-left: 0;
 }
 
 .submit-button 

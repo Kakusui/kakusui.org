@@ -13,16 +13,23 @@ Kakusui | Kairyou
 {% block content %}
 <div class="kairyou-container">
     <h1>Kairyou - Text and JSON Preprocessor</h1>
+    <h4>"Better Design Pending"</h4>
     <div class="input-section">
         <div class="input-block">
             <h2>Text Input</h2>
             <textarea class="form-control" id="textToPreprocess" rows="3"></textarea>
-            <input type="file" class="form-control file-input" id="textFileInput">
+            <label for="textFileInput" class="custom-file-upload">
+              Browse
+            </label>
+            <input id="textFileInput" class="form-control file-input" type="file">
         </div>
         <div class="input-block">
             <h2>JSON Input</h2>
             <textarea class="form-control" id="replacementsJson" rows="3"></textarea>
-            <input type="file" class="form-control file-input" id="jsonFileInput">
+            <label for="jsonFileInput" class="custom-file-upload">
+              Browse
+            </label>
+            <input id="jsonFileInput" class="form-control file-input" type="file">
         </div>
     </div>
     <div class="output-section">
