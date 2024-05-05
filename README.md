@@ -17,10 +17,10 @@ kairyou==1.6.1
 ja-core-news-lg==3.7.0 (this is not a pip package, it is a spacy model) Must be installed via spacy.
 
 ## To build locally
-1. Clone the repo, make sure you are using the development branch.
+1. Clone the repo, make sure you are using the production branch.
 2. Navigate to the `src` directory. `cd src`
 3. Run the setup script with the local argument. This will install all requirements and flag the environment as local. `python setup.py local`
-4. Run the server. `python app.py`
+4. Run the server. `python app.py` for a non-production server, or `python serve.py` for a production server.
 5. Website will be on localhost:5000
 
 ## Contributing
