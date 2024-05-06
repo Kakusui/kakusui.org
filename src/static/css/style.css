@@ -88,6 +88,12 @@ body a
   text-align: center;
 }
 
+.kairyou-container a
+{
+  color:#ffffff;
+  text-decoration: none;
+}
+
 .input-section, .output-section 
 {
   display: flex;
