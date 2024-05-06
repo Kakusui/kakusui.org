@@ -99,6 +99,12 @@ body a
   margin-right: 440px;
 }
 
+.input-block h2
+{
+  text-align: center;
+  margin-right: 10px;
+}
+
 .output-block 
 {
   flex: 1;
@@ -119,6 +125,18 @@ body a
   border: none;
   padding: 10px;
   border-radius: 5px;
+  resize: vertical;
+}
+
+/* Hide scrollbar for Chrome, Safari and Opera */
+.form-control::-webkit-scrollbar {
+  display: none;
+}
+
+/* Hide scrollbar for IE, Edge and Firefox */
+.form-control {
+-ms-overflow-style: none;  /* IE and Edge */
+scrollbar-width: none;  /* Firefox */
 }
 
 .file-input 
@@ -129,7 +147,7 @@ body a
 .custom-file-upload {
   display: inline-block;
   margin-top: 10px;
-  margin-left: 50px;
+  margin-left: 40px;
   padding: 6px 12px;
   cursor: pointer;
   background-color: var(--accent-color);
