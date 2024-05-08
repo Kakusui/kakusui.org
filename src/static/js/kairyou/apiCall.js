@@ -7,7 +7,7 @@ license that can be found in the LICENSE file.
 function makeApiRequest(apiKey, isLocal)
 {
 
-    const apiUrl = isLocal === 'true' ? "http://api.localhost:5000/v1/kairyou" : "https://api.kakusui.org/v1/kairyou";
+    const apiUrl = isLocal === 'True' ? "http://api.localhost:5000/v1/kairyou" : "https://api.kakusui.org/v1/kairyou";
 
     const textToPreprocess = document.getElementById('textToPreprocess').value;
     const replacementsJsonInput = document.getElementById('replacementsJson').value;

@@ -77,7 +77,7 @@ def require_api_key(func):
 
 app = Flask(__name__)
 
-CORS(app, resources={r"/v1/*": {"origins": ["https://*.kakusui.org", "http://localhost:5000"]}})
+CORS(app, resources={r"/v1/*": {"origins": ["*"]}})
 
 is_local = setup_app(app)
 
@@ -110,6 +110,7 @@ def privacy_policy():
 @app.route('/kairyou/')
 def kairyou():
     app.logger.debug("Serving Kairyou Page")
+    app.logger.info(f"Is Local: {is_local}")
     return render_template('kairyou/kairyou.html', api_key=os.getenv('ROOT_API_KEY'), is_local=is_local)
 
 ## Error Handlers
@@ -135,7 +136,7 @@ def api_home():
     return jsonify({"message": "Welcome to the API"})
 
 @app.route('/v1/kairyou', subdomain='api', methods=["POST"])
-@cross_origin()
+@cross_origin(origins="*", headers=["Content-Type", "Authorization"])
 @require_api_key
 def kairyou():
 
