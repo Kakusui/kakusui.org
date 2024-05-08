@@ -24,11 +24,11 @@ Kakusui | Okisouchi
   <p><br>The whole process is detailed further on where the source code is located <a href="https://github.com/Kakusui/OSC_Interface" target="_blank">here</a> but put simply:</p>
   <p><br>Simply download the source code, set up your LocalConfig file, and configure the following paths:<br></p>
   <ul>
-    <li>blacklist.txt (folder names to ignore when merging directories)</li>
-    <li>file_names.txt (files to import from)</li>
-    <li>folder_ids.txt (gfolder id's to retrieve content from)</li>
-    <li>folder_names.txt (those gfolder names)</li>
-    <li>target_location.txt (where to put the files)</li>
+    <li>downloaded_files_directory_name (name of the directory to download files to, this will be newly created locally and also be where your files are transferred to)</li>
+    <li>file_paths_to_transfer.txt (Additional file paths to transfer to the target location, these should be full local paths, one per line)</li>
+    <li>google_folder_ids.txt (the folder ids of the folders you want to download from, these can be found in the URL of the folder)</li>
+    <li>google_folder_names.txt (the names of the folders you want to download from, these should be the names of the folders in your Google Drive)</li>
+    <li>target_location.txt (where to put the files, this should be a full local path, or a usb stick like E://)</li>
   </ul>
   <p><br>Once this is completed, you can simply run the run.py file and log in through Google, and your transfer will complete.</p>
 
