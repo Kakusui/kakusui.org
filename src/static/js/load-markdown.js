@@ -4,7 +4,7 @@ Use of this source code is governed by a GNU General Public License v3.0
 license that can be found in the LICENSE file.
 */
 
-function loadMarkdown(url) 
+function loadMarkdown(url, containerSelector) 
 {
   fetch(url)
     .then(response => 
@@ -17,12 +17,12 @@ function loadMarkdown(url)
     })
     .then(text => 
     {
-      document.querySelector('.container').innerHTML = markdownToHtml(text);
+      document.querySelector(containerSelector).innerHTML = markdownToHtml(text);
     })
     .catch(error => 
     {
       console.error('Error fetching or parsing the markdown file:', error);
-      document.querySelector('.container').innerHTML = '<p>Error loading content.</p>';
+      document.querySelector(containerSelector).innerHTML = '<p>Error loading content.</p>';
     });
 }
 

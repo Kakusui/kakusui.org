@@ -11,13 +11,13 @@ Okisouchi | Privacy Policy
 {% endblock %}
 
 {% block content %}
-<div class="container">
+<div class="okisouchi-container">
 </div>
 {% endblock %}
 
 {% block scripts %}
 <script src="{{ url_for('static', filename='js/load-markdown.js') }}"></script>
 <script>
-loadMarkdown("{{ url_for('static', filename='markdown/okisouchi/PRIVACYPOLICY.md')}}")
+loadMarkdown("{{ url_for('static', filename='markdown/okisouchi/PRIVACYPOLICY.md')}}", containerSelector=".okisouchi-container")
 </script>
 {% endblock %}
