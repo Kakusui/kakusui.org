@@ -4,10 +4,11 @@ Use of this source code is governed by a GNU General Public License v3.0
 license that can be found in the LICENSE file.
 */
 
-const isLocal = " {{ is_local }}" ? 'true' : 'false';
-const apiUrl = isLocal === 'true' ? "http://api.localhost:5000/v1/kairyou" : "https://api.kakusui.org/v1/kairyou";
+function makeApiRequest(apiKey, isLocal)
+{
 
-function makeApiRequest(apiKey) {
+    const apiUrl = isLocal === 'true' ? "http://api.localhost:5000/v1/kairyou" : "https://api.kakusui.org/v1/kairyou";
+
     const textToPreprocess = document.getElementById('textToPreprocess').value;
     const replacementsJsonInput = document.getElementById('replacementsJson').value;
     const preprocessedText = document.getElementById('preprocessedText');
