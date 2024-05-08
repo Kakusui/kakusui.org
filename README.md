@@ -10,7 +10,7 @@ waitress==3.0.0
 
 python-dotenv==1.0.1
 
-flask-cors==4.0.0
+flask-cors==4.0.1
 
 kairyou==1.6.1
 
