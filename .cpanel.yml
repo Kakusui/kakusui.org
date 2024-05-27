@@ -1,6 +1,0 @@
-deployment:
-  tasks:
-    - export DEPLOYPATH=/home/kakuggiy/public_html
-    - rm -rf $DEPLOYPATH/* 
-    - mkdir -p $DEPLOYPATH/kakusui  
-    - /bin/cp -R src/* $DEPLOYPATH/kakusui 
