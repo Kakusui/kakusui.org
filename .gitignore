@@ -3,3 +3,4 @@ __pycache__/
 src/local_flag
 src/.env
 logs/
+frontend/.env

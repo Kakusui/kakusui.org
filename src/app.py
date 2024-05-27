@@ -23,7 +23,7 @@ def setup_app(app:Flask) -> bool:
     load_dotenv()
 
     try:
-        ## get the path to this file
+        ## check if local_flag exists, meaning the app is running in a local environment
         path_to_flag = os.path.join(os.path.dirname(__file__), 'local_flag')
         assert os.path.exists(path_to_flag)
 
@@ -168,12 +168,15 @@ def kairyou():
                 }), 200)
 
             except Exception as e:
-                response = make_response(jsonify({"message": f"An error occurred: {e}"}), 500)        
+                response = make_response(jsonify({"message": f"An internal error occurred."}), 500)        
     
     else:
         response = make_response(jsonify({"message": "This endpoint only accepts POST requests"}), 405)
     
     return response
 
-
-app.run(debug=True, port=5000)
+## Under no circumstances should the app be run in production without a WSGI server
+## EVER. This is only for development purposes.
+## See: serve.py for production deployment.
+if(__name__ == '__main__'):
+    app.run(debug=True, port=5000)
