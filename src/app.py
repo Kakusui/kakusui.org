@@ -6,6 +6,7 @@
 from logging.handlers import RotatingFileHandler
 
 import os
+import json
 import logging
 
 ## third-party libraries
@@ -155,6 +156,9 @@ def kairyou():
 
         else:
             try:
+
+                replacements_json = json.loads(replacements_json)
+
                 preprocessed_text, preprocessing_log, error_log = Kairyou.preprocess(text_to_preprocess, replacements_json)
 
                 response = make_response(jsonify({
