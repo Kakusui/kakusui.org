@@ -31,8 +31,12 @@ def download_spacy_model() -> None:
         ## Check if spacy is installed
         import spacy
 
-        ## Download the spacy model
-        subprocess.check_call([sys.executable, '-m', 'spacy', 'download', 'ja_core_news_lg'])
+        try:
+            spacy.load("ja_core_news_lg")
+
+        except:
+            ## Download the spacy model
+            subprocess.check_call([sys.executable, '-m', 'spacy', 'download', 'ja_core_news_lg'])
 
     except subprocess.CalledProcessError as e:
         print(f"Error: {e}")
@@ -54,7 +58,7 @@ def setup_local_environment() -> None:
 
         ## If local_flag exists, we need to create a .env file with a dummy ROOT_API_KEY value, so that the app can access its API locally (api.localhost:5000)
         ## Such a secret doesn't really matter in a local environment, but it's necessary for the app to run since the API is protected by an API key which is loaded from the environment.
-        if (os.path.exists('local_flag') and not os.path.exists('.env')):
+        if(os.path.exists('local_flag') and not os.path.exists('.env')):
             with open('.env', 'w') as f:
                 dummy_key = secrets.token_hex(16)
                 f.write(f'ROOT_API_KEY={dummy_key}')
