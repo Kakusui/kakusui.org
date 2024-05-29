@@ -23,9 +23,9 @@ function OkisouchiPage() {
             </Link>
 
             <Stack direction="row" spacing={4} mt={8}>
-                <Link href="/tos" color="teal.500">Terms of Service</Link>
-                <Link href="/privacy" color="teal.500">Privacy Policy</Link>
-                <Link href="/license" color="teal.500">License</Link>
+                <Link href="/okisouchi/tos" color="teal.500">Terms of Service</Link>
+                <Link href="okisouchi/privacy" color="teal.500">Privacy Policy</Link>
+                <Link href="okisouchi/license" color="teal.500">License</Link>
             </Stack>
         </Box>
     );
