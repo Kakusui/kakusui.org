@@ -22,11 +22,8 @@ def setup_app(app:Flask) -> bool:
     ## Load Environment Variables
     load_dotenv()
 
-    is_local = False
-
     if(os.getenv('ENVIRONMENT') == 'development'):
         app.config['SERVER_NAME'] = 'localhost:5000'
-        is_local = True
         
     else:
         app.config['SERVER_NAME'] = 'kakusui.org'
@@ -49,8 +46,6 @@ def setup_app(app:Flask) -> bool:
     app.logger.setLevel(logging.DEBUG)
     app.logger.info('Application Startup')
 
-    return is_local
-
 ##-------------------start-of-require_api_key()---------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 ## for now, as we don't want just anyone to access the API, we require root API key
@@ -72,25 +67,7 @@ app = Flask(__name__)
 
 CORS(app, resources={r"/v1/*": {"origins": ["*"]}})
 
-is_local = setup_app(app)
-
 ## Routes
-
-## Error Handlers
-@app.errorhandler(404)
-def page_not_found(e):
-    app.logger.error(f"404 Error: {e}, Page Not Found")
-    return render_template('/error_pages/404.shtml'), 404
-
-@app.errorhandler(500)
-def internal_server_error(e):
-    app.logger.error(f"500 Error: {e}, Internal Server Error")
-    return render_template('/error_pages/500.shtml'), 500
-
-@app.errorhandler(403)
-def forbidden(e):
-    app.logger.error(f"403 Error: {e}, Forbidden")
-    return render_template('/error_pages/403.shtml'), 403
 
 ## API Endpoints
 @app.route('/', subdomain='api')
