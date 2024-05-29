@@ -22,8 +22,12 @@ def setup_app(app:Flask) -> bool:
     ## Load Environment Variables
     load_dotenv()
 
+    is_local = False
+
     if(os.getenv('ENVIRONMENT') == 'development'):
         app.config['SERVER_NAME'] = 'localhost:5000'
+        is_local = True
+        
     else:
         app.config['SERVER_NAME'] = 'kakusui.org'
 

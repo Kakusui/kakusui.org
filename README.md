@@ -25,17 +25,19 @@ See `frontend/package.json` for a list of node requirements.
 ## To build locally
 1. Clone the repo, make sure you are using the correct branch (currently `website-redesign`)
 2. Navigate to the `src` directory. `cd src`. Inside is the python backend.
-3. Run the setup script with the local argument. This will install all requirements and flag the environment as local. `python setup.py local`
+3. Run the setup script with the local argument. This will install all requirements and setup .env files. `python setup.py local`
 4. Run the server. `python app.py` for a non-production server, or `python serve.py` for a production server.
 5. Open a new terminal and navigate to the `frontend` directory. `cd frontend`. Inside is the react (vite) frontend.
 6. First install all required packages, these are in `package.json`. Do `npm i`. Then run the dev server with `npm run dev`
-7. | Note to self (frontend depends on a hardcoded .env file) You need to change this to be created dynamically based on setup.py (and see if we can get it to utilize the local_flag too)
-8. Website will be on localhost:5173 (frontend) and localhost:5000 (backend)
+7. Website will be on localhost:5173 (frontend) and localhost:5000 (backend)
 
 ## Frontend README
+for development:
+`npm i`
 `npm run dev`
+
+for production:
 `npm run build`
-`npm run start`
 
 When building for production make sure that `VITE_AUTHORIZATION` is set to the token for the api.
 Ensure that `NODE_ENV`is set to `PRODUCTION`
