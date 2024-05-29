@@ -7,6 +7,7 @@ license that can be found in the LICENSE file.
 import {createBrowserRouter, RouterProvider} from 'react-router-dom';
 import HomePage from "./pages/Home.page.tsx";
 import KairyouPage from "./pages/Kairyou.page.tsx";
+import OkisouchiPage from './pages/Okisouchi.page.tsx';
 import NotFoundPage from './pages/error_pages/404.tsx';
 import ForbiddenPage from './pages/error_pages/403.tsx';
 import InternalErrorPage from './pages/error_pages/500.tsx';
@@ -19,6 +20,10 @@ const router = createBrowserRouter([
     {
         path: '/kairyou',
         element: <KairyouPage/>,
+    },
+    {
+        path: '/okisouchi',
+        element: <OkisouchiPage/>,
     },
     {
         path: '/403',

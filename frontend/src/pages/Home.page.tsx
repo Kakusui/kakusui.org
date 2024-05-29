@@ -144,10 +144,10 @@ function Okisouchi() {
                                 bg: 'orange.500',
                             }}
                             as='a'
-                            href="https://github.com/Kakusui/OSC_Interface?tab=readme-ov-file#to-use"
+                            href="/okisouchi"
 
                         >
-                            Get Started
+                            See more
                         </Button>
                     </Stack>
                 </Stack>
