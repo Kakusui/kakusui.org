@@ -7,20 +7,22 @@ license that can be found in the LICENSE file.
 import {
     chakra,
     GridItem,
+    TextProps,
 } from "@chakra-ui/react";
 
 interface FeatureProps {
     heading: string;
     text: string;
+    color: TextProps['color'];
 }
 
-const Feature = ({heading, text}: FeatureProps) => {
+const Feature = ({heading, text, color}: FeatureProps) => {
     return (
         <GridItem>
-            <chakra.h3 fontSize="xl" fontWeight="600">
+            <chakra.h3 fontSize="xl" fontWeight="600" color={"white"}>
                 {heading}
             </chakra.h3>
-            <chakra.p>{text}</chakra.p>
+            <chakra.p color={color}>{text}</chakra.p>
         </GridItem>
     );
 };
