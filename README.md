@@ -32,5 +32,13 @@ See `frontend/package.json` for a list of node requirements.
 7. | Note to self (frontend depends on a hardcoded .env file) You need to change this to be created dynamically based on setup.py (and see if we can get it to utilize the local_flag too)
 8. Website will be on localhost:5173 (frontend) and localhost:5000 (backend)
 
+## Frontend README
+`npm run dev`
+`npm run build`
+`npm run start`
+
+When building for production make sure that `VITE_AUTHORIZATION` is set to the token for the api.
+Ensure that `NODE_ENV`is set to `PRODUCTION`
+
 ## Contributing
 If you would like to contribute, please open an issue or a pull request. No specific guidelines yet, but please be respectful.
