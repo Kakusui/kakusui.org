@@ -65,6 +65,9 @@ def require_api_key(func):
 
 app = Flask(__name__)
 
+## Setup the app
+setup_app(app)
+
 CORS(app, resources={r"/v1/*": {"origins": ["*"]}})
 
 ## Routes
