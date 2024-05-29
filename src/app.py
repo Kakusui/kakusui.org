@@ -22,19 +22,7 @@ def setup_app(app:Flask) -> bool:
     ## Load Environment Variables
     load_dotenv()
 
-    try:
-        ## check if local_flag exists, meaning the app is running in a local environment
-        path_to_flag = os.path.join(os.path.dirname(__file__), 'local_flag')
-        assert os.path.exists(path_to_flag)
-
-        os.environ['FLASK_ENV'] = 'development'
-
-        is_local = True
-        
-    except AssertionError:
-        is_local = False
-
-    if(os.getenv('FLASK_ENV') == 'development'):
+    if(os.getenv('ENVIRONMENT') == 'development'):
         app.config['SERVER_NAME'] = 'localhost:5000'
     else:
         app.config['SERVER_NAME'] = 'kakusui.org'
@@ -67,7 +55,7 @@ def require_api_key(func):
     def decorated_function(*args, **kwargs):
 
         api_key = request.headers.get('Authorization')
-        if(not api_key or api_key != f"{os.getenv('ROOT_API_KEY')}"):
+        if(not api_key or api_key != f"{app.config['ROOT_API_KEY']}"):
             abort(401)  ## Unauthorized
 
         return func(*args, **kwargs)
@@ -83,36 +71,6 @@ CORS(app, resources={r"/v1/*": {"origins": ["*"]}})
 is_local = setup_app(app)
 
 ## Routes
-
-## Home Page
-@app.route('/')
-def home():
-    app.logger.debug("Serving Home Page")
-    return render_template('home.html')
-
-## Okisouchi Pages
-@app.route('/okisouchi/')
-def okisouchi():
-    app.logger.debug("Serving Okisouchi Page")
-    return render_template('okisouchi/okisouchi.html')
-
-@app.route('/okisouchi/tos/')
-def tos():
-    app.logger.debug("Serving TOS Page")
-    return render_template('okisouchi/tos/tos.html')
-
-@app.route('/okisouchi/privacypolicy/')
-def privacy_policy():
-    app.logger.debug("Serving Privacy Policy Page")
-    return render_template('okisouchi/privacypolicy/privacypolicy.html')
-
-
-## Kairyou Pages
-@app.route('/kairyou/')
-def kairyou():
-    app.logger.debug("Serving Kairyou Page")
-    app.logger.info(f"Is Local: {is_local}")
-    return render_template('kairyou/kairyou.html', api_key=os.getenv('ROOT_API_KEY'), is_local=is_local)
 
 ## Error Handlers
 @app.errorhandler(404)
@@ -131,7 +89,6 @@ def forbidden(e):
     return render_template('/error_pages/403.shtml'), 403
 
 ## API Endpoints
-
 @app.route('/', subdomain='api')
 def api_home():
     return jsonify({"message": "Welcome to the API"})
