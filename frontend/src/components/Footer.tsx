@@ -1,5 +1,10 @@
-import {Box, Container, Flex, HStack, IconButton, Image, Stack, Text, useColorModeValue,} from '@chakra-ui/react';
+/*
+Copyright Kakusui LLC 2024 (https://kakusui.org) (https://github.com/Kakusui)
+Use of this source code is governed by a GNU General Public License v3.0
+license that can be found in the LICENSE file.
+*/
 
+import {Box, Container, Flex, HStack, IconButton, Image, Stack, Text, useColorModeValue,} from '@chakra-ui/react';
 
 import {IconBrandGithub} from '@tabler/icons-react';
 
