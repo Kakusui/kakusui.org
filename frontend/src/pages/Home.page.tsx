@@ -14,7 +14,7 @@ import {
     Text,
     VStack
 } from "@chakra-ui/react";
-import logo from '../assets/kakusui_logo.svg'
+import logo from '../assets/kakusui_logo.png'
 import {IconBrandGithub} from "@tabler/icons-react";
 
 function HomePage() {
