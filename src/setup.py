@@ -9,7 +9,7 @@ import os
 import secrets
 
 BACKEND_ENV = ".env"
-FRONTEND_ENV = "./frontend/.env"
+FRONTEND_ENV = "../frontend/.env"
 
 ##-------------------start-of-install_dependencies()---------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 def install_dependencies() -> None:
@@ -18,6 +18,8 @@ def install_dependencies() -> None:
     try:
         assert os.path.exists('requirements.txt')
         subprocess.check_call([sys.executable, '-m', 'pip', 'install', '-r', 'requirements.txt'])
+
+        print("Python dependencies installed successfully")
 
     except subprocess.CalledProcessError as e:
         print(f"Error: {e}")
@@ -37,9 +39,16 @@ def download_spacy_model() -> None:
         try:
             spacy.load("ja_core_news_lg")
 
+            print("Spacy model already downloaded")
+
         except:
             ## Download the spacy model
+
+            print("Downloading spacy model...")
+
             subprocess.check_call([sys.executable, '-m', 'spacy', 'download', 'ja_core_news_lg'])
+
+            print("Spacy model downloaded successfully")
 
     except subprocess.CalledProcessError as e:
         print(f"Error: {e}")
@@ -61,13 +70,19 @@ def setup_local_environment() -> None:
         to_write_backend = f'ROOT_API_KEY={dummy_key}\n'
         to_write_frontend = f'VITE_AUTHORIZATION={dummy_key}\n'
 
-        to_write_frontend += f'VITE_SHOWDEV="FALSE"'
+        to_write_frontend += f'VITE_SHOWDEV="FALSE"\n"'
 
 
         if(len(sys.argv) > 1 and sys.argv[1] == 'local'):
+
+            print("Setting up local environment...")
+
             to_write_backend += 'ENVIRONMENT=development\n'
             to_write_frontend += 'NODE_ENV=development\n'
         else:
+
+            print("Setting up production environment...")
+
             to_write_backend += 'ENVIRONMENT=production\n'
             to_write_frontend += 'NODE_ENV=production\n'
         
@@ -75,7 +90,9 @@ def setup_local_environment() -> None:
             f.write(to_write_backend)
 
         with open(FRONTEND_ENV, 'w') as f:
-            f.write(to_write_frontend)            
+            f.write(to_write_frontend)
+
+        print("Environment setup successfully")
 
     except Exception as e:
         print(f"Error: {e}")
