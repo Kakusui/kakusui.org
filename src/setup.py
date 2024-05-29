@@ -8,6 +8,9 @@ import subprocess
 import os
 import secrets
 
+BACKEND_ENV = ".env"
+FRONTEND_ENV = "./frontend/.env"
+
 ##-------------------start-of-install_dependencies()---------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 def install_dependencies() -> None:
    
@@ -50,18 +53,29 @@ def download_spacy_model() -> None:
 def setup_local_environment() -> None:
 
     try:
-        ## If the script is called with the 'local' argument, create an empty file called 'local_flag'
-        ## Local flag is used to indicate that the script is running in a local environment rather than its cPanel hosting environment
-        if(len(sys.argv) > 1 and sys.argv[1] == 'local'):
-            with open('local_flag', 'w') as f:
-                pass
-
-        ## If local_flag exists, we need to create a .env file with a dummy ROOT_API_KEY value, so that the app can access its API locally (api.localhost:5000)
+        ## If local, we need to create a .env file with a dummy ROOT_API_KEY value, so that the app can access its API locally (api.localhost:5000)
         ## Such a secret doesn't really matter in a local environment, but it's necessary for the app to run since the API is protected by an API key which is loaded from the environment.
-        if(os.path.exists('local_flag') and not os.path.exists('.env')):
-            with open('.env', 'w') as f:
-                dummy_key = secrets.token_hex(16)
-                f.write(f'ROOT_API_KEY={dummy_key}')
+        ## and also wouldn't matter at all in production.
+        dummy_key = secrets.token_hex(16)
+
+        to_write_backend = f'ROOT_API_KEY={dummy_key}\n'
+        to_write_frontend = f'VITE_AUTHORIZATION={dummy_key}\n'
+
+        to_write_frontend += f'VITE_SHOWDEV="FALSE"'
+
+
+        if(len(sys.argv) > 1 and sys.argv[1] == 'local'):
+            to_write_backend += 'ENVIRONMENT=development\n'
+            to_write_frontend += 'NODE_ENV=development\n'
+        else:
+            to_write_backend += 'ENVIRONMENT=production\n'
+            to_write_frontend += 'NODE_ENV=production\n'
+        
+        with open(BACKEND_ENV, 'w') as f:
+            f.write(to_write_backend)
+
+        with open(FRONTEND_ENV, 'w') as f:
+            f.write(to_write_frontend)            
 
     except Exception as e:
         print(f"Error: {e}")
