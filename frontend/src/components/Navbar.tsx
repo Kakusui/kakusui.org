@@ -234,7 +234,7 @@ const NAV_ITEMS: Array<NavItem> = [
             {
                 label: 'Kairyou',
                 subLabel: 'Soon tm',
-                href: '/app/kairyou',
+                href: '/kairyou',
             },
         ],
     },

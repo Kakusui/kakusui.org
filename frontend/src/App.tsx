@@ -9,7 +9,7 @@ import theme from "./theme.ts";
 function App() {
 
 
-    if (import.meta.env.VITE_SHOWDEV === "TRUE") {
+    if (import.meta.env.VITE_SHOWDEV === "true") {
         return (
             <ChakraProvider theme={theme}>
                 <Development/>

@@ -70,7 +70,7 @@ def setup_local_environment() -> None:
         to_write_backend = f'ROOT_API_KEY={dummy_key}\n'
         to_write_frontend = f'VITE_AUTHORIZATION={dummy_key}\n'
 
-        to_write_frontend += f'VITE_SHOWDEV="FALSE"\n"'
+        to_write_frontend += f'VITE_SHOWDEV=false\n'
 
 
         if(len(sys.argv) > 1 and sys.argv[1] == 'local'):

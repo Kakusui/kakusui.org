@@ -1,13 +1,19 @@
-const getURL = (path: string) => {
+const getURL = (path: string) => 
+{
     let url;
-    switch (import.meta.env.MODE) {
-        case "PRODUCTION":
-            url = "https://api.kakusui.org";
-            break;
-        case "DEVELOPMENT":
-        default:
-            url = "http://api.localhost:5000"
+    if(import.meta.env.MODE === "production") 
+    {
+        url = "https://api.kakusui.org";
+    } 
+    else if (import.meta.env.MODE === "development") 
+    {
+        url = "http://api.localhost:5000";
+    } 
+    else 
+    {
+        throw new Error(`Invalid environment: ${import.meta.env.MODE}`);
     }
+    
     return url + path;
 }
 
