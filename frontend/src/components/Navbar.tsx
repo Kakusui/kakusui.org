@@ -56,8 +56,6 @@ export default function Navbar() {
                         </Flex>
                     </Flex>
                 </Container>
-
-
             </Flex>
 
             <Collapse in={isOpen} animateOpacity>
@@ -87,7 +85,8 @@ const DesktopNav = () => {
                                 _hover={{
                                     textDecoration: 'none',
                                     color: linkHoverColor,
-                                }}>
+                                }}
+                                onClick={(e) => navItem.children && e.preventDefault()}>
                                 {navItem.label}
                             </Link>
                         </PopoverTrigger>
@@ -174,7 +173,8 @@ const MobileNavItem = ({label, children, href}: NavItem) => {
                 align={'center'}
                 _hover={{
                     textDecoration: 'none',
-                }}>
+                }}
+                onClick={(e) => children && e.preventDefault()}>
                 <Text
                     fontWeight={600}
                     color={useColorModeValue('gray.600', 'gray.200')}>
