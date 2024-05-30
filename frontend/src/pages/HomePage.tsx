@@ -20,9 +20,9 @@ import {
 } from "@chakra-ui/react";
 
 // logos and images
-import logo from '../assets/kakusui_logo.png'
-import okisouchi_sync from '../assets/okisouchi_sync_image.png'
-import kairyou_logo from '../assets/kairyou_logo.png'
+import logo from '../assets/images/kakusui_logo.png'
+import okisouchi_sync from '../assets/images/okisouchi_sync_image.png'
+import kairyou_logo from '../assets/images/kairyou_logo.png'
 
 // icons
 import {IconBrandGithub} from "@tabler/icons-react";

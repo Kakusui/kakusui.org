@@ -6,7 +6,7 @@ license that can be found in the LICENSE file.
 
 import Router from "./Router.tsx";
 import {ChakraProvider, Container} from "@chakra-ui/react";
-import Development from "./components/Development.tsx";
+import Development from "./components/DevelopmentBanner.tsx";
 import Navbar from "./components/Navbar.tsx";
 import Footer from "./components/Footer.tsx";
 import theme from "./theme.ts";
