@@ -5,10 +5,10 @@ license that can be found in the LICENSE file.
 */
 
 import React from "react";
-import {useForm} from "react-hook-form";
-import {getURL} from "../utils";
-import {Box, Button, Center, Flex, FormErrorMessage, IconButton, Text, Textarea} from "@chakra-ui/react";
-import {ArrowUpIcon, DownloadIcon} from "@chakra-ui/icons";
+import { useForm } from "react-hook-form";
+import { getURL } from "../utils";
+import { Box, Button, Center, Flex, FormErrorMessage, FormControl, FormLabel, IconButton, Text, Textarea, useToast } from "@chakra-ui/react";
+import { ArrowUpIcon, DownloadIcon } from "@chakra-ui/icons";
 
 type FormInput = 
 {
@@ -28,111 +28,121 @@ function KairyouPage()
     const textRef = React.useRef<HTMLInputElement>(null);
     const jsonRef = React.useRef<HTMLInputElement>(null);
 
-    const {register, handleSubmit, setValue, formState: {isSubmitting}} = useForm<FormInput>();
-
+    const { register, handleSubmit, setValue, formState: { isSubmitting, errors } } = useForm<FormInput>();
     const [response, setResponse] = React.useState<ResponseValues>();
-
+    const toast = useToast();
 
     const onSubmit = async (data: FormInput) => 
     {
-        const response = await fetch(getURL("/v1/kairyou"), {
-            method: "POST",
-            headers: 
-            {
-                "Content-Type": "application/json",
-                "Authorization": import.meta.env.VITE_AUTHORIZATION
-            },
-            body: JSON.stringify(data)
-        })
-
-        if (!response.ok) 
+        try 
         {
-            const result: { message: string } = await response.json();
-            throw new Error("Error Returned:" + result.message);
-        }
+            const response = await fetch(getURL("/v1/kairyou"), {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": import.meta.env.VITE_AUTHORIZATION
+                },
+                body: JSON.stringify(data)
+            });
 
-        const result: ResponseValues = await response.json();
-        setResponse(result);
-    }
+            if (!response.ok) 
+            {
+                const result: { message: string } = await response.json();
+                throw new Error("Error Returned: " + result.message);
+            }
+
+            const result: ResponseValues = await response.json();
+            setResponse(result);
+        } 
+        catch (error) 
+        {
+            toast({
+                title: "An error occurred.",
+                description: (error as Error).message,
+                status: "error",
+                duration: 5000,
+                isClosable: true,
+            });
+        }
+    };
 
     const onUpload = async (event: React.ChangeEvent<HTMLInputElement>) => 
     {
         const file = event.target.files?.[0];
-
-
-        if (!file)
+        if (!file) 
         {
             return;
         }
 
-
-        const input = await file.text()
+        const input = await file.text();
         switch (file.type) 
         {
             case "text/plain":
-                setValue("textToPreprocess", input)
-                return
+                setValue("textToPreprocess", input);
+                return;
             case "application/json":
-                setValue("replacementsJson", input)
-                return
+                setValue("replacementsJson", input);
+                return;
             default:
-                throw new Error("Invalid file type")
+                throw new Error("Invalid file type");
         }
-
     };
-
 
     const downloadOutput = (input: 'preprocessing_log' | 'preprocessedText') => 
     {
         let content = '';
         if (input === 'preprocessing_log') 
         {
-            content = response?.preprocessingLog|| '';
+            content = response?.preprocessingLog || '';
         } 
-        else if (input === 'preprocessedText')
+        else if (input === 'preprocessedText') 
         {
             content = response?.preprocessedText || '';
-        }
-        else
+        } 
+        else 
         {
-            throw new Error("Invalid input type")
+            throw new Error("Invalid input type");
         }
 
         if (!content) 
-            {
+        {
             return;
         }
 
-        const blob = new Blob([content], {type: "text/plain"});
+        const blob = new Blob([content], { type: "text/plain" });
         const url = URL.createObjectURL(blob);
         const link = document.createElement("a") as HTMLAnchorElement;
         link.download = input + '.txt';
         link.href = url;
         link.click();
-    }
+    };
 
     return (
         <>
             {/* Hidden file inputs. Will allow us to use styled buttons */}
-            <input onChange={onUpload} ref={textRef} type={'file'} accept={'.txt'} hidden/>
-            <input onChange={onUpload} ref={jsonRef} type={'file'} accept={'.json'} hidden/>
+            <input onChange={onUpload} ref={textRef} type={'file'} accept={'.txt'} hidden />
+            <input onChange={onUpload} ref={jsonRef} type={'file'} accept={'.json'} hidden />
             <form onSubmit={handleSubmit(onSubmit)}>
                 <Flex flex={1} gap={2}>
-                    <Box flex={1}>
-                        <Text mb='8px'>Text Input <IconButton variant={'ghost'} size={'xl'}
-                                                              onClick={() => textRef.current?.click()}
-                                                              aria-label={'Upload Text'} icon={<ArrowUpIcon/>}/> </Text>
-                        <Textarea rows={20} size='sm' {...register("textToPreprocess", {required: true})} />
-                    </Box>
-                    <Box flex={1}>
-                        <Text mb='8px'>JSON Input <IconButton variant={'ghost'} size={'xl'}
-                                                              onClick={() => jsonRef.current?.click()}
-                                                              aria-label={'Upload JSON'} icon={<ArrowUpIcon/>}/> </Text>
-                        <Textarea rows={20} size='sm' {...register("replacementsJson", {required: true})} />
-                    </Box>
+                    <FormControl isInvalid={!!errors.textToPreprocess} flex={1}>
+                        <FormLabel>Text Input <IconButton variant={'ghost'} size={'xl'}
+                            onClick={() => textRef.current?.click()}
+                            aria-label={'Upload Text'} icon={<ArrowUpIcon />} /> </FormLabel>
+                        <Textarea rows={20} size='sm' {...register("textToPreprocess", { required: true })} />
+                        <FormErrorMessage>
+                            {errors.textToPreprocess && "Text Input is required"}
+                        </FormErrorMessage>
+                    </FormControl>
+                    <FormControl isInvalid={!!errors.replacementsJson} flex={1}>
+                        <FormLabel>JSON Input <IconButton variant={'ghost'} size={'xl'}
+                            onClick={() => jsonRef.current?.click()}
+                            aria-label={'Upload JSON'} icon={<ArrowUpIcon />} /> </FormLabel>
+                        <Textarea rows={20} size='sm' {...register("replacementsJson", { required: true })} />
+                        <FormErrorMessage>
+                            {errors.replacementsJson && "JSON Input is required"}
+                        </FormErrorMessage>
+                    </FormControl>
                 </Flex>
-
-                <FormErrorMessage></FormErrorMessage>
 
                 <Button
                     mb={17} mt={17} width='100%' type="submit"
@@ -151,50 +161,44 @@ function KairyouPage()
 
                         <Box flex={1}>
                             <Text mb='8px'>Preprocessing Log <IconButton onClick={() => downloadOutput("preprocessing_log")} variant={'ghost'}
-                                                                          size='xl' aria-label="Download preprocessing log"
-                                                                          icon={<DownloadIcon/>}/> </Text>
+                                size='xl' aria-label="Download preprocessing log"
+                                icon={<DownloadIcon />} /> </Text>
 
                             <Box overflowY='scroll' height={200}>
-                                <Text style={{whiteSpace: "pre-wrap"}}>
+                                <Text style={{ whiteSpace: "pre-wrap" }}>
                                     {response?.preprocessingLog}
                                 </Text>
                             </Box>
                         </Box>
                         {response.errorLog ? (
-                                <Box flex={1}>
-                                    <Text mb='8px'>Error Log</Text>
+                            <Box flex={1}>
+                                <Text mb='8px'>Error Log</Text>
 
-                                    <Box overflowY='scroll' height={200}>
-                                        <Text style={{whiteSpace: "pre-wrap"}}>
-                                            {response?.errorLog}
-                                        </Text>
-                                    </Box>
+                                <Box overflowY='scroll' height={200}>
+                                    <Text style={{ whiteSpace: "pre-wrap" }}>
+                                        {response?.errorLog}
+                                    </Text>
                                 </Box>
-                            ) :
-                            (
-                                <Box flex={1}>
-                                    <Text mb='8px'>Output <IconButton onClick={() => downloadOutput("preprocessedText")} variant={'ghost'}
-                                                                      size='xl' aria-label="Download output"
-                                                                      icon={<DownloadIcon/>}/> </Text>
+                            </Box>
+                        ) : (
+                            <Box flex={1}>
+                                <Text mb='8px'>Output <IconButton onClick={() => downloadOutput("preprocessedText")} variant={'ghost'}
+                                    size='xl' aria-label="Download output"
+                                    icon={<DownloadIcon />} /> </Text>
 
-                                    <Box overflowY='scroll' height={200}>
-                                        <Text style={{whiteSpace: "pre-wrap"}}>
-                                            {response?.preprocessedText}
-                                        </Text>
-                                    </Box>
+                                <Box overflowY='scroll' height={200}>
+                                    <Text style={{ whiteSpace: "pre-wrap" }}>
+                                        {response?.preprocessedText}
+                                    </Text>
                                 </Box>
-                            )
-                        }
-
+                            </Box>
+                        )}
                     </Flex>
                     <Center>
-                        <Button onClick={() => setResponse(undefined)} mb={17} colorScheme="orange" variant='ghost'>Clear
-                            Logs</Button>
+                        <Button onClick={() => setResponse(undefined)} mb={17} colorScheme="orange" variant='ghost'>Clear Logs</Button>
                     </Center>
                 </>
             )}
-
-
         </>
     );
 }

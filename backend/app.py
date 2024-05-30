@@ -10,10 +10,11 @@ import json
 import logging
 
 ## third-party libraries
-from flask import Flask, render_template, jsonify, request, abort, make_response
+from flask import Flask, jsonify, request, abort, make_response
 from flask_cors import CORS, cross_origin
 from dotenv import load_dotenv
 from kairyou import Kairyou
+from kairyou.exceptions import InvalidReplacementJsonKeys, InvalidReplacementJsonName, SpacyModelNotFound
 
 ##-------------------start-of-setup_app()---------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -108,9 +109,12 @@ def kairyou():
                     "errorLog": error_log
                 }), 200)
 
-            except Exception as e:
-                response = make_response(jsonify({"message": f"An internal error occurred."}), 500)        
+            except (InvalidReplacementJsonKeys, InvalidReplacementJsonName):
+                response = make_response(jsonify({"message": f"You have an invalid replacement json file. Please see https://github.com/Bikatr7/Kairyou?tab=readme-ov-file#kairyou for usage."}), 400)
     
+            except SpacyModelNotFound:
+                response = make_response(jsonify({"message": "An internal error occurred. Please contact the administrator."}), 500)
+
     else:
         response = make_response(jsonify({"message": "This endpoint only accepts POST requests"}), 405)
     
