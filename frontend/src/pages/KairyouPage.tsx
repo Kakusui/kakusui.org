@@ -10,18 +10,21 @@ import {getURL} from "../utils";
 import {Box, Button, Center, Flex, FormErrorMessage, IconButton, Text, Textarea} from "@chakra-ui/react";
 import {ArrowUpIcon, DownloadIcon} from "@chakra-ui/icons";
 
-type FormInput = {
+type FormInput = 
+{
     textToPreprocess: string,
     replacementsJson: string,
 }
 
-type ResponseValues = {
+type ResponseValues = 
+{
     errorLog: string,
     preprocessedText: string,
     preprocessingLog: string,
 }
 
-function KairyouPage() {
+function KairyouPage() 
+{
     const textRef = React.useRef<HTMLInputElement>(null);
     const jsonRef = React.useRef<HTMLInputElement>(null);
 
@@ -30,17 +33,20 @@ function KairyouPage() {
     const [response, setResponse] = React.useState<ResponseValues>();
 
 
-    const onSubmit = async (data: FormInput) => {
+    const onSubmit = async (data: FormInput) => 
+    {
         const response = await fetch(getURL("/v1/kairyou"), {
             method: "POST",
-            headers: {
+            headers: 
+            {
                 "Content-Type": "application/json",
                 "Authorization": import.meta.env.VITE_AUTHORIZATION
             },
             body: JSON.stringify(data)
         })
 
-        if (!response.ok) {
+        if (!response.ok) 
+        {
             const result: { message: string } = await response.json();
             throw new Error("Error Returned:" + result.message);
         }
@@ -49,17 +55,20 @@ function KairyouPage() {
         setResponse(result);
     }
 
-    const onUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const onUpload = async (event: React.ChangeEvent<HTMLInputElement>) => 
+    {
         const file = event.target.files?.[0];
 
 
-        if (!file) {
+        if (!file)
+        {
             return;
         }
 
 
         const input = await file.text()
-        switch (file.type) {
+        switch (file.type) 
+        {
             case "text/plain":
                 setValue("textToPreprocess", input)
                 return
@@ -73,14 +82,31 @@ function KairyouPage() {
     };
 
 
-    const downloadOutput = () => {
-        if (!response?.preprocessedText) {
+    const downloadOutput = (input: 'preprocessing_log' | 'preprocessedText') => 
+    {
+        let content = '';
+        if (input === 'preprocessing_log') 
+        {
+            content = response?.preprocessingLog|| '';
+        } 
+        else if (input === 'preprocessedText')
+        {
+            content = response?.preprocessedText || '';
+        }
+        else
+        {
+            throw new Error("Invalid input type")
+        }
+
+        if (!content) 
+            {
             return;
         }
-        const blob = new Blob([response?.preprocessedText], {type: "text/plain"});
+
+        const blob = new Blob([content], {type: "text/plain"});
         const url = URL.createObjectURL(blob);
         const link = document.createElement("a") as HTMLAnchorElement;
-        link.download = "output.txt";
+        link.download = input + '.txt';
         link.href = url;
         link.click();
     }
@@ -124,7 +150,9 @@ function KairyouPage() {
                     <Flex mt={17} gap='2'>
 
                         <Box flex={1}>
-                            <Text mb='8px'>Preprocessing Log</Text>
+                            <Text mb='8px'>Preprocessing Log <IconButton onClick={() => downloadOutput("preprocessing_log")} variant={'ghost'}
+                                                                          size='xl' aria-label="Download preprocessing log"
+                                                                          icon={<DownloadIcon/>}/> </Text>
 
                             <Box overflowY='scroll' height={200}>
                                 <Text style={{whiteSpace: "pre-wrap"}}>
@@ -145,7 +173,7 @@ function KairyouPage() {
                             ) :
                             (
                                 <Box flex={1}>
-                                    <Text mb='8px'>Output <IconButton onClick={downloadOutput} variant={'ghost'}
+                                    <Text mb='8px'>Output <IconButton onClick={() => downloadOutput("preprocessedText")} variant={'ghost'}
                                                                       size='xl' aria-label="Download output"
                                                                       icon={<DownloadIcon/>}/> </Text>
 
