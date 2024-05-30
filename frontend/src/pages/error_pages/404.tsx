@@ -31,22 +31,20 @@ const NotFoundPage = () => {
           <Text fontSize="2xl" fontWeight="semibold">
             404 - Page not found
           </Text>
-          <Text fontSize="lg">
+          <Text fontSize="lg" color="gray.500">
             It seems like either we can't code or you went to a page that doesn't exist...
           </Text>
           <Button
             as="a"
             href="/"
-            bg="blue.600"
+            bg="orange.400"
             color="white"
             py={2}
             px={4}
             rounded="md"
             mb={4}
             _hover={{
-              bg: "black",
-              color: "blue.600",
-              transition: "0.3s",
+              bg: "orange.500",
             }}
           >
             Return to Home
@@ -54,7 +52,7 @@ const NotFoundPage = () => {
           <chakra.a
             href="https://github.com/kakusui/kakusui-org/issues"
             target="_blank"
-            color="blue.400"
+            color="orange.400"
             _hover={{ color: "white" }}
           >
             Something Broken? Tell us!

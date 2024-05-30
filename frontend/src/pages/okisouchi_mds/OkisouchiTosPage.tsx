@@ -63,7 +63,7 @@ const OkisouchiTermsOfServicePage: React.FC = () => {
 
             <Heading as="h2" size="md" mt={4} mb={2}>10. Contact Information</Heading>
             <Text mb={4}>
-                If you have any questions about these Terms, please contact us at <Link href="mailto:contact@kakusui.org" color="teal.500">contact@kakusui.org</Link>.
+                If you have any questions about these Terms, please contact us at <Link href="mailto:contact@kakusui.org" color="orange.400">contact@kakusui.org</Link>.
             </Text>
 
             <Text mt={4} fontSize="sm" color="gray.500">

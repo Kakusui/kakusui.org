@@ -34,7 +34,7 @@ const OkisouchiLicensePage: React.FC = () => {
                 For a detailed understanding of your rights and obligations under this license, please refer to the full license text.
             </Text>
 
-            <Link href="https://www.gnu.org/licenses/gpl-3.0.html" color="teal.500" isExternal>
+            <Link href="https://www.gnu.org/licenses/gpl-3.0.html" color="orange.400" isExternal>
                 Read the full GPLv3 License
             </Link>
 

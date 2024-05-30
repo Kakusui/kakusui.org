@@ -43,7 +43,7 @@ const OkisouchiPrivacyPolicyPage: React.FC = () => {
 
             <Heading as="h2" size="md" mt={4} mb={2}>6. Google API Services User Data Policy</Heading>
             <Text mb={4}>
-                We comply with all requirements outlined in Google’s <Link href="https://developers.google.com/terms/api-services-user-data-policy#additional_requirements_for_specific_api_scopes" color="teal.500" isExternal>API Services User Data Policy</Link>, including the Limited Use requirements. This ensures that the use of Google user data is limited to the practices explicitly disclosed in this Privacy Policy.
+                We comply with all requirements outlined in Google’s <Link href="https://developers.google.com/terms/api-services-user-data-policy#additional_requirements_for_specific_api_scopes" color="orange.400" isExternal>API Services User Data Policy</Link>, including the Limited Use requirements. This ensures that the use of Google user data is limited to the practices explicitly disclosed in this Privacy Policy.
             </Text>
 
             <Heading as="h2" size="md" mt={4} mb={2}>7. Consent</Heading>
@@ -58,7 +58,7 @@ const OkisouchiPrivacyPolicyPage: React.FC = () => {
 
             <Heading as="h2" size="md" mt={4} mb={2}>9. Contact Information</Heading>
             <Text mb={4}>
-                If you have any questions regarding this Privacy Policy or the data practices of Okisouchi, please contact us at <Link href="mailto:contact@kakusui.org" color="teal.500">contact@kakusui.org</Link>.
+                If you have any questions regarding this Privacy Policy or the data practices of Okisouchi, please contact us at <Link href="mailto:contact@kakusui.org" color="orange.400">contact@kakusui.org</Link>.
             </Text>
 
             <Text mt={4} fontSize="sm" color="gray.500">

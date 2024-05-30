@@ -31,22 +31,20 @@ const InternalErrorPage = () => {
           <Text fontSize="2xl" fontWeight="semibold">
             500 - Server Error
           </Text>
-          <Text fontSize="lg">
+          <Text fontSize="lg" color="gray.500">
             It seems like something went wrong on our end...
           </Text>
           <Button
             as="a"
             href="/"
-            bg="blue.600"
+            bg="orange.400"
             color="white"
             py={2}
             px={4}
             rounded="md"
             mb={4}
             _hover={{
-              bg: "black",
-              color: "blue.600",
-              transition: "0.3s",
+              bg: "orange.500",
             }}
           >
             Return to Home
@@ -54,7 +52,7 @@ const InternalErrorPage = () => {
           <chakra.a
             href="https://github.com/kakusui/kakusui-org/issues"
             target="_blank"
-            color="blue.400"
+            color="orange.400"
             _hover={{ color: "white" }}
           >
             Something Broken? Tell us!
