@@ -3,7 +3,9 @@ Source code for kakusui.org
 
 ## Prerequisites
 python (runs on 3.11.8, lowest tested version is 3.11.4)
+
 node 20.13.1
+
 npm 10.8.0
 
 ## Python Requirements
@@ -33,14 +35,19 @@ See `frontend/package.json` for a list of node requirements.
 
 ## Frontend README
 for development:
+
 `npm i`
+
 `npm run dev`
 
 for production:
+
 `npm i`
+
 `npm run build`
 
 When building for production make sure that `VITE_AUTHORIZATION` is set to the token for the api.
+
 Ensure that `NODE_ENV`is set to `PRODUCTION`
 
 ## Contributing
