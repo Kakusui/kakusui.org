@@ -37,6 +37,7 @@ for development:
 `npm run dev`
 
 for production:
+`npm i`
 `npm run build`
 
 When building for production make sure that `VITE_AUTHORIZATION` is set to the token for the api.

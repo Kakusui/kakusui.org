@@ -38,7 +38,7 @@ function HomePage() {
             <Kakusui/>
             <Box position='relative' padding='10'>
                 <Divider/>
-                <AbsoluteCenter bg='gray.800' px='4'>
+                <AbsoluteCenter bg='gray.800' px='4' id="applications">
                     Applications
                 </AbsoluteCenter>
             </Box>
@@ -108,7 +108,7 @@ function Kakusui() {
 
 function Okisouchi() {
     return (
-        <Stack id="applications" direction={{base: 'column', md: 'row'}}>
+        <Stack direction={{base: 'column', md: 'row'}}>
             <Flex flex={1}>
                 <Image
                     boxSize={400}
