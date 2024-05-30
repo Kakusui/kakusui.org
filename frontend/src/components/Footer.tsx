@@ -8,7 +8,7 @@ import {Box, Container, Flex, HStack, IconButton, Image, Stack, Text, useColorMo
 
 import {IconBrandGithub} from '@tabler/icons-react';
 
-import logo from '../assets/kakusui_logo.png';
+import logo from '../assets/images/kakusui_logo.png';
 
 function Footer() {
     return (

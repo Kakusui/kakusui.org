@@ -20,9 +20,9 @@ import {
 } from "@chakra-ui/react";
 
 // logos and images
-import logo from '../assets/kakusui_logo.png'
-import okisouchi_sync from '../assets/okisouchi_sync_image.png'
-import kairyou_logo from '../assets/kairyou_logo.png'
+import logo from '../assets/images/kakusui_logo.png'
+import okisouchi_sync from '../assets/images/okisouchi_sync_image.png'
+import kairyou_logo from '../assets/images/kairyou_logo.png'
 
 // icons
 import {IconBrandGithub} from "@tabler/icons-react";
@@ -215,18 +215,22 @@ function Kairyou() {
                     }}
                     gap={{base: '8', sm: '12', md: '16'}}>
                     <Feature
+                        color={'gray.500'}
                         heading={'Advanced Japanese NLP'}
                         text={"Leverages SpaCy's NLP capabilities to provide robust preprocessing of Japanese text, including named entity recognition and tokenization."}
                     />
                     <Feature
+                        color={'gray.500'}
                         heading={'Translation preparation'}
                         text={'Automatically replaces named entities with placeholders, making it easier to translate Japanese text.'}
                     />
                     <Feature
+                        color={'gray.500'}
                         heading={'Katakana Utility'}
                         text={"Includes versatile utilities such as KatakanaUtil for specialized text manipulation, allowing users to tailor preprocessing to specific needs."}
                     />
                     <Feature
+                        color={'gray.500'}
                         heading={'Name Indexing'}
                         text={'Supports name indexing for discovering new named entities, which can be used for other NLP tasks.'}
                     />

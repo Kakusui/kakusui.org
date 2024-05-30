@@ -24,7 +24,7 @@ import {
 
 import {ChevronDownIcon, ChevronRightIcon, CloseIcon, HamburgerIcon,} from '@chakra-ui/icons';
 
-import logo from '../assets/kakusui_logo.png'
+import logo from '../assets/images/kakusui_logo.png'
 
 export default function Navbar() {
     const {isOpen, onToggle} = useDisclosure();
