@@ -8,7 +8,8 @@ license that can be found in the LICENSE file.
 import {extendTheme, type ThemeConfig} from '@chakra-ui/react'
 
 // 2. Add your color mode config
-const config: ThemeConfig = {
+const config: ThemeConfig = 
+{
     initialColorMode: 'dark',
     useSystemColorMode: false,
 }

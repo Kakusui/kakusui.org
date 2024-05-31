@@ -19,47 +19,22 @@ import NotFoundPage from './pages/error_pages/404.tsx';
 import ForbiddenPage from './pages/error_pages/403.tsx';
 import InternalErrorPage from './pages/error_pages/500.tsx';
 
-const router = createBrowserRouter([
-    {
-        path: '/',
-        element: <HomePage/>,
-    },
-    {
-        path: '/kairyou',
-        element: <KairyouPage/>,
-    },
-    {
-        path: '/okisouchi',
-        element: <OkisouchiPage/>,
-    },
-    {
-        path: '/okisouchi/tos',
-        element: <OkisouchiTermsOfServicePage/>,
-    },
-    {
-        path: '/okisouchi/privacy',
-        element: <OkisouchiPrivacyPolicyPage/>,
-    },
-    {
-        path: '/okisouchi/license',
-        element: <OkisouchiLicensePage/>,
-    },
-    {
-        path: '/403',
-        element: <ForbiddenPage/>,
-    },
-    {
-        path: '/500',
-        element: <InternalErrorPage/>,
-    },
-    {
-        path: '*',
-        element: <NotFoundPage/>,
-    },
+const routes = [
+    { path: '/', element: <HomePage/> },
+    { path: '/kairyou', element: <KairyouPage/> },
+    { path: '/okisouchi', element: <OkisouchiPage/> },
+    { path: '/okisouchi/tos', element: <OkisouchiTermsOfServicePage/> },
+    { path: '/okisouchi/privacy', element: <OkisouchiPrivacyPolicyPage/> },
+    { path: '/okisouchi/license', element: <OkisouchiLicensePage/> },
+    { path: '/403', element: <ForbiddenPage/> },
+    { path: '/500', element: <InternalErrorPage/> },
+    { path: '*', element: <NotFoundPage/> },
+];
 
-]);
+const router = createBrowserRouter(routes);
 
-function Router() {
+function Router() 
+{
     return <RouterProvider router={router}/>;
 }
 

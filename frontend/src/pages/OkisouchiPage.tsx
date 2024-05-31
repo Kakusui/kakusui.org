@@ -7,7 +7,8 @@ license that can be found in the LICENSE file.
 import { Box, Button, Heading, Link, Stack, Text } from "@chakra-ui/react";
 import { ExternalLinkIcon } from "@chakra-ui/icons";
 
-function OkisouchiPage() {
+function OkisouchiPage() 
+{
     return (
         <Box p={4} bg="gray.800">
             <Heading as="h1" mb={4} color="white">Okisouchi</Heading>

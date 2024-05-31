@@ -12,10 +12,11 @@ import Footer from "./components/Footer.tsx";
 import theme from "./theme.ts";
 
 
-function App() {
+function App() 
+{
 
-
-    if (import.meta.env.VITE_SHOWDEV === "true") {
+    if (import.meta.env.VITE_SHOWDEV === "true") 
+    {
         return (
             <ChakraProvider theme={theme}>
                 <Development/>

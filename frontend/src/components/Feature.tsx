@@ -10,13 +10,15 @@ import {
     TextProps,
 } from "@chakra-ui/react";
 
-interface FeatureProps {
+interface FeatureProps 
+{
     heading: string;
     text: string;
     color: TextProps['color'];
 }
 
-const Feature = ({heading, text, color}: FeatureProps) => {
+const Feature = ({heading, text, color}: FeatureProps) => 
+{
     return (
         <GridItem>
             <chakra.h3 fontSize="xl" fontWeight="600" color={"white"}>

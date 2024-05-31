@@ -7,7 +7,8 @@ license that can be found in the LICENSE file.
 import {Box, Heading, Text} from '@chakra-ui/react';
 import {WarningTwoIcon} from '@chakra-ui/icons';
 
-function DevelopmentBanner() {
+function DevelopmentBanner() 
+{
 
     return (
         <Box textAlign="start" py={10} px={6}>
