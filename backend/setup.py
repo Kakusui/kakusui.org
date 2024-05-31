@@ -8,8 +8,15 @@ import subprocess
 import os
 import secrets
 
-BACKEND_ENV = ".env"
-FRONTEND_ENV = "../frontend/.env"
+## Define the paths relative to the current working directory of the script
+current_dir = os.path.dirname(os.path.abspath(__file__))
+BACKEND_ENV = os.path.join(current_dir, ".env")
+
+## Adjust FRONTEND_ENV based on the environment
+if(len(sys.argv) > 1 and sys.argv[1] == 'local'):
+    FRONTEND_ENV = os.path.join(current_dir, "../frontend/.env")
+else:
+    FRONTEND_ENV = os.path.join(current_dir, "../frontend/.env")
 
 ##-------------------start-of-install_dependencies()---------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 def install_dependencies() -> None:
@@ -88,6 +95,8 @@ def setup_local_environment() -> None:
         
         with open(BACKEND_ENV, 'w') as f:
             f.write(to_write_backend)
+
+        os.makedirs(os.path.dirname(FRONTEND_ENV), exist_ok=True)
 
         with open(FRONTEND_ENV, 'w') as f:
             f.write(to_write_frontend)
