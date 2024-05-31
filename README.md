@@ -9,13 +9,13 @@ node 20.13.1
 npm 10.8.0
 
 ## Python Requirements
-flask==3.0.3
+fastapi==0.111.0
 
-waitress==3.0.0
+gunicorn==22.0.0
+
+uvicorn-worker==0.2.0
 
 python-dotenv==1.0.1
-
-flask-cors==4.0.1
 
 kairyou==1.6.1
 
@@ -28,7 +28,7 @@ See `frontend/package.json` for a list of node requirements.
 1. Clone the repo, make sure you are using the correct branch (currently `website-redesign`)
 2. Navigate to the `backend` directory. `cd backend`. Inside is the python backend.
 3. Run the setup script with the local argument. This will install all requirements and setup .env files. `python setup.py local`
-4. Run the server. `python app.py` for a non-production server, or `python serve.py` for a production server.
+4. Run the server. For local `uvicorn main:app --reload --port 5000` For production `gunicorn -w 4 -k uvicorn.workers.UvicornWorker main:app`
 5. Open a new terminal and navigate to the `frontend` directory. `cd frontend`. Inside is the react (vite) frontend.
 6. First install all required packages, these are in `package.json`. Do `npm i`. Then run the dev server with `npm run dev`
 7. Website will be on localhost:5173 (frontend) and localhost:5000 (backend)

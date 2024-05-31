@@ -2,3 +2,4 @@ fastapi==0.111.0
 gunicorn==22.0.0
 python-dotenv==1.0.1
 kairyou==1.6.1
+uvicorn-worker==0.2.0
