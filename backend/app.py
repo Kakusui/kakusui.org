@@ -18,7 +18,7 @@ from kairyou.exceptions import InvalidReplacementJsonKeys, InvalidReplacementJso
 
 ##-------------------start-of-setup_app()---------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-def setup_app(app:Flask) -> bool:
+def setup_app(app:Flask) -> None:
 
     ## Load Environment Variables
     load_dotenv()
@@ -79,7 +79,7 @@ def api_home():
     return jsonify({"message": "Welcome to the API"})
 
 @app.route('/v1/kairyou', subdomain='api', methods=["POST"])
-@cross_origin(origins="*", headers=["Content-Type", "Authorization"])
+@cross_origin(origins="*", allow_headers=["Content-Type", "Authorization"])
 @require_api_key
 def kairyou():
 

@@ -7,7 +7,7 @@ license that can be found in the LICENSE file.
 import React from "react";
 import { useForm } from "react-hook-form";
 import { getURL } from "../utils";
-import { Box, Button, Center, Flex, FormErrorMessage, FormControl, FormLabel, IconButton, Text, Textarea, useToast } from "@chakra-ui/react";
+import { Box, Button, Center, Flex, FormErrorMessage, FormControl, FormLabel, IconButton, Link, Text, Textarea, useToast } from "@chakra-ui/react";
 import { ArrowUpIcon, DownloadIcon } from "@chakra-ui/icons";
 
 type FormInput = 
@@ -36,6 +36,8 @@ function KairyouPage()
     {
         try 
         {
+            JSON.parse(data.replacementsJson);
+
             const response = await fetch(getURL("/v1/kairyou"), {
                 method: "POST",
                 headers: {
@@ -56,9 +58,20 @@ function KairyouPage()
         } 
         catch (error) 
         {
+            let description = "An error occurred.";
+
+            if (error instanceof SyntaxError) 
+            {
+                description = "Invalid JSON format.";
+            }
+            else 
+            {
+                description = (error as Error).message;
+            }
+
             toast({
                 title: "An error occurred.",
-                description: (error as Error).message,
+                description: description,
                 status: "error",
                 duration: 5000,
                 isClosable: true,
@@ -199,6 +212,25 @@ function KairyouPage()
                     </Center>
                 </>
             )}
+            <Box mt={17} p={4} bg="gray.800" color="gray.500">
+                <Text fontSize="lg" mb={4} color="white">How to Use</Text>
+                <Text mb={2}>
+                    For detailed usage instructions, please visit the <Link href="https://github.com/Bikatr7/Kairyou" color="orange.400" isExternal>GitHub repository README</Link>.
+                </Text>
+                <Text mb={2}>
+                    Kairyou is a tool for preprocessing Japanese text. You can upload a text file or input text directly, and provide a JSON file with replacement rules. The tool will preprocess the text according to the provided rules and return the results.
+                </Text>
+                <Text>
+                    Follow these steps:
+                </Text>
+                <Text>
+                    1. Upload or input the text you want to preprocess.<br />
+                    2. Upload or input the JSON file with replacement rules.<br />
+                    3. Click "Submit" to preprocess the text.<br />
+                    4. Review the preprocessing log and output, and download if necessary.<br />
+                    5. If there are any errors, they will be displayed in the error log.
+                </Text>
+            </Box>
         </>
     );
 }
