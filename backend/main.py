@@ -104,10 +104,3 @@ async def kairyou(request_data: KairyouRequest, request: Request):
         return JSONResponse(status_code=500, content={
             "message": "An internal error occurred. Please contact the administrator."
         })
-
-## Under no circumstances should the app be run in production without a WSGI server
-## EVER. This is only for development purposes.
-## See: serve.py for production deployment.
-if(__name__ == '__main__'):
-    import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=5000, log_level="debug", reload=True)
