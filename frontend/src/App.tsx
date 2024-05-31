@@ -9,7 +9,7 @@ import {ChakraProvider, Container} from "@chakra-ui/react";
 import Development from "./components/DevelopmentBanner.tsx";
 import Navbar from "./components/Navbar.tsx";
 import Footer from "./components/Footer.tsx";
-import theme from "./theme.ts";
+import theme from "./theme.ts"; 
 
 
 function App() 
