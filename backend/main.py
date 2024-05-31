@@ -10,7 +10,7 @@ import json
 import logging
 
 ## third-party libraries
-from fastapi import FastAPI, HTTPException, Request
+from fastapi import FastAPI
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
@@ -25,7 +25,7 @@ class KairyouRequest(BaseModel):
 
 ##-------------------start-of-setup_app()---------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-def setup_app(app: FastAPI) -> None:
+def setup_app() -> None:
 
     ## Load Environment Variables
     load_dotenv()
@@ -50,7 +50,7 @@ def setup_app(app: FastAPI) -> None:
 app = FastAPI()
 
 ## Setup the app
-setup_app(app)
+setup_app()
 
 ## CORS setup
 origins = ["*"]
@@ -70,12 +70,8 @@ async def api_home():
     return {"message": "Welcome to the API"}
 
 @app.post("/v1/kairyou")
-async def kairyou(request_data: KairyouRequest, request: Request):
+async def kairyou(request_data:KairyouRequest):
 
-    ## API key validation
-    api_key = request.headers.get('Authorization')
-    if(not api_key or api_key != os.getenv('ROOT_API_KEY')):
-        raise HTTPException(status_code=401, detail="Unauthorized")
 
     ## kairyou receives a POST request with a JSON payload (textToPreprocess) and (replacementsJson)
     ## it returns a JSON response with the preprocessed text, preprocessing log, and error log

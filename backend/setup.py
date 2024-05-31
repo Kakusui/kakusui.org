@@ -6,7 +6,6 @@
 import sys
 import subprocess
 import os
-import secrets
 
 ## Define the paths relative to the current working directory of the script
 current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -69,28 +68,21 @@ def download_spacy_model() -> None:
 def setup_local_environment() -> None:
 
     try:
-        ## If local, we need to create a .env file with a dummy ROOT_API_KEY value, so that the app can access its API locally (api.localhost:5000)
-        ## Such a secret doesn't really matter in a local environment, but it's necessary for the app to run since the API is protected by an API key which is loaded from the environment.
-        ## and also wouldn't matter at all in production.
-        dummy_key = secrets.token_hex(16)
 
-        to_write_backend = f'ROOT_API_KEY={dummy_key}\n'
-        to_write_frontend = f'VITE_AUTHORIZATION={dummy_key}\n'
-
-        to_write_frontend += f'VITE_SHOWDEV=false\n'
+        to_write_frontend = f'VITE_SHOWDEV=false\n'
 
 
         if(len(sys.argv) > 1 and sys.argv[1] == 'local'):
 
             print("Setting up local environment...")
 
-            to_write_backend += 'ENVIRONMENT=development\n'
+            to_write_backend = 'ENVIRONMENT=development\n'
             to_write_frontend += 'NODE_ENV=development\n'
         else:
 
             print("Setting up production environment...")
 
-            to_write_backend += 'ENVIRONMENT=production\n'
+            to_write_backend = 'ENVIRONMENT=production\n'
             to_write_frontend += 'NODE_ENV=production\n'
         
         with open(BACKEND_ENV, 'w') as f:

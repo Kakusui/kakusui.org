@@ -53,7 +53,7 @@ Ensure that `NODE_ENV`is set to `PRODUCTION`
 ## Production
 
 docker build -t kakusui-org -f build.dockerfile .
-docker run -p 80:80 kakusui-org
+docker run -p 8000:8000 kakusui-org
 
 ## Contributing
 If you would like to contribute, please open an issue or a pull request. No specific guidelines yet, but please be respectful.

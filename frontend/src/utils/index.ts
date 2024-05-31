@@ -7,18 +7,15 @@ license that can be found in the LICENSE file.
 const getURL = (path: string) => 
 {
     let url;
-    if(import.meta.env.MODE === "production") 
+
+    if(process.env.NODE_ENV === "production") 
     {
-        url = "http://api.localhost:3000";
+        url = "http://api.localhost:8000";
     } 
-    else if (import.meta.env.MODE === "development") 
+    else if (process.env.NODE_ENV === "development") 
     {
         url = "http://api.localhost:5000";
     } 
-    else 
-    {
-        throw new Error(`Invalid environment: ${import.meta.env.MODE}`);
-    }
     
     return url + path;
 }

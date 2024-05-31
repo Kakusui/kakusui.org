@@ -41,8 +41,7 @@ function KairyouPage()
             const response = await fetch(getURL("/v1/kairyou"), {
                 method: "POST",
                 headers: {
-                    "Content-Type": "application/json",
-                    "Authorization": import.meta.env.VITE_AUTHORIZATION
+                    "Content-Type": "application/json"
                 },
                 body: JSON.stringify(data)
             });
