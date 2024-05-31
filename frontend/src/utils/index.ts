@@ -9,7 +9,7 @@ const getURL = (path: string) =>
     let url;
     if(import.meta.env.MODE === "production") 
     {
-        url = "https://api.kakusui.org";
+        url = "http://api.localhost:3000";
     } 
     else if (import.meta.env.MODE === "development") 
     {

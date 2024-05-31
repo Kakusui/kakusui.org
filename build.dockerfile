@@ -21,14 +21,21 @@ WORKDIR /app
 ## Install nginx and other required packages
 RUN apt-get update && apt-get install -y nginx && apt-get clean
 
-## Install Gunicorn
-##RUN pip install gunicorn==22.0.0
-
 ## Copy backend from the previous stage
 COPY --from=backend-build /app/backend /app/backend
 
 ## Copy frontend build from the previous stage
 COPY --from=frontend-build /app/frontend/dist /app/frontend/dist
+
+## Copy requirements file from backend to the current stage
+COPY backend/requirements.txt /app/backend/requirements.txt
+
+## Install required Python packages
+RUN pip install -r /app/backend/requirements.txt
+RUN python3 -c "\
+import spacy;\
+nlp = spacy.load('ja_core_news_lg', disable=['parser', 'ner']);\
+" || python3 -m spacy download ja_core_news_lg
 
 ## Copy nginx configuration file
 COPY nginx.conf /etc/nginx/nginx.conf
