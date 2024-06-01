@@ -1,32 +1,28 @@
 ## Stage 1: Build backend
 FROM python:3.11.8-slim as backend-build
 WORKDIR /app/backend
-COPY backend/ ./
-
-## Install Python dependencies, set up the environment files for both frontend and backend
-RUN python setup.py install
+COPY backend/main.py backend/requirements.txt ./
 
 ## Stage 2: Final stage
 FROM python:3.11.8-slim
 WORKDIR /app
 
 ## Install required packages
-RUN apt-get update && apt-get install && apt-get clean
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 ## Copy backend from the previous stage
-COPY --from=backend-build /app/backend /app/backend
-
-## Copy requirements file from backend to the current stage
-COPY backend/requirements.txt /app/backend/requirements.txt
+COPY --from=backend-build /app/backend/main.py /app/backend/main.py
+COPY --from=backend-build /app/backend/requirements.txt /app/backend/requirements.txt
 
 ## Install required Python packages
-RUN pip install -r /app/backend/requirements.txt
-RUN python3 -c "\
+RUN pip install --no-cache-dir -r /app/backend/requirements.txt \
+    && python3 -c "\
 import spacy;\
 nlp = spacy.load('ja_core_news_lg', disable=['parser', 'ner']);\
 " || python3 -m spacy download ja_core_news_lg
 
-## Copy entrypoint script
+## Copy entrypoint script and make it executable
 COPY entrypoint.sh /app/entrypoint.sh
 RUN chmod +x /app/entrypoint.sh
 

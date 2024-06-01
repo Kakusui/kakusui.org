@@ -9,13 +9,8 @@ import os
 
 ## Define the paths relative to the current working directory of the script
 current_dir = os.path.dirname(os.path.abspath(__file__))
-BACKEND_ENV = os.path.join(current_dir, ".env")
+FRONTEND_ENV = os.path.join(current_dir, "../frontend/.env")
 
-## Adjust FRONTEND_ENV based on the environment
-if(len(sys.argv) > 1 and sys.argv[1] == 'local'):
-    FRONTEND_ENV = os.path.join(current_dir, "../frontend/.env")
-else:
-    FRONTEND_ENV = os.path.join(current_dir, "../frontend/.env")
 
 ##-------------------start-of-install_dependencies()---------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 def install_dependencies() -> None:
@@ -71,23 +66,17 @@ def setup_local_environment() -> None:
 
         to_write_frontend = f'VITE_SHOWDEV=false\n'
 
-
         if(len(sys.argv) > 1 and sys.argv[1] == 'local'):
 
             print("Setting up local environment...")
 
-            to_write_backend = 'ENVIRONMENT=development\n'
             to_write_frontend += 'NODE_ENV=development\n'
         else:
 
             print("Setting up production environment...")
 
-            to_write_backend = 'ENVIRONMENT=production\n'
             to_write_frontend += 'NODE_ENV=production\n'
         
-        with open(BACKEND_ENV, 'w') as f:
-            f.write(to_write_backend)
-
         os.makedirs(os.path.dirname(FRONTEND_ENV), exist_ok=True)
 
         with open(FRONTEND_ENV, 'w') as f:

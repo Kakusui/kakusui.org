@@ -3,18 +3,13 @@
 ## license that can be found in the LICENSE file.
 
 ## built-in libraries
-from logging.handlers import RotatingFileHandler
-
-import os
 import json
-import logging
 
 ## third-party libraries
 from fastapi import FastAPI
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
-from dotenv import load_dotenv
 from kairyou import Kairyou
 from kairyou.exceptions import InvalidReplacementJsonKeys, InvalidReplacementJsonName, SpacyModelNotFound
 
@@ -23,34 +18,9 @@ class KairyouRequest(BaseModel):
     textToPreprocess: str
     replacementsJson: str
 
-##-------------------start-of-setup_app()---------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-
-def setup_app() -> None:
-
-    ## Load Environment Variables
-    load_dotenv()
-
-    ## Setup logging
-    if(not os.path.exists('logs')):
-        os.makedirs('logs',exist_ok=True)
-
-    file_handler = RotatingFileHandler('logs/myapp.log', maxBytes=10240, backupCount=10)
-    file_handler.setFormatter(logging.Formatter(
-        '%(asctime)s %(levelname)s: %(message)s [in %(pathname)s:%(lineno)d]'
-    ))
-
-    file_handler.setLevel(logging.DEBUG)
-    logging.getLogger().addHandler(file_handler)
-
-    logging.getLogger().setLevel(logging.DEBUG)
-    logging.info('Application Startup')
-
 ##-----------------------------------------start-of-main----------------------------------------------------------------------------------------------------------------------------------------------------------
 
 app = FastAPI()
-
-## Setup the app
-setup_app()
 
 ## CORS setup
 origins = ["*"]

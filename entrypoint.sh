@@ -1,4 +1,2 @@
-#!/bin/bash
-
-## Start Gunicorn
-exec gunicorn -w 4 -k uvicorn.workers.UvicornWorker backend.main:app --bind 0.0.0.0:8000
+#!/bin/sh
+exec uvicorn backend.main:app --host 0.0.0.0 --port 8000 --workers 1
