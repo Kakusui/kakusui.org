@@ -10,7 +10,7 @@ const getURL = (path: string) =>
 
     if(process.env.NODE_ENV === "production") 
     {
-        url = "https://kakusui-org.fly.dev";
+        url = "https://api.kakusui.org";
     } 
     else if (process.env.NODE_ENV === "development") 
     {

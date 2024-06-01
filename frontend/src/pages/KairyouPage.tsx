@@ -1,10 +1,4 @@
-/*
-Copyright Kakusui LLC 2024 (https://kakusui.org) (https://github.com/Kakusui)
-Use of this source code is governed by a GNU General Public License v3.0
-license that can be found in the LICENSE file.
-*/
-
-import React from "react";
+import React, { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { getURL } from "../utils";
 import { Box, Button, Center, Flex, FormErrorMessage, FormControl, FormLabel, IconButton, Link, Text, Textarea, useToast } from "@chakra-ui/react";
@@ -31,6 +25,24 @@ function KairyouPage()
     const { register, handleSubmit, setValue, formState: { isSubmitting, errors } } = useForm<FormInput>();
     const [response, setResponse] = React.useState<ResponseValues>();
     const toast = useToast();
+
+    useEffect(() => 
+    {
+        const warmUpAPI = async () => 
+        {
+            try 
+            {
+                await fetch(getURL("/v1/kairyou"), {
+                    method: "GET",
+                });
+            } catch (error) 
+            {
+            
+            }
+        };
+
+        warmUpAPI();
+    }, []);
 
     const onSubmit = async (data: FormInput) => 
     {
