@@ -10,7 +10,7 @@ const getURL = (path: string) =>
 
     if(process.env.NODE_ENV === "production") 
     {
-        url = "http://api.localhost:8000";
+        url = "https://api.kakusui.org";
     } 
     else if (process.env.NODE_ENV === "development") 
     {
