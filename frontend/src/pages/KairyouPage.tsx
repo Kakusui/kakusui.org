@@ -7,26 +7,28 @@ license that can be found in the LICENSE file.
 import React, { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { getURL } from "../utils";
-import { Box, Button, Center, Flex, FormErrorMessage, FormControl, FormLabel, IconButton, Link, Text, Textarea, useToast, Stack } from "@chakra-ui/react";
+import {
+    Box, Button, Flex, FormErrorMessage, FormControl, FormLabel, IconButton, Link, Text, Textarea, useToast, Stack, Center
+} from "@chakra-ui/react";
 import { ArrowUpIcon, DownloadIcon } from "@chakra-ui/icons";
+import Turnstile from "../components/Turnstile";
 
-type FormInput = 
-{
+type FormInput = {
     textToPreprocess: string,
     replacementsJson: string,
-}
+};
 
-type ResponseValues = 
-{
+type ResponseValues = {
     errorLog: string,
     preprocessedText: string,
     preprocessingLog: string,
-}
+};
 
 function KairyouPage() 
 {
     const textRef = React.useRef<HTMLInputElement>(null);
     const jsonRef = React.useRef<HTMLInputElement>(null);
+    const [turnstileToken, setTurnstileToken] = React.useState<string | null>(null);
 
     const { register, handleSubmit, setValue, formState: { isSubmitting, errors } } = useForm<FormInput>();
     const [response, setResponse] = React.useState<ResponseValues>();
@@ -41,9 +43,10 @@ function KairyouPage()
                 await fetch(getURL("/v1/kairyou"), {
                     method: "GET",
                 });
-            } catch (error) 
+            } 
+            catch (error) 
             {
-            
+
             }
         };
 
@@ -52,49 +55,77 @@ function KairyouPage()
 
     const onSubmit = async (data: FormInput) => 
     {
-        try 
-        {
-            JSON.parse(data.replacementsJson);
-
-            const response = await fetch(getURL("/v1/kairyou"), {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json"
-                },
-                body: JSON.stringify(data)
-            });
-
-            if (!response.ok) 
+            if (!turnstileToken) 
             {
-                const result: { message: string } = await response.json();
-                throw new Error("Error Returned: " + result.message);
+                toast({
+                    title: "Verification failed",
+                    description: "Please complete the verification",
+                    status: "error",
+                    duration: 5000,
+                    isClosable: true,
+                });
+                return;
             }
-
-            const result: ResponseValues = await response.json();
-            setResponse(result);
-        } 
-        catch (error) 
-        {
-            let description = "An error occurred.";
-
-            if (error instanceof SyntaxError) 
+        
+            try 
             {
-                description = "Invalid JSON format.";
-            }
-            else 
+                const verificationResponse = await fetch('http://localhost:5000/verify-turnstile', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ token: turnstileToken })
+                });
+        
+                const verificationResult = await verificationResponse.json();
+        
+                if (!verificationResult.success) 
+                {
+                    throw new Error("Turnstile verification failed");
+                }
+        
+                JSON.parse(data.replacementsJson);
+        
+                const response = await fetch(getURL("/v1/kairyou"), {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify(data)
+                });
+        
+                if (!response.ok) 
+                {
+                    const result: { message: string } = await response.json();
+                    throw new Error("Error Returned: " + result.message);
+                }
+        
+                const result: ResponseValues = await response.json();
+                setResponse(result);
+            } 
+            catch (error) 
             {
-                description = (error as Error).message;
+                let description = "An error occurred.";
+        
+                if (error instanceof SyntaxError) 
+                {
+                    description = "Invalid JSON format.";
+                } 
+                else 
+                {
+                    description = (error as Error).message;
+                }
+        
+                toast({
+                    title: "An error occurred.",
+                    description: description,
+                    status: "error",
+                    duration: 5000,
+                    isClosable: true,
+                });
             }
-
-            toast({
-                title: "An error occurred.",
-                description: description,
-                status: "error",
-                duration: 5000,
-                isClosable: true,
-            });
-        }
     };
+        
 
     const onUpload = async (event: React.ChangeEvent<HTMLInputElement>) => 
     {
@@ -173,6 +204,8 @@ function KairyouPage()
                         </FormErrorMessage>
                     </FormControl>
                 </Flex>
+
+                <Turnstile siteKey="0x4AAAAAAAbu-SlGyNF03684" onVerify={setTurnstileToken} />
 
                 <Button
                     mb={17} mt={17} width='100%' type="submit"

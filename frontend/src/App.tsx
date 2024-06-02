@@ -6,7 +6,6 @@ license that can be found in the LICENSE file.
 
 import Router from "./Router.tsx";
 import {ChakraProvider, Container} from "@chakra-ui/react";
-import Development from "./components/DevelopmentBanner.tsx";
 import Navbar from "./components/Navbar.tsx";
 import Footer from "./components/Footer.tsx";
 import theme from "./theme.ts"; 
@@ -14,16 +13,6 @@ import theme from "./theme.ts";
 
 function App() 
 {
-
-    if (import.meta.env.VITE_SHOWDEV === "true") 
-    {
-        return (
-            <ChakraProvider theme={theme}>
-                <Development/>
-            </ChakraProvider>
-        );
-    }
-
     return (
         <ChakraProvider theme={theme}>
             <Navbar/>
