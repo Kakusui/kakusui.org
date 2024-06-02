@@ -51,7 +51,8 @@ function KairyouPage()
 
     useEffect(() => {
         const currentDomain = window.location.hostname;
-        if (currentDomain === "kakusui-org.pages.dev") {
+        if (currentDomain === "kakusui-org.pages.dev" || currentDomain === "localhost") 
+            {
             setBlacklistedDomain(true);
         }
     }, []);
@@ -64,7 +65,7 @@ function KairyouPage()
     {
         setResetTurnstile(false);
         
-        if (isBlacklistedDomain) 
+        if (isBlacklistedDomain && window.location.hostname !== "localhost")
         {
             toast({
                 title: "Access Denied",
@@ -76,7 +77,7 @@ function KairyouPage()
             return;
         }
 
-        if (!turnstileToken) 
+        if (!turnstileToken && window.location.hostname !== "localhost")
         {
             toast({
                 title: "Verification failed",
@@ -107,25 +108,31 @@ function KairyouPage()
 
         try 
         {
-            const verificationResponse = await fetch('https://api.kakusui.org/verify-turnstile', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ token: turnstileToken })
-            });
 
-            const verificationResult = await verificationResponse.json();
-
-            if (!verificationResult.success) 
+            if(window.location.hostname !== "localhost")
             {
-                throw new Error("Turnstile verification failed");
-            }
+                const verificationResponse = await fetch(getURL("/verify-turnstile"), {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ token: turnstileToken })
+                });
+    
+                const verificationResult = await verificationResponse.json();
+    
+                if (!verificationResult.success) 
+                {
+                    throw new Error("Turnstile verification failed");
+                }
 
+            }
+            
             const response = await fetch(getURL("/v1/kairyou"), {
                 method: "POST",
                 headers: {
-                    "Content-Type": "application/json"
+                    "Content-Type": "application/json",
+                    "X-API-Key": "test"
                 },
                 body: JSON.stringify(data)
             });

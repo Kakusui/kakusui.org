@@ -7,7 +7,7 @@ import json
 import os
 
 ## third-party libraries
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -30,7 +30,6 @@ def get_env_variables():
 class KairyouRequest(BaseModel):
     textToPreprocess: str
     replacementsJson: str
-    apiKey: str
 
 class VerifyTurnstileRequest(BaseModel):
     token: str
@@ -59,7 +58,6 @@ if(not V1_KAIRYOU_ROOT_KEY):
     V1_KAIRYOU_ROOT_KEY = os.environ.get("V1_KAIRYOU_ROOT_KEY")
 
 assert V1_KAIRYOU_ROOT_KEY, "V1_KAIRYOU_ROOT_KEY is not set in the environment variables"
-assert TURNSTILE_SECRET_KEY, "TURNSTILE_SECRET_KEY is not set in the environment variables"
 
 ## Routes
 
@@ -77,10 +75,11 @@ async def kairyou_warm_up():
 ## if and when we ever actually open this up to the public, we will need to add a rate limiter
 
 @app.post("/v1/kairyou")
-async def kairyou(request_data: KairyouRequest):
+async def kairyou(request_data:KairyouRequest, request:Request):
     text_to_preprocess = request_data.textToPreprocess
     replacements_json = request_data.replacementsJson
-    api_key = request_data.apiKey
+    
+    api_key = request.headers.get("X-API-Key")
 
     if(api_key != V1_KAIRYOU_ROOT_KEY):
         return JSONResponse(status_code=401, content={
