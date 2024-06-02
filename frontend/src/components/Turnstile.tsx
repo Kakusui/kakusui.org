@@ -1,6 +1,6 @@
 /*
 Copyright Kakusui LLC 2024 (https://kakusui.org) (https://github.com/Kakusui)
-Use of this source code is governed by a GNU Lesser General Public License v2.1
+Use of this source code is governed by a GNU General Public License v3.0
 license that can be found in the LICENSE file.
 */
 
@@ -15,9 +15,10 @@ declare global {
 type TurnstileProps = {
     siteKey: string;
     onVerify: (token: string) => void;
+    resetKey: boolean;
 };
 
-const Turnstile: React.FC<TurnstileProps> = ({ siteKey, onVerify }) => {
+const Turnstile: React.FC<TurnstileProps> = ({ siteKey, onVerify, resetKey }) => {
     const turnstileRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
@@ -46,6 +47,12 @@ const Turnstile: React.FC<TurnstileProps> = ({ siteKey, onVerify }) => {
 
         loadTurnstile();
     }, [siteKey, onVerify]);
+
+    useEffect(() => {
+        if (resetKey && turnstileRef.current) {
+            window.turnstile.reset(turnstileRef.current);
+        }
+    }, [resetKey]);
 
     return <div ref={turnstileRef}></div>;
 };

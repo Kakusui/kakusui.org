@@ -24,6 +24,7 @@ function KairyouPage()
     const jsonRef = useRef<HTMLInputElement>(null);
     const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
     const [isBlacklistedDomain, setBlacklistedDomain] = useState(false);
+    const [resetTurnstile, setResetTurnstile] = useState(false);
 
     const { register, handleSubmit, setValue, formState: { isSubmitting, errors } } = useForm<FormInput>();
     const [response, setResponse] = useState<ResponseValues>();
@@ -61,6 +62,8 @@ function KairyouPage()
 
     const onSubmit = async (data: FormInput) => 
     {
+        setResetTurnstile(false);
+        
         if (isBlacklistedDomain) 
         {
             toast({
@@ -155,6 +158,8 @@ function KairyouPage()
                 duration: 5000,
                 isClosable: true,
             });
+        } finally {
+            setResetTurnstile(true); // Reset the Turnstile after processing
         }
     };
 
@@ -210,8 +215,8 @@ function KairyouPage()
     };
 
     const memoizedTurnstile = useMemo(() => {
-        return <Turnstile siteKey="0x4AAAAAAAbu-SlGyNF03684" onVerify={onTurnstileVerify} />;
-    }, []);
+        return <Turnstile siteKey="0x4AAAAAAAbu-SlGyNF03684" onVerify={onTurnstileVerify} resetKey={resetTurnstile} />;
+    }, [resetTurnstile]);
 
     return (
         <>
