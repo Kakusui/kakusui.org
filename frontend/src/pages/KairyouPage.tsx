@@ -1,7 +1,13 @@
+/*
+Copyright Kakusui LLC 2024 (https://kakusui.org) (https://github.com/Kakusui)
+Use of this source code is governed by a GNU Lesser General Public License v2.1
+license that can be found in the LICENSE file.
+*/
+
 import React, { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { getURL } from "../utils";
-import { Box, Button, Center, Flex, FormErrorMessage, FormControl, FormLabel, IconButton, Link, Text, Textarea, useToast } from "@chakra-ui/react";
+import { Box, Button, Center, Flex, FormErrorMessage, FormControl, FormLabel, IconButton, Link, Text, Textarea, useToast, Stack } from "@chakra-ui/react";
 import { ArrowUpIcon, DownloadIcon } from "@chakra-ui/icons";
 
 type FormInput = 
@@ -241,6 +247,14 @@ function KairyouPage()
                     4. Review the preprocessing log and output, and download if necessary.<br />
                     5. If there are any errors, they will be displayed in the error log.
                 </Text>
+            </Box>
+
+            <Box mt={5} p={2} bg="gray.800">
+                <Stack direction="row">
+                    <Link href="/kairyou/tos" color="orange.400">Terms of Service</Link>
+                    <Link href="/kairyou/privacy" color="orange.400">Privacy Policy</Link>
+                    <Link href="/kairyou/license" color="orange.400">License</Link>
+                </Stack>
             </Box>
         </>
     );

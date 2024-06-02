@@ -9,6 +9,9 @@ import {createBrowserRouter, RouterProvider} from 'react-router-dom';
 import HomePage from "./pages/HomePage.tsx";
 
 import KairyouPage from "./pages/KairyouPage.tsx";
+import KairyouTermsOfServicePage from './pages/kairyou_mds/KairyouTosPage.tsx';
+import KairyouPrivacyPolicyPage from './pages/kairyou_mds/KairyouPrivacyPolicyPage.tsx';
+import KairyouLicensePage from './pages/kairyou_mds/KairyouLicensePage.tsx';
 
 import OkisouchiPage from './pages/OkisouchiPage.tsx';
 import OkisouchiTermsOfServicePage from './pages/okisouchi_mds/OkisouchiTosPage.tsx';
@@ -22,6 +25,9 @@ import InternalErrorPage from './pages/error_pages/500.tsx';
 const routes = [
     { path: '/', element: <HomePage/> },
     { path: '/kairyou', element: <KairyouPage/> },
+    { path: '/kairyou/tos', element: <KairyouTermsOfServicePage/> },
+    { path: '/kairyou/privacy', element: <KairyouPrivacyPolicyPage/> },
+    { path: '/kairyou/license', element: <KairyouLicensePage/> },
     { path: '/okisouchi', element: <OkisouchiPage/> },
     { path: '/okisouchi/tos', element: <OkisouchiTermsOfServicePage/> },
     { path: '/okisouchi/privacy', element: <OkisouchiPrivacyPolicyPage/> },
