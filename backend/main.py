@@ -102,6 +102,8 @@ async def verify_turnstile(request: VerifyTurnstileRequest):
             'secret': TURNSTILE_SECRET_KEY,
             'response': request.token
         }
+
+        
         async with httpx.AsyncClient() as client:
             response = await client.post(url, data=data)
             result = response.json()
