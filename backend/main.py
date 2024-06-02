@@ -39,8 +39,10 @@ app.add_middleware(
 async def api_home():
     return {"message": "Welcome to the API"}
 
+## Kairyou endpoints
+
 @app.get("/v1/kairyou")
-async def warm_up():
+async def kairyou_warm_up():
     return {"message": "Kairyou is running."}
 
 @app.post("/v1/kairyou")
@@ -74,3 +76,8 @@ async def kairyou(request_data:KairyouRequest):
         return JSONResponse(status_code=500, content={
             "message": "An internal error occurred. Please contact the administrator."
         })
+
+## EasyTL endpoints
+@app.get("/v1/easytl")
+async def easytl_warm_up():
+    return {"message": "The endpoint is still under development."}
