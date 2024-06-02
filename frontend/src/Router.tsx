@@ -8,6 +8,8 @@ import {createBrowserRouter, RouterProvider} from 'react-router-dom';
 
 import HomePage from "./pages/HomePage.tsx";
 
+import EasyTLPage from './pages/EasyTLPage.tsx';
+
 import KairyouPage from "./pages/KairyouPage.tsx";
 import KairyouTermsOfServicePage from './pages/kairyou_mds/KairyouTosPage.tsx';
 import KairyouPrivacyPolicyPage from './pages/kairyou_mds/KairyouPrivacyPolicyPage.tsx';
@@ -24,6 +26,7 @@ import InternalErrorPage from './pages/error_pages/500.tsx';
 
 const routes = [
     { path: '/', element: <HomePage/> },
+    { path: '/easytl', element: <EasyTLPage/> },
     { path: '/kairyou', element: <KairyouPage/> },
     { path: '/kairyou/tos', element: <KairyouTermsOfServicePage/> },
     { path: '/kairyou/privacy', element: <KairyouPrivacyPolicyPage/> },
