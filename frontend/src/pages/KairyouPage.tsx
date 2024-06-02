@@ -55,7 +55,7 @@ function KairyouPage()
 
         // Check if the current domain is allowed
         const currentDomain = window.location.hostname;
-        const allowedDomainPattern = /\.kakusui\.org$/;
+        const allowedDomainPattern = /(\.kakusui\.org|kakusui-org\.pages\.dev)$/;
         if (allowedDomainPattern.test(currentDomain)) 
         {
             setIsAllowedDomain(true);
@@ -217,7 +217,7 @@ function KairyouPage()
                 </Flex>
 
                 {isAllowedDomain && (
-                    <Turnstile siteKey="0x4AAAAAAAbu-SlGyNF03684" onVerify={setTurnstileToken} />
+                    <Turnstile siteKey="your-site-key" onVerify={setTurnstileToken} />
                 )}
 
                 <Button
