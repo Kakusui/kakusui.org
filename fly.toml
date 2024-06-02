@@ -1,6 +1,6 @@
 app = 'kakusui-org'
 primary_region = 'den'
-swap_size_mb = 1024
+swap_size_mb = 2048
 
 [build]
   dockerfile = 'build.dockerfile'
