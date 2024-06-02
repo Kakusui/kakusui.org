@@ -51,7 +51,8 @@ function KairyouPage()
 
     useEffect(() => {
         const currentDomain = window.location.hostname;
-        if(currentDomain === "kakusui-org.pages.dev " || currentDomain === "localhost")
+        // this just actually hides the turnstile on any none kakusui.org domain
+        if(currentDomain !== "kakusui.org")
             {
             setBlacklistedDomain(true);
         }
@@ -64,7 +65,8 @@ function KairyouPage()
     const onSubmit = async (data: FormInput) => {
         setResetTurnstile(false);
     
-        if (isBlacklistedDomain && window.location.hostname !== "localhost") {
+        // you cannot use forms here on the pages.dev domain
+        if (window.location.hostname === "kakusui-org.pages.dev") {
             toast({
                 title: "Access Denied",
                 description: "This domain is not for end user usage, please use kakusui.org",
@@ -75,7 +77,9 @@ function KairyouPage()
             return;
         }
     
-        if (!turnstileToken && window.location.hostname !== "localhost") {
+
+        // only verify Turnstile on kakusui.org
+        if (!turnstileToken && window.location.hostname === "kakusui.org") {
             toast({
                 title: "Verification failed",
                 description: "Please complete the verification",
@@ -104,8 +108,8 @@ function KairyouPage()
         }
     
         try {
-            // Do not verify Turnstile on localhost
-            if (window.location.hostname !== "localhost") 
+            // Do not verify Turnstile on any other domain than kakusui.org
+            if (window.location.hostname === "kakusui.org") 
             {
                 const verificationResponse = await fetch(getURL("/verify-turnstile"), {
                     method: 'POST',
