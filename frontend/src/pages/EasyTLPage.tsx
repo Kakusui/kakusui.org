@@ -55,12 +55,12 @@ function EasyTLPage() {
 
         <FormControl isInvalid={!!errors.textToTranslate}>
           <FormLabel>Text to Translate</FormLabel>
-          <Textarea {...register("textToTranslate", { required: true })} placeholder="Enter text to translate" />
+          <Textarea {...register("textToTranslate", { required: true })} placeholder="Enter text to translate" rows={5} />
         </FormControl>
 
         <FormControl isInvalid={!!errors.tone}>
           <FormLabel>Tone</FormLabel>
-          <Textarea {...register("tone", { required: true })} placeholder="Enter tone" size="sm" />
+          <Textarea {...register("tone", { required: true })} placeholder="Enter tone" rows={2}/>
         </FormControl>
 
         <HStack spacing={4}>
