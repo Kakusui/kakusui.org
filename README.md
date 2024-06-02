@@ -17,6 +17,8 @@ uvicorn==0.30.0
 
 ja-core-news-lg==3.7.0 (this is not a pip package, it is a spacy model) Must be installed via spacy.
 
+httpx==0.25.1
+
 ## Node Requirements
 See `frontend/package.json` for a list of node requirements.
 

@@ -2,3 +2,4 @@ fastapi==0.110.3
 kairyou==1.6.1
 uvicorn==0.30.0
 easytl==0.4.1
+httpx==0.25.1
