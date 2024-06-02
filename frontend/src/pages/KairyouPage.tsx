@@ -29,6 +29,7 @@ function KairyouPage()
     const textRef = React.useRef<HTMLInputElement>(null);
     const jsonRef = React.useRef<HTMLInputElement>(null);
     const [turnstileToken, setTurnstileToken] = React.useState<string | null>(null);
+    const [turnstileCompleted, setTurnstileCompleted] = React.useState<boolean>(false);
 
     const { register, handleSubmit, setValue, formState: { isSubmitting, errors } } = useForm<FormInput>();
     const [response, setResponse] = React.useState<ResponseValues>();
@@ -46,15 +47,32 @@ function KairyouPage()
             } 
             catch (error) 
             {
-
             }
         };
 
         warmUpAPI();
     }, []);
 
+    const onTurnstileVerify = (token: string) => {
+        setTurnstileToken(token);
+        setTurnstileCompleted(true);
+    };
+
     const onSubmit = async (data: FormInput) => 
     {
+        const currentDomain = window.location.hostname;
+        if (currentDomain === "kakusui-org.pages.dev") 
+        {
+            toast({
+                title: "Access Denied",
+                description: "Form submission is not allowed from this domain.",
+                status: "error",
+                duration: 5000,
+                isClosable: true,
+            });
+            return;
+        }
+
         if (!turnstileToken) 
         {
             toast({
@@ -67,13 +85,30 @@ function KairyouPage()
             return;
         }
 
+        // Validate JSON
         try 
         {
-            const verificationResponse = await fetch('api.kakusui.org/verify-turnstile', {
+            JSON.parse(data.replacementsJson);
+        } 
+        catch (e) 
+        {
+            toast({
+                title: "Invalid JSON",
+                description: "Please provide a valid JSON format.",
+                status: "error",
+                duration: 5000,
+                isClosable: true,
+            });
+            return;
+        }
+
+        try 
+        {
+            const verificationResponse = await fetch('https://api.kakusui.org/verify-turnstile', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
-                    },
+                },
                 body: JSON.stringify({ token: turnstileToken })
             });
 
@@ -83,8 +118,6 @@ function KairyouPage()
             {
                 throw new Error("Turnstile verification failed");
             }
-
-            JSON.parse(data.replacementsJson);
 
             const response = await fetch(getURL("/v1/kairyou"), {
                 method: "POST",
@@ -106,7 +139,6 @@ function KairyouPage()
         catch (error) 
         {
             let description = "An error occurred.";
-
             if (error instanceof SyntaxError) 
             {
                 description = "Invalid JSON format.";
@@ -204,7 +236,11 @@ function KairyouPage()
                     </FormControl>
                 </Flex>
 
-                <Turnstile siteKey="0x4AAAAAAAbu-SlGyNF03684" onVerify={setTurnstileToken} />
+                <Center>
+                    {!turnstileCompleted && (
+                        <Turnstile siteKey="0x4AAAAAAAbu-SlGyNF03684" onVerify={onTurnstileVerify} />
+                    )}
+                </Center>
 
                 <Button
                     mb={17} mt={17} width='100%' type="submit"
