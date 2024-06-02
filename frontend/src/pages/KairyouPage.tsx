@@ -29,7 +29,6 @@ function KairyouPage()
     const textRef = React.useRef<HTMLInputElement>(null);
     const jsonRef = React.useRef<HTMLInputElement>(null);
     const [turnstileToken, setTurnstileToken] = React.useState<string | null>(null);
-    const [turnstileCompleted, setTurnstileCompleted] = React.useState<boolean>(false);
 
     const { register, handleSubmit, setValue, formState: { isSubmitting, errors } } = useForm<FormInput>();
     const [response, setResponse] = React.useState<ResponseValues>();
@@ -47,6 +46,7 @@ function KairyouPage()
             } 
             catch (error) 
             {
+                // handle error silently
             }
         };
 
@@ -55,7 +55,6 @@ function KairyouPage()
 
     const onTurnstileVerify = (token: string) => {
         setTurnstileToken(token);
-        setTurnstileCompleted(true);
     };
 
     const onSubmit = async (data: FormInput) => 
@@ -65,7 +64,7 @@ function KairyouPage()
         {
             toast({
                 title: "Access Denied",
-                description: "Form submission is not allowed from this domain.",
+                description: "This domain is not for end user usage, please use kakusui.org",
                 status: "error",
                 duration: 5000,
                 isClosable: true,
@@ -236,12 +235,6 @@ function KairyouPage()
                     </FormControl>
                 </Flex>
 
-                <Center>
-                    {!turnstileCompleted && (
-                        <Turnstile siteKey="0x4AAAAAAAbu-SlGyNF03684" onVerify={onTurnstileVerify} />
-                    )}
-                </Center>
-
                 <Button
                     mb={17} mt={17} width='100%' type="submit"
                     bg={'orange.400'}
@@ -251,6 +244,10 @@ function KairyouPage()
                     }}
                     isLoading={isSubmitting}
                 >Submit</Button>
+                
+                <Center>
+                    <Turnstile siteKey="0x4AAAAAAAbu-SlGyNF03684" onVerify={onTurnstileVerify} />
+                </Center>
             </form>
 
             {response && (
