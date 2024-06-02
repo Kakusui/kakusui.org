@@ -29,7 +29,8 @@ function KairyouPage()
     const textRef = React.useRef<HTMLInputElement>(null);
     const jsonRef = React.useRef<HTMLInputElement>(null);
     const [turnstileToken, setTurnstileToken] = React.useState<string | null>(null);
-    const [isAllowedDomain, setIsAllowedDomain] = React.useState<boolean>(false);
+    const [isKakusuiDomain, setIsKakusuiDomain] = React.useState<boolean>(false);
+    const [isBlockedDomain, setIsBlockedDomain] = React.useState<boolean>(false);
 
     const { register, handleSubmit, setValue, formState: { isSubmitting, errors } } = useForm<FormInput>();
     const [response, setResponse] = React.useState<ResponseValues>();
@@ -55,16 +56,34 @@ function KairyouPage()
 
         // Check if the current domain is allowed
         const currentDomain = window.location.hostname;
-        const allowedDomainPattern = /(\.kakusui\.org|kakusui-org\.pages\.dev)$/;
+        const allowedDomainPattern = /\.kakusui\.org$/;
+        const blockedDomainPattern = /^kakusui-org\.pages\.dev$/;
+
         if (allowedDomainPattern.test(currentDomain)) 
         {
-            setIsAllowedDomain(true);
+            setIsKakusuiDomain(true);
+        } 
+        else if (blockedDomainPattern.test(currentDomain)) 
+        {
+            setIsBlockedDomain(true);
         }
     }, []);
 
     const onSubmit = async (data: FormInput) => 
     {
-        if (isAllowedDomain && !turnstileToken) 
+        if (isBlockedDomain) 
+        {
+            toast({
+                title: "Submission blocked",
+                description: "Form submission is blocked on this domain",
+                status: "error",
+                duration: 5000,
+                isClosable: true,
+            });
+            return;
+        }
+
+        if (isKakusuiDomain && !turnstileToken) 
         {
             toast({
                 title: "Verification failed",
@@ -78,7 +97,7 @@ function KairyouPage()
 
         try 
         {
-            if (isAllowedDomain) 
+            if (isKakusuiDomain) 
             {
                 const verificationResponse = await fetch('http://localhost:5000/verify-turnstile', {
                     method: 'POST',
@@ -216,8 +235,8 @@ function KairyouPage()
                     </FormControl>
                 </Flex>
 
-                {isAllowedDomain && (
-                    <Turnstile siteKey="your-site-key" onVerify={setTurnstileToken} />
+                {isKakusuiDomain && (
+                    <Turnstile siteKey="0x4AAAAAAAbu-SlGyNF03684" onVerify={setTurnstileToken} />
                 )}
 
                 <Button
