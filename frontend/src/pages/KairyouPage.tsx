@@ -29,8 +29,6 @@ function KairyouPage()
     const textRef = React.useRef<HTMLInputElement>(null);
     const jsonRef = React.useRef<HTMLInputElement>(null);
     const [turnstileToken, setTurnstileToken] = React.useState<string | null>(null);
-    const [isKakusuiDomain, setIsKakusuiDomain] = React.useState<boolean>(false);
-    const [isBlockedDomain, setIsBlockedDomain] = React.useState<boolean>(false);
 
     const { register, handleSubmit, setValue, formState: { isSubmitting, errors } } = useForm<FormInput>();
     const [response, setResponse] = React.useState<ResponseValues>();
@@ -53,37 +51,11 @@ function KairyouPage()
         };
 
         warmUpAPI();
-
-        // Check if the current domain is allowed
-        const currentDomain = window.location.hostname;
-        const allowedDomainPattern = /\.kakusui\.org$/;
-        const blockedDomainPattern = /^kakusui-org\.pages\.dev$/;
-
-        if (allowedDomainPattern.test(currentDomain)) 
-        {
-            setIsKakusuiDomain(true);
-        } 
-        else if (blockedDomainPattern.test(currentDomain)) 
-        {
-            setIsBlockedDomain(true);
-        }
     }, []);
 
     const onSubmit = async (data: FormInput) => 
     {
-        if (isBlockedDomain) 
-        {
-            toast({
-                title: "Submission blocked",
-                description: "Form submission is blocked on this domain",
-                status: "error",
-                duration: 5000,
-                isClosable: true,
-            });
-            return;
-        }
-
-        if (isKakusuiDomain && !turnstileToken) 
+        if (!turnstileToken) 
         {
             toast({
                 title: "Verification failed",
@@ -97,22 +69,19 @@ function KairyouPage()
 
         try 
         {
-            if (isKakusuiDomain) 
-            {
-                const verificationResponse = await fetch('http://localhost:5000/verify-turnstile', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
+            const verificationResponse = await fetch('api.kakusui.org/verify-turnstile', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
                     },
-                    body: JSON.stringify({ token: turnstileToken })
-                });
+                body: JSON.stringify({ token: turnstileToken })
+            });
 
-                const verificationResult = await verificationResponse.json();
+            const verificationResult = await verificationResponse.json();
 
-                if (!verificationResult.success) 
-                {
-                    throw new Error("Turnstile verification failed");
-                }
+            if (!verificationResult.success) 
+            {
+                throw new Error("Turnstile verification failed");
             }
 
             JSON.parse(data.replacementsJson);
@@ -235,9 +204,7 @@ function KairyouPage()
                     </FormControl>
                 </Flex>
 
-                {isKakusuiDomain && (
-                    <Turnstile siteKey="0x4AAAAAAAbu-SlGyNF03684" onVerify={setTurnstileToken} />
-                )}
+                <Turnstile siteKey="0x4AAAAAAAbu-SlGyNF03684" onVerify={setTurnstileToken} />
 
                 <Button
                     mb={17} mt={17} width='100%' type="submit"
