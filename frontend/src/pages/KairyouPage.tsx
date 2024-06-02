@@ -51,7 +51,7 @@ function KairyouPage()
 
     useEffect(() => {
         const currentDomain = window.location.hostname;
-        if (currentDomain === "kakusui-org.pages.dev" || currentDomain === "localhost") 
+        if(currentDomain === "kakusui-org.pages.dev " || currentDomain === "localhost")
             {
             setBlacklistedDomain(true);
         }
@@ -61,12 +61,10 @@ function KairyouPage()
         setTurnstileToken(token);
     };
 
-    const onSubmit = async (data: FormInput) => 
-    {
+    const onSubmit = async (data: FormInput) => {
         setResetTurnstile(false);
-        
-        if (isBlacklistedDomain && window.location.hostname !== "localhost")
-        {
+    
+        if (isBlacklistedDomain && window.location.hostname !== "localhost") {
             toast({
                 title: "Access Denied",
                 description: "This domain is not for end user usage, please use kakusui.org",
@@ -76,9 +74,8 @@ function KairyouPage()
             });
             return;
         }
-
-        if (!turnstileToken && window.location.hostname !== "localhost")
-        {
+    
+        if (!turnstileToken && window.location.hostname !== "localhost") {
             toast({
                 title: "Verification failed",
                 description: "Please complete the verification",
@@ -88,7 +85,7 @@ function KairyouPage()
             });
             return;
         }
-
+    
         // Validate JSON
         try 
         {
@@ -105,11 +102,10 @@ function KairyouPage()
             });
             return;
         }
-
-        try 
-        {
-
-            if(window.location.hostname !== "localhost")
+    
+        try {
+            // Do not verify Turnstile on localhost
+            if (window.location.hostname !== "localhost") 
             {
                 const verificationResponse = await fetch(getURL("/verify-turnstile"), {
                     method: 'POST',
@@ -121,43 +117,37 @@ function KairyouPage()
     
                 const verificationResult = await verificationResponse.json();
     
-                if (!verificationResult.success) 
-                {
+                if (!verificationResult.success) {
                     throw new Error("Turnstile verification failed");
                 }
-
             }
-            
-            const response = await fetch(getURL("/v1/kairyou"), {
+    
+            const response = await fetch(getURL("/proxy/kairyou"), {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
-                    "X-API-Key": "test"
                 },
                 body: JSON.stringify(data)
             });
-
+    
+            const result = await response.json();
+    
             if (!response.ok) 
             {
-                const result: { message: string } = await response.json();
-                throw new Error("Error Returned: " + result.message);
+                throw new Error(result.message || "An unknown error occurred");
             }
-
-            const result: ResponseValues = await response.json();
+    
             setResponse(result);
-        } 
-        catch (error) 
-        {
+        } catch (error) {
+            console.error("Error Occurred:", error);
+    
             let description = "An error occurred.";
-            if (error instanceof SyntaxError) 
-            {
+            if (error instanceof SyntaxError) {
                 description = "Invalid JSON format.";
-            } 
-            else 
-            {
+            } else {
                 description = (error as Error).message;
             }
-
+    
             toast({
                 title: "An error occurred.",
                 description: description,
@@ -169,6 +159,7 @@ function KairyouPage()
             setResetTurnstile(true); // Reset the Turnstile after processing
         }
     };
+    
 
     const onUpload = async (event: React.ChangeEvent<HTMLInputElement>) => 
     {

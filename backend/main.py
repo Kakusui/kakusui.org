@@ -18,7 +18,22 @@ from kairyou.exceptions import InvalidReplacementJsonKeys, InvalidReplacementJso
 
 import httpx
 
-def get_env_variables():
+##-----------------------------------------start-of-utility-functions----------------------------------------------------------------------------------------------------------------------------------------------------------
+
+def get_url() -> str:
+    if(ENVIRONMENT == "development"):
+        return "http://api.localhost:5000"
+    
+    return "https://api.kakusui.org"
+
+def get_env_variables() -> None:
+
+    """
+    
+    Only used in development. This function reads the .env file and sets the environment variables.
+
+    """
+
     with open(".env") as f:
         for line in f:
             key, value = line.strip().split("=")
@@ -49,6 +64,7 @@ app.add_middleware(
 )
 
 TURNSTILE_SECRET_KEY = os.environ.get("TURNSTILE_SECRET_KEY")
+ENVIRONMENT = os.environ.get("ENVIRONMENT", "development")
 V1_KAIRYOU_ROOT_KEY = os.environ.get("V1_KAIRYOU_ROOT_KEY")
 
 ## Turnstile verification endpoint won't be used if the secret key is not set
@@ -83,7 +99,7 @@ async def kairyou(request_data:KairyouRequest, request:Request):
 
     if(api_key != V1_KAIRYOU_ROOT_KEY):
         return JSONResponse(status_code=401, content={
-            "message": "Invalid API key. If you are actually interesting in using this endpoint, please contact support@kakusui.org."
+            "message": "Invalid API key. If you are actually interested in using this endpoint, please contact support@kakusui.org."
         })
 
     if(len(text_to_preprocess) > 175000):
@@ -119,14 +135,17 @@ async def easytl_warm_up():
 
 ## Turnstile verification endpoint
 @app.post("/verify-turnstile")
-async def verify_turnstile(request: VerifyTurnstileRequest):
+async def verify_turnstile(request_data:VerifyTurnstileRequest, request:Request):
+
+    origin = request.headers.get('origin')
+    if(origin != "https://kakusui.org"):
+        raise HTTPException(status_code=403, detail="Forbidden")
 
     try:
-
         url = "https://challenges.cloudflare.com/turnstile/v0/siteverify"
         data = {
             'secret': TURNSTILE_SECRET_KEY,
-            'response': request.token
+            'response': request_data.token
         }
 
         async with httpx.AsyncClient() as client:
@@ -140,3 +159,21 @@ async def verify_turnstile(request: VerifyTurnstileRequest):
             
     except Exception:
         raise HTTPException(status_code=500, detail="An error occurred while verifying the token")
+
+## Proxy endpoint for Kairyou
+## Used only by Kakusui.org
+@app.post("/proxy/kairyou")
+async def proxy_kairyou(request_data:KairyouRequest, request:Request):
+    origin = request.headers.get('origin')
+
+    if(origin not in ["https://kakusui.org", "http://localhost:5173"]):
+        raise HTTPException(status_code=403, detail="Forbidden")
+
+    async with httpx.AsyncClient() as client:
+        headers = {
+            "Content-Type": "application/json",
+            "X-API-Key": V1_KAIRYOU_ROOT_KEY
+        }
+        response = await client.post(f"{get_url()}/v1/kairyou", json=request_data.model_dump(), headers=headers)
+
+        return JSONResponse(status_code=response.status_code, content=response.json())
