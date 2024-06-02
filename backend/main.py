@@ -4,19 +4,27 @@
 
 ## built-in libraries
 import json
+import os
 
 ## third-party libraries
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
+
 from pydantic import BaseModel
+
 from kairyou import Kairyou
 from kairyou.exceptions import InvalidReplacementJsonKeys, InvalidReplacementJsonName, SpacyModelNotFound
+
+import httpx
 
 ## Define Pydantic models
 class KairyouRequest(BaseModel):
     textToPreprocess: str
     replacementsJson: str
+
+class VerifyTurnstileRequest(BaseModel):
+    token: str
 
 ##-----------------------------------------start-of-main----------------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -32,6 +40,8 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+TURNSTILE_SECRET_KEY = os.environ.get("TURNSTILE_SECRET_KEY")
+
 ## Routes
 
 ## API Endpoints
@@ -39,20 +49,21 @@ app.add_middleware(
 async def api_home():
     return {"message": "Welcome to the API"}
 
+## Kairyou endpoints
+
 @app.get("/v1/kairyou")
-async def warm_up():
+async def kairyou_warm_up():
     return {"message": "Kairyou is running."}
 
 @app.post("/v1/kairyou")
-async def kairyou(request_data:KairyouRequest):
-
-
-    ## kairyou receives a POST request with a JSON payload (textToPreprocess) and (replacementsJson)
-    ## it returns a JSON response with the preprocessed text, preprocessing log, and error log
-    ## Possible status codes: 200, 400, 405, 500, 401
-
+async def kairyou(request_data: KairyouRequest):
     text_to_preprocess = request_data.textToPreprocess
     replacements_json = request_data.replacementsJson
+
+    if(len(text_to_preprocess) > 175000):
+        return JSONResponse(status_code=400, content={
+            "message": "The text to preprocess is too long. Please keep it under 175,000 characters."
+        })
 
     try:
         replacements_json = json.loads(replacements_json)
@@ -74,3 +85,33 @@ async def kairyou(request_data:KairyouRequest):
         return JSONResponse(status_code=500, content={
             "message": "An internal error occurred. Please contact the administrator."
         })
+
+## EasyTL endpoints
+@app.get("/v1/easytl")
+async def easytl_warm_up():
+    return {"message": "The endpoint is still under development."}
+
+## Turnstile verification endpoint
+@app.post("/verify-turnstile")
+async def verify_turnstile(request: VerifyTurnstileRequest):
+
+    try:
+
+        url = "https://challenges.cloudflare.com/turnstile/v0/siteverify"
+        data = {
+            'secret': TURNSTILE_SECRET_KEY,
+            'response': request.token
+        }
+
+        
+        async with httpx.AsyncClient() as client:
+            response = await client.post(url, data=data)
+            result = response.json()
+            
+            if(result.get('success')):
+                return {"success": True}
+            else:
+                raise HTTPException(status_code=400, detail="Turnstile verification failed")
+            
+    except Exception:
+        raise HTTPException(status_code=500, detail="An error occurred while verifying the token")

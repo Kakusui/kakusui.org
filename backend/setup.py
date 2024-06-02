@@ -64,18 +64,16 @@ def setup_local_environment() -> None:
 
     try:
 
-        to_write_frontend = f'VITE_SHOWDEV=false\n'
-
         if(len(sys.argv) > 1 and sys.argv[1] == 'local'):
 
             print("Setting up local environment...")
 
-            to_write_frontend += 'NODE_ENV=development\n'
+            to_write_frontend = 'NODE_ENV=development\n'
         else:
 
             print("Setting up production environment...")
 
-            to_write_frontend += 'NODE_ENV=production\n'
+            to_write_frontend = 'NODE_ENV=production\n'
         
         os.makedirs(os.path.dirname(FRONTEND_ENV), exist_ok=True)
 

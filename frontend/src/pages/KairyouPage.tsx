@@ -1,26 +1,36 @@
+/*
+Copyright Kakusui LLC 2024 (https://kakusui.org) (https://github.com/Kakusui)
+Use of this source code is governed by a GNU Lesser General Public License v2.1
+license that can be found in the LICENSE file.
+*/
+
 import React, { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { getURL } from "../utils";
-import { Box, Button, Center, Flex, FormErrorMessage, FormControl, FormLabel, IconButton, Link, Text, Textarea, useToast } from "@chakra-ui/react";
+import {
+    Box, Button, Flex, FormErrorMessage, FormControl, FormLabel, IconButton, Link, Text, Textarea, useToast, Stack, Center
+} from "@chakra-ui/react";
 import { ArrowUpIcon, DownloadIcon } from "@chakra-ui/icons";
+import Turnstile from "../components/Turnstile";
 
-type FormInput = 
-{
+type FormInput = {
     textToPreprocess: string,
     replacementsJson: string,
-}
+};
 
-type ResponseValues = 
-{
+type ResponseValues = {
     errorLog: string,
     preprocessedText: string,
     preprocessingLog: string,
-}
+};
 
 function KairyouPage() 
 {
     const textRef = React.useRef<HTMLInputElement>(null);
     const jsonRef = React.useRef<HTMLInputElement>(null);
+    const [turnstileToken, setTurnstileToken] = React.useState<string | null>(null);
+    const [isKakusuiDomain, setIsKakusuiDomain] = React.useState<boolean>(false);
+    const [isBlockedDomain, setIsBlockedDomain] = React.useState<boolean>(false);
 
     const { register, handleSubmit, setValue, formState: { isSubmitting, errors } } = useForm<FormInput>();
     const [response, setResponse] = React.useState<ResponseValues>();
@@ -35,19 +45,76 @@ function KairyouPage()
                 await fetch(getURL("/v1/kairyou"), {
                     method: "GET",
                 });
-            } catch (error) 
+            } 
+            catch (error) 
             {
-            
+
             }
         };
 
         warmUpAPI();
+
+        // Check if the current domain is allowed
+        const currentDomain = window.location.hostname;
+        const allowedDomainPattern = /\.kakusui\.org$/;
+        const blockedDomainPattern = /^kakusui-org\.pages\.dev$/;
+
+        if (allowedDomainPattern.test(currentDomain)) 
+        {
+            setIsKakusuiDomain(true);
+        } 
+        else if (blockedDomainPattern.test(currentDomain)) 
+        {
+            setIsBlockedDomain(true);
+        }
     }, []);
 
     const onSubmit = async (data: FormInput) => 
     {
+        if (isBlockedDomain) 
+        {
+            toast({
+                title: "Submission blocked",
+                description: "Form submission is blocked on this domain",
+                status: "error",
+                duration: 5000,
+                isClosable: true,
+            });
+            return;
+        }
+
+        if (isKakusuiDomain && !turnstileToken) 
+        {
+            toast({
+                title: "Verification failed",
+                description: "Please complete the verification",
+                status: "error",
+                duration: 5000,
+                isClosable: true,
+            });
+            return;
+        }
+
         try 
         {
+            if (isKakusuiDomain) 
+            {
+                const verificationResponse = await fetch('http://localhost:5000/verify-turnstile', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ token: turnstileToken })
+                });
+
+                const verificationResult = await verificationResponse.json();
+
+                if (!verificationResult.success) 
+                {
+                    throw new Error("Turnstile verification failed");
+                }
+            }
+
             JSON.parse(data.replacementsJson);
 
             const response = await fetch(getURL("/v1/kairyou"), {
@@ -74,7 +141,7 @@ function KairyouPage()
             if (error instanceof SyntaxError) 
             {
                 description = "Invalid JSON format.";
-            }
+            } 
             else 
             {
                 description = (error as Error).message;
@@ -168,6 +235,10 @@ function KairyouPage()
                     </FormControl>
                 </Flex>
 
+                {isKakusuiDomain && (
+                    <Turnstile siteKey="0x4AAAAAAAbu-SlGyNF03684" onVerify={setTurnstileToken} />
+                )}
+
                 <Button
                     mb={17} mt={17} width='100%' type="submit"
                     bg={'orange.400'}
@@ -241,6 +312,14 @@ function KairyouPage()
                     4. Review the preprocessing log and output, and download if necessary.<br />
                     5. If there are any errors, they will be displayed in the error log.
                 </Text>
+            </Box>
+
+            <Box mt={5} p={2} bg="gray.800">
+                <Stack direction="row">
+                    <Link href="/kairyou/tos" color="orange.400">Terms of Service</Link>
+                    <Link href="/kairyou/privacy" color="orange.400">Privacy Policy</Link>
+                    <Link href="/kairyou/license" color="orange.400">License</Link>
+                </Stack>
             </Box>
         </>
     );
