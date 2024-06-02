@@ -18,6 +18,14 @@ from kairyou.exceptions import InvalidReplacementJsonKeys, InvalidReplacementJso
 
 import httpx
 
+def get_env_variables():
+    with open(".env") as f:
+        for line in f:
+            key, value = line.strip().split("=")
+            os.environ[key] = value
+
+##-----------------------------------------start-of-pydantic-models----------------------------------------------------------------------------------------------------------------------------------------------------------
+
 ## Define Pydantic models
 class KairyouRequest(BaseModel):
     textToPreprocess: str
@@ -44,6 +52,14 @@ app.add_middleware(
 TURNSTILE_SECRET_KEY = os.environ.get("TURNSTILE_SECRET_KEY")
 V1_KAIRYOU_ROOT_KEY = os.environ.get("V1_KAIRYOU_ROOT_KEY")
 
+## Turnstile verification endpoint won't be used if the secret key is not set
+## but for kairyou we need to get it from env if it's not there already (cloudflare pages)
+if(not V1_KAIRYOU_ROOT_KEY):
+    get_env_variables()
+    V1_KAIRYOU_ROOT_KEY = os.environ.get("V1_KAIRYOU_ROOT_KEY")
+
+assert V1_KAIRYOU_ROOT_KEY, "V1_KAIRYOU_ROOT_KEY is not set in the environment variables"
+assert TURNSTILE_SECRET_KEY, "TURNSTILE_SECRET_KEY is not set in the environment variables"
 
 ## Routes
 
@@ -57,6 +73,8 @@ async def api_home():
 @app.get("/v1/kairyou")
 async def kairyou_warm_up():
     return {"message": "Kairyou is running."}
+
+## if and when we ever actually open this up to the public, we will need to add a rate limiter
 
 @app.post("/v1/kairyou")
 async def kairyou(request_data: KairyouRequest):
