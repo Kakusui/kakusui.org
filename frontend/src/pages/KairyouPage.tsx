@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useMemo, useState, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { getURL } from "../utils";
 import {
@@ -20,13 +20,13 @@ type ResponseValues = {
 
 function KairyouPage() 
 {
-    const textRef = React.useRef<HTMLInputElement>(null);
-    const jsonRef = React.useRef<HTMLInputElement>(null);
-    const [turnstileToken, setTurnstileToken] = React.useState<string | null>(null);
-    const [isBlacklistedDomain, setBlacklistedDomain] = React.useState(false);
+    const textRef = useRef<HTMLInputElement>(null);
+    const jsonRef = useRef<HTMLInputElement>(null);
+    const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
+    const [isBlacklistedDomain, setBlacklistedDomain] = useState(false);
 
     const { register, handleSubmit, setValue, formState: { isSubmitting, errors } } = useForm<FormInput>();
-    const [response, setResponse] = React.useState<ResponseValues>();
+    const [response, setResponse] = useState<ResponseValues>();
     const toast = useToast();
 
     useEffect(() => 
@@ -209,6 +209,10 @@ function KairyouPage()
         link.click();
     };
 
+    const memoizedTurnstile = useMemo(() => {
+        return <Turnstile siteKey="0x4AAAAAAAbu-SlGyNF03684" onVerify={onTurnstileVerify} />;
+    }, []);
+
     return (
         <>
             {/* Hidden file inputs. Will allow us to use styled buttons */}
@@ -237,7 +241,7 @@ function KairyouPage()
                 </Flex>
 
                 <Button
-                    mb={17} mt={17} width='100%' type="submit"
+                    mb={4} mt={4} width='100%' type="submit"
                     bg={'orange.400'}
                     color={'white'}
                     _hover={{
@@ -245,13 +249,13 @@ function KairyouPage()
                     }}
                     isLoading={isSubmitting}
                 >Submit</Button>
-                
-                {!isBlacklistedDomain && (
-                    <Center>
-                        <Turnstile siteKey="0x4AAAAAAAbu-SlGyNF03684" onVerify={onTurnstileVerify} />
-                    </Center>
-                )}
             </form>
+
+            {!isBlacklistedDomain && (
+                <Center mt={4}>
+                    {memoizedTurnstile}
+                </Center>
+            )}
 
             {response && (
                 <>
