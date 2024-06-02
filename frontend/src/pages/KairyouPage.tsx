@@ -1,9 +1,3 @@
-/*
-Copyright Kakusui LLC 2024 (https://kakusui.org) (https://github.com/Kakusui)
-Use of this source code is governed by a GNU Lesser General Public License v2.1
-license that can be found in the LICENSE file.
-*/
-
 import React, { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { getURL } from "../utils";
@@ -29,6 +23,7 @@ function KairyouPage()
     const textRef = React.useRef<HTMLInputElement>(null);
     const jsonRef = React.useRef<HTMLInputElement>(null);
     const [turnstileToken, setTurnstileToken] = React.useState<string | null>(null);
+    const [isBlacklistedDomain, setBlacklistedDomain] = React.useState(false);
 
     const { register, handleSubmit, setValue, formState: { isSubmitting, errors } } = useForm<FormInput>();
     const [response, setResponse] = React.useState<ResponseValues>();
@@ -53,14 +48,20 @@ function KairyouPage()
         warmUpAPI();
     }, []);
 
+    useEffect(() => {
+        const currentDomain = window.location.hostname;
+        if (currentDomain === "kakusui-org.pages.dev") {
+            setBlacklistedDomain(true);
+        }
+    }, []);
+
     const onTurnstileVerify = (token: string) => {
         setTurnstileToken(token);
     };
 
     const onSubmit = async (data: FormInput) => 
     {
-        const currentDomain = window.location.hostname;
-        if (currentDomain === "kakusui-org.pages.dev") 
+        if (isBlacklistedDomain) 
         {
             toast({
                 title: "Access Denied",
@@ -245,9 +246,11 @@ function KairyouPage()
                     isLoading={isSubmitting}
                 >Submit</Button>
                 
-                <Center>
-                    <Turnstile siteKey="0x4AAAAAAAbu-SlGyNF03684" onVerify={onTurnstileVerify} />
-                </Center>
+                {!isBlacklistedDomain && (
+                    <Center>
+                        <Turnstile siteKey="0x4AAAAAAAbu-SlGyNF03684" onVerify={onTurnstileVerify} />
+                    </Center>
+                )}
             </form>
 
             {response && (
@@ -293,6 +296,7 @@ function KairyouPage()
                         <Button onClick={() => setResponse(undefined)} mb={17} colorScheme="orange" variant='ghost'>Clear Logs</Button>
                     </Center>
                 </>
+           
             )}
             <Box mt={17} p={4} bg="gray.800" color="gray.500">
                 <Text fontSize="lg" mb={4} color="white">How to Use</Text>
