@@ -22,6 +22,7 @@ import httpx
 class KairyouRequest(BaseModel):
     textToPreprocess: str
     replacementsJson: str
+    apiKey: str
 
 class VerifyTurnstileRequest(BaseModel):
     token: str
@@ -41,6 +42,8 @@ app.add_middleware(
 )
 
 TURNSTILE_SECRET_KEY = os.environ.get("TURNSTILE_SECRET_KEY")
+V1_KAIRYOU_ROOT_KEY = os.environ.get("V1_KAIRYOU_ROOT_KEY")
+
 
 ## Routes
 
@@ -59,6 +62,12 @@ async def kairyou_warm_up():
 async def kairyou(request_data: KairyouRequest):
     text_to_preprocess = request_data.textToPreprocess
     replacements_json = request_data.replacementsJson
+    api_key = request_data.apiKey
+
+    if(api_key != V1_KAIRYOU_ROOT_KEY):
+        return JSONResponse(status_code=401, content={
+            "message": "Invalid API key. If you are actually interesting in using this endpoint, please contact support@kakusui.org."
+        })
 
     if(len(text_to_preprocess) > 175000):
         return JSONResponse(status_code=400, content={
@@ -103,7 +112,6 @@ async def verify_turnstile(request: VerifyTurnstileRequest):
             'response': request.token
         }
 
-        
         async with httpx.AsyncClient() as client:
             response = await client.post(url, data=data)
             result = response.json()
