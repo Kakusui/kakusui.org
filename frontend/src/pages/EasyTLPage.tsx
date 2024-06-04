@@ -26,20 +26,40 @@ import { useState } from "react";
 type FormInput = {
   apiKey: string,
   llm: string,
+  model: string,
   language: string,
   textToTranslate: string,
   tone: string,
 };
 
 function EasyTLPage() {
-  const { register, handleSubmit, formState: { isSubmitting, errors } } = useForm<FormInput>({
+  const { register, handleSubmit, watch, formState: { isSubmitting, errors } } = useForm<FormInput>({
     defaultValues: {
       tone: "Formal Polite",
+      llm: "OpenAI",
+      model: "Dummy openai 1"
     }
   });
 
   const [showApiKey, setShowApiKey] = useState(false);
   const handleToggleShowApiKey = () => setShowApiKey(!showApiKey);
+
+  const selectedLLM = watch("llm");
+
+  const getModelOptions = (llm: string): string[] => {
+switch (llm) {
+      case "OpenAI":
+        return ["Dummy openai 1", "Dummy openai 2"];
+      case "Gemini":
+        return ["Dummy gemini 1", "Dummy gemini 2"];
+      case "Anthropic":
+        return ["Dummy anthropic 1", "Dummy anthropic 2"];
+      default:
+        return [];
+}
+  };
+
+  const modelOptions = getModelOptions(selectedLLM);
 
   const onSubmit = (data: FormInput) => {
     console.log(data);
@@ -70,6 +90,15 @@ function EasyTLPage() {
               <option value="OpenAI">OpenAI</option>
               <option value="Gemini">Gemini</option>
               <option value="Anthropic">Anthropic</option>
+            </Select>
+          </FormControl>
+
+          <FormControl isInvalid={!!errors.model} flex={1}>
+            <FormLabel>Model</FormLabel>
+            <Select {...register("model", { required: true })}>
+              {modelOptions.map((model) => (
+                <option key={model} value={model}>{model}</option>
+              ))}
             </Select>
           </FormControl>
 
