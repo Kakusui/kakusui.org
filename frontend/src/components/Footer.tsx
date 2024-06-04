@@ -27,7 +27,7 @@ function Footer() {
                     <Flex flex={{base: 1}} justify={{base: 'center', md: 'start'}}>
                         <Image src={logo} boxSize='30px'/>
                         <Flex display={{base: 'none', md: 'flex'}} ml={10}>
-                            <Text>© 2024 Kakusui. All rights reserved</Text>
+                            <Text>© 2024 Kakusui LLC. All rights reserved</Text>
                         </Flex>
                     </Flex>
                 </HStack>

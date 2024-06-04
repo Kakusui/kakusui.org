@@ -16,6 +16,8 @@ from pydantic import BaseModel
 from kairyou import Kairyou
 from kairyou.exceptions import InvalidReplacementJsonKeys, InvalidReplacementJsonName, SpacyModelNotFound
 
+from easytl import EasyTL
+
 import httpx
 
 ##-----------------------------------------start-of-utility-functions----------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -43,11 +45,18 @@ def get_env_variables() -> None:
 
 ## Define Pydantic models
 class KairyouRequest(BaseModel):
-    textToPreprocess: str
-    replacementsJson: str
+    textToPreprocess:str
+    replacementsJson:str
 
 class VerifyTurnstileRequest(BaseModel):
-    token: str
+    token:str
+
+class EasyTLRequest(BaseModel):
+    textToTranslate:str
+    translationInstructions:str
+    llmType:str
+    userAPIKey:str
+    model:str
 
 ##-----------------------------------------start-of-main----------------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -65,7 +74,9 @@ app.add_middleware(
 
 TURNSTILE_SECRET_KEY = os.environ.get("TURNSTILE_SECRET_KEY")
 ENVIRONMENT = os.environ.get("ENVIRONMENT", "development")
+
 V1_KAIRYOU_ROOT_KEY = os.environ.get("V1_KAIRYOU_ROOT_KEY")
+V1_EASYTL_ROOT_KEY = os.environ.get("V1_EASYTL_ROOT_KEY")
 
 ## Turnstile verification endpoint won't be used if the secret key is not set
 ## but for kairyou we need to get it from env if it's not there already (cloudflare pages)
@@ -99,7 +110,7 @@ async def kairyou(request_data:KairyouRequest, request:Request):
 
     if(api_key != V1_KAIRYOU_ROOT_KEY):
         return JSONResponse(status_code=401, content={
-            "message": "Invalid API key. If you are actually interested in using this endpoint, please contact support@kakusui.org."
+            "message": "Invalid API key. If you are actually interested in using this endpoint, please contact contact@kakusui.org."
         })
 
     if(len(text_to_preprocess) > 175000):
@@ -127,11 +138,119 @@ async def kairyou(request_data:KairyouRequest, request:Request):
         return JSONResponse(status_code=500, content={
             "message": "An internal error occurred. Please contact the administrator."
         })
+    
+## Proxy endpoint for Kairyou
+## Used only by Kakusui.org and testing environments
+@app.post("/proxy/kairyou")
+async def proxy_kairyou(request_data:KairyouRequest, request:Request):
+    origin = request.headers.get('origin')
+
+    allowed_domains = [
+        "https://kakusui.org", 
+        "http://localhost:5173",
+        ".kakusui-org.pages.dev"
+    ]
+
+    if(origin is not None and not any(origin.endswith(domain) for domain in allowed_domains)):
+        raise HTTPException(status_code=403, detail="Forbidden")
+
+    async with httpx.AsyncClient() as client:
+        headers = {
+            "Content-Type": "application/json",
+            "X-API-Key": V1_KAIRYOU_ROOT_KEY
+        }
+        response = await client.post(f"{get_url()}/v1/kairyou", json=request_data.model_dump(), headers=headers)
+
+        return JSONResponse(status_code=response.status_code, content=response.json())
 
 ## EasyTL endpoints
 @app.get("/v1/easytl")
 async def easytl_warm_up():
-    return {"message": "The endpoint is still under development."}
+    return {"message": "EasyTL is running."}
+
+## if and when we ever actually open this up to the public, we will need to add a rate limiter
+
+@app.post("/v1/easytl")
+async def easytl(request_data:EasyTLRequest, request:Request):
+    text_to_translate = request_data.textToTranslate
+    translation_instructions = request_data.translationInstructions
+    llm_type = request_data.llmType
+    user_api_key = request_data.userAPIKey
+    model = request_data.model.lower()
+
+    api_key = request.headers.get("X-API-Key")
+
+    MAX_TEXT_LENGTH = 10000
+    MAX_INSTRUCTIONS_LENGTH = 1000
+    VALID_LLM_TYPES = ["anthropic", "openai", "gemini"]
+
+    ERRORS = {
+        "invalid_api_key": {"status_code": 401, "message": "Invalid API key. If you are actually interested in using this endpoint, please contact contact@kakusui.org."},
+        "text_too_long": {"status_code": 400, "message": "The text to translate is too long. Please keep it under 10,000 characters."},
+        "instructions_too_long": {"status_code": 400, "message": "The translation instructions are too long. Please keep it under 1,000 characters."},
+        "invalid_llm_type": {"status_code": 400, "message": "Invalid LLM type. Please use 'anthropic', 'openai', or 'gemini'."},
+        "invalid_user_api_key": {"status_code": 401, "message": "Invalid user API key. Please check your credentials."},
+        "internal_error": {"status_code": 500, "message": "An internal error occurred. Please try again later."}
+    }
+
+    if(api_key != V1_EASYTL_ROOT_KEY):
+        return JSONResponse(**ERRORS["invalid_api_key"])
+    
+    if(len(text_to_translate) > MAX_TEXT_LENGTH):
+        return JSONResponse(**ERRORS["text_too_long"])
+    
+    if(len(translation_instructions) > MAX_INSTRUCTIONS_LENGTH):
+        return JSONResponse(**ERRORS["instructions_too_long"])
+        
+    if(llm_type not in VALID_LLM_TYPES):
+        return JSONResponse(**ERRORS["invalid_llm_type"])
+    
+    try:
+        EasyTL.set_credentials(api_type=llm_type, credentials=user_api_key) # type: ignore
+        EasyTL.test_credentials(api_type=llm_type) # type: ignore
+
+    except:
+        return JSONResponse(**ERRORS["invalid_user_api_key"])
+
+    try:
+
+        translated_text = await EasyTL.translate_async(text=text_to_translate, 
+                                                       service=llm_type, # type: ignore 
+                                                       translation_instructions=translation_instructions,
+                                                       model=model
+                                                       ) 
+
+    except:
+        return JSONResponse(**ERRORS["internal_error"])
+
+    return JSONResponse(status_code=200, content={
+        "translatedText": translated_text
+    })
+
+## Proxy endpoint for EasyTL
+## Used only by Kakusui.org and testing environments
+@app.post("/proxy/easytl")
+async def proxy_easytl(request_data:EasyTLRequest, request:Request):
+    origin = request.headers.get('origin')
+
+    allowed_domains = [
+        "https://kakusui.org", 
+        "http://localhost:5173",
+        ".kakusui-org.pages.dev"
+    ]
+
+    if(origin is not None and not any(origin.endswith(domain) for domain in allowed_domains)):
+        raise HTTPException(status_code=403, detail="Forbidden")
+
+    async with httpx.AsyncClient() as client:
+        headers = {
+            "Content-Type": "application/json",
+            "X-API-Key": V1_EASYTL_ROOT_KEY
+        }
+        response = await client.post(f"{get_url()}/v1/easytl", json=request_data.model_dump(), headers=headers)
+
+        return JSONResponse(status_code=response.status_code, content=response.json())
+
 
 ## Turnstile verification endpoint
 @app.post("/verify-turnstile")
@@ -159,27 +278,3 @@ async def verify_turnstile(request_data:VerifyTurnstileRequest, request:Request)
             
     except Exception:
         raise HTTPException(status_code=500, detail="An error occurred while verifying the token")
-
-## Proxy endpoint for Kairyou
-## Used only by Kakusui.org
-@app.post("/proxy/kairyou")
-async def proxy_kairyou(request_data:KairyouRequest, request:Request):
-    origin = request.headers.get('origin')
-
-    allowed_domains = [
-        "https://kakusui.org", 
-        "http://localhost:5173",
-        ".kakusui-org.pages.dev"
-    ]
-
-    if(origin is not None and not any(origin.endswith(domain) for domain in allowed_domains)):
-        raise HTTPException(status_code=403, detail="Forbidden")
-
-    async with httpx.AsyncClient() as client:
-        headers = {
-            "Content-Type": "application/json",
-            "X-API-Key": V1_KAIRYOU_ROOT_KEY
-        }
-        response = await client.post(f"{get_url()}/v1/kairyou", json=request_data.model_dump(), headers=headers)
-
-        return JSONResponse(status_code=response.status_code, content=response.json())
