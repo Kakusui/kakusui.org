@@ -20,9 +20,12 @@ import {
   IconButton,
   useToast,
   Center,
+  Box,
+  Flex,
+  Text,
 } from "@chakra-ui/react";
 
-import { ViewIcon, ViewOffIcon } from "@chakra-ui/icons";
+import { ViewIcon, ViewOffIcon, DownloadIcon } from "@chakra-ui/icons";
 
 import Turnstile from "../components/Turnstile";
 import { getURL } from "../utils";
@@ -35,6 +38,11 @@ type FormInput =
   textToTranslate: string,
   language: string,
   tone: string,
+};
+
+type ResponseValues = 
+{
+  translatedText: string;
 };
 
 function EasyTLPage() 
@@ -51,6 +59,7 @@ function EasyTLPage()
   const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
   const [isBlacklistedDomain, setBlacklistedDomain] = useState(false);
   const [resetTurnstile, setResetTurnstile] = useState(false);
+  const [response, setResponse] = useState<ResponseValues | null>(null);
   const toast = useToast();
 
   useEffect(() => 
@@ -86,7 +95,7 @@ function EasyTLPage()
       case "OpenAI":
         return ["gpt-3.5-turbo", "gpt-4", "gpt-4-turbo", "gpt-4o"];
       case "Gemini":
-        return ["gemini-1.0-pro", "gemini-1.5-pro"]
+        return ["gemini-1.0-pro", "gemini-1.5-pro"];
       case "Anthropic":
         return ["claude-3-haiku-20240307", "claude-3-sonnet-20240229", "claude-3-opus-20240229"];
       default:
@@ -162,7 +171,7 @@ function EasyTLPage()
       const result = await response.json();
       if(!response.ok) throw new Error(result.message || "An unknown error occurred");
 
-      console.log(result);
+      setResponse(result);
     } 
     catch (error) 
     {
@@ -173,6 +182,19 @@ function EasyTLPage()
     {
       setResetTurnstile(true);
     }
+  };
+
+  const downloadOutput = (input: 'translatedText') => 
+  {
+    const content = response?.translatedText;
+    if(!content) return;
+
+    const blob = new Blob([content], { type: "text/plain" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.download = `${input}.txt`;
+    link.href = url;
+    link.click();
   };
 
   const memoizedTurnstile = useMemo(() =>
@@ -253,6 +275,25 @@ function EasyTLPage()
         <Center mt={4}>
           {memoizedTurnstile}
         </Center>
+      )}
+
+      {response && (
+        <>
+          <Flex mt={17} gap={2}>
+            <Box flex={1}>
+              <Text mb="8px">
+                Translated Text
+                <IconButton onClick={() => downloadOutput("translatedText")} variant="ghost" size="xl" aria-label="Download translated text" icon={<DownloadIcon />} />
+              </Text>
+              <Box overflowY="scroll" height={200}>
+                <Text style={{ whiteSpace: "pre-wrap" }}>{response.translatedText}</Text>
+              </Box>
+            </Box>
+          </Flex>
+          <Center>
+            <Button onClick={() => setResponse(null)} mb={17} colorScheme="orange" variant="ghost">Clear Logs</Button>
+          </Center>
+        </>
       )}
     </form>
   );
