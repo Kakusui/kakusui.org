@@ -23,6 +23,7 @@ import {
 import logo from '../assets/images/kakusui_logo.png'
 import okisouchi_sync from '../assets/images/okisouchi_sync_image.png'
 import kairyou_logo from '../assets/images/kairyou_logo.png'
+import easytl_logo from '../assets/images/easytl_logo.png'
 
 // icons
 import {IconBrandGithub} from "@tabler/icons-react";
@@ -31,8 +32,6 @@ import {IconBrandGithub} from "@tabler/icons-react";
 import Feature from "../components/Feature";
 
 function HomePage() {
-
-
     return (
         <>
             <Kakusui/>
@@ -42,10 +41,11 @@ function HomePage() {
                     Applications
                 </AbsoluteCenter>
             </Box>
+            <EasyTL/>
+            <Divider mt={14} variant='dashed'/>
             <Kairyou/>
             <Divider mt={14} variant='dashed'/>
             <Okisouchi/>
-
         </>
     );
 }
@@ -57,16 +57,12 @@ export default HomePage;
 //
 
 function Kakusui() {
-
     return (
         <Stack direction={{base: 'column', md: 'row'}}>
             <Flex p={8} flex={1} align={'center'}>
                 <Stack spacing={6} w={'full'} maxW={'xl'}>
                     <Heading fontSize={{base: '3xl', md: '4xl', lg: '5xl'}}>
-                        <Text
-                            as={'span'}
-                            position={'relative'}
-                        >
+                        <Text as={'span'} position={'relative'}>
                             Kakusui
                         </Text>
                         <br/>{' '}
@@ -120,10 +116,7 @@ function Okisouchi() {
             <Flex p={8} flex={1} align={'center'}>
                 <Stack spacing={6} w={'full'} maxW={'xl'}>
                     <Heading fontSize={{base: '3xl', md: '4xl', lg: '5xl'}}>
-                        <Text
-                            as={'span'}
-                            position={'relative'}
-                        >
+                        <Text as={'span'} position={'relative'}>
                             Okisouchi
                         </Text>
                         <br/>{' '}
@@ -134,7 +127,8 @@ function Okisouchi() {
                     <Text fontSize={{base: 'md', lg: 'lg'}} color={'gray.500'}>
                         Okisouchi is a robust, open-source tool for automating the transfer of files from Google Drive
                         to designated locations, streamlining file management and organization with user-configured
-                        settings while ensuring data privacy and adherence to GPLv3 open-source licensing. </Text>
+                        settings while ensuring data privacy and adherence to GPLv3 open-source licensing.
+                    </Text>
                     <Stack direction={{base: 'column', md: 'row'}} spacing={4}>
                         <Button
                             rounded={'full'}
@@ -145,7 +139,6 @@ function Okisouchi() {
                             }}
                             as='a'
                             href="/okisouchi"
-
                         >
                             See more
                         </Button>
@@ -163,15 +156,12 @@ function Kairyou() {
                 <Flex p={8} flex={1} align={'center'}>
                     <Stack spacing={6} w={'full'} maxW={'xl'}>
                         <Heading fontSize={{base: '3xl', md: '4xl', lg: '5xl'}}>
-                            <Text
-                                as={'span'}
-                                position={'relative'}
-                            >
+                            <Text as={'span'} position={'relative'}>
                                 Kairyou
                             </Text>
                             <br/>{' '}
                             <Text color={'orange.400'} as={'span'}>
-                                Quickly preprocess Japanese text using NLP/NER from SpaCy for Japanese translation or other NLP tasks. 
+                                Quickly preprocess Japanese text using NLP/NER from SpaCy for Japanese translation or other NLP tasks.
                             </Text>{' '}
                         </Heading>
                         <Text fontSize={{base: 'md', lg: 'lg'}} color={'gray.500'}>
@@ -233,6 +223,87 @@ function Kairyou() {
                         color={'gray.500'}
                         heading={'Name Indexing'}
                         text={'Supports name indexing for discovering new named entities, which can be used for other NLP tasks.'}
+                    />
+                </Grid>
+            </Box>
+        </>
+    );
+}
+
+function EasyTL() {
+    return (
+        <>
+            <Stack direction={{base: 'column', md: 'row'}} mt={14}>
+                <Flex flex={1}>
+                    <Image
+                        boxSize={400}
+                        alt={'EasyTL Logo'}
+                        objectFit={'cover'}
+                        src={easytl_logo}
+                    />
+                </Flex>
+                <Flex p={8} flex={1} align={'center'}>
+                    <Stack spacing={6} w={'full'} maxW={'xl'}>
+                        <Heading fontSize={{base: '3xl', md: '4xl', lg: '5xl'}}>
+                            <Text as={'span'} position={'relative'}>
+                                EasyTL
+                            </Text>
+                            <br/>{' '}
+                            <Text color={'orange.400'} as={'span'}>
+                                Simplifying Language Barriers with custom translation using AI and LLMs
+                            </Text>{' '}
+                        </Heading>
+                        <Text fontSize={{base: 'md', lg: 'lg'}} color={'gray.500'}>
+                            EasyTL is a user-friendly translation tool that leverages AI and LLMs to provide high-quality translations across multiple languages.
+                            The only limit to customization is your imagination, making it a versatile tool for all your translation needs.
+                        </Text>
+                        <Stack direction={{base: 'column', md: 'row'}} spacing={4}>
+                            <Button
+                                rounded={'full'}
+                                bg={'orange.400'}
+                                color={'white'}
+                                _hover={{
+                                    bg: 'orange.500',
+                                }}
+                                as='a'
+                                href="/easytl"
+                            >
+                                Try it here
+                            </Button>
+                            <Button as={'a'} href="https://github.com/Bikatr7/EasyTL" leftIcon={<IconBrandGithub/>}
+                                    rounded={'full'}>Github</Button>
+                        </Stack>
+                    </Stack>
+                </Flex>
+            </Stack>
+            <Box as={Container} maxW="7xl" mt={14} p={4}>
+                <Divider mt={12} mb={12}/>
+                <Grid
+                    templateColumns={{
+                        base: 'repeat(1, 1fr)',
+                        sm: 'repeat(2, 1fr)',
+                        md: 'repeat(4, 1fr)',
+                    }}
+                    gap={{base: '8', sm: '12', md: '16'}}>
+                    <Feature
+                        color={'gray.500'}
+                        heading={'Heading 1'}
+                        text={'Text 1'}
+                    />
+                    <Feature
+                        color={'gray.500'}
+                        heading={'Heading 2'}
+                        text={'Text 2'}
+                    />
+                    <Feature
+                        color={'gray.500'}
+                        heading={'Heading 3'}
+                        text={'Text 3'}
+                    />
+                    <Feature
+                        color={'gray.500'}
+                        heading={'Heading 4'}
+                        text={'Text 4'}
                     />
                 </Grid>
             </Box>
