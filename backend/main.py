@@ -176,9 +176,9 @@ async def easytl_warm_up():
 async def easytl(request_data:EasyTLRequest, request:Request):
     text_to_translate = request_data.textToTranslate
     translation_instructions = request_data.translationInstructions
-    llm_type = request_data.llmType
+    llm_type = request_data.llmType.lower()
     user_api_key = request_data.userAPIKey
-    model = request_data.model.lower()
+    model = request_data.model
 
     api_key = request.headers.get("X-API-Key")
 
@@ -244,7 +244,7 @@ async def proxy_easytl(request_data:EasyTLRequest, request:Request):
     if(origin is not None and not any(origin.endswith(domain) for domain in allowed_domains)):
         raise HTTPException(status_code=403, detail="Forbidden")
 
-    async with httpx.AsyncClient() as client:
+    async with httpx.AsyncClient(timeout=None) as client:
         headers = {
             "Content-Type": "application/json",
             "X-API-Key": V1_EASYTL_ROOT_KEY
