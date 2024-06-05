@@ -287,23 +287,23 @@ function EasyTL() {
                     gap={{base: '8', sm: '12', md: '16'}}>
                     <Feature
                         color={'gray.500'}
-                        heading={'Heading 1'}
-                        text={'Text 1'}
+                        heading={'Powered by AI and LLMs'}
+                        text={'EasyTL is powered by AI and LLMs, enabling high-quality superior translations across multiple languages.'}
                     />
                     <Feature
                         color={'gray.500'}
-                        heading={'Heading 2'}
-                        text={'Text 2'}
+                        heading={'Customizable Translation'}
+                        text={'Utilizing the power of AI and LLMs, EasyTL allows customizing translations, you can set the tone, allowing different styles of translation.'}
                     />
                     <Feature
                         color={'gray.500'}
-                        heading={'Heading 3'}
-                        text={'Text 3'}
+                        heading={'Multiple Translation Options'}
+                        text={'EasyTL Utilizes multiple translation options, such as OpenAI, Anthropic, and Gemini, to provide a wide range of translation options.'}
                     />
                     <Feature
                         color={'gray.500'}
-                        heading={'Heading 4'}
-                        text={'Text 4'}
+                        heading={'Quick and Easy to Use'}
+                        text={'EasyTL is user-friendly, making it easy to use, with a simple interface that allows users to quickly translate text.'}
                     />
                 </Grid>
             </Box>

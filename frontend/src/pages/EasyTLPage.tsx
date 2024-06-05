@@ -1,6 +1,6 @@
 /*
 Copyright Kakusui LLC 2024 (https://kakusui.org) (https://github.com/Kakusui)
-Use of this source code is governed by a GNU Lesser General Public License v2.1
+Use of this source code is governed by a GNU General Public License v3.0
 license that can be found in the LICENSE file.
 */
 
@@ -47,7 +47,7 @@ type ResponseValues =
 
 function EasyTLPage() 
 {
-  const { register, handleSubmit, watch, formState: { isSubmitting, errors } } = useForm<FormInput>({
+  const { register, handleSubmit, watch, formState: { isSubmitting, errors }, setValue } = useForm<FormInput>({
     defaultValues: {
       tone: "Formal Polite",
       llmType: "OpenAI",
@@ -60,6 +60,7 @@ function EasyTLPage()
   const [isBlacklistedDomain, setBlacklistedDomain] = useState(false);
   const [resetTurnstile, setResetTurnstile] = useState(false);
   const [response, setResponse] = useState<ResponseValues | null>(null);
+  const [modelOptions, setModelOptions] = useState<string[]>([]);
   const toast = useToast();
 
   useEffect(() => 
@@ -84,9 +85,28 @@ function EasyTLPage()
     setBlacklistedDomain(currentDomain !== "kakusui.org");
   }, []);
 
-  const handleToggleShowApiKey = () => setShowApiKey(!showApiKey);
-
   const selectedLLM = watch("llmType");
+  const selectedModel = watch("model");
+
+  useEffect(() => {
+    const updateModelOptions = () => {
+      const options = getModelOptions(selectedLLM);
+      setModelOptions(options);
+      if (!options.includes(selectedModel)) {
+        setValue("model", options[0]);
+      }
+    };
+
+    const updateApiKey = () => {
+      const savedApiKey = localStorage.getItem(`${selectedLLM}-apiKey`);
+      setValue("userAPIKey", savedApiKey || "");
+    };
+
+    updateModelOptions();
+    updateApiKey();
+  }, [selectedLLM, setValue]);
+
+  const handleToggleShowApiKey = () => setShowApiKey(!showApiKey);
 
   const getModelOptions = (llm: string): string[] => 
   {
@@ -102,8 +122,6 @@ function EasyTLPage()
         return [];
     }
   };
-
-  const modelOptions = getModelOptions(selectedLLM);
 
   const showToast = (title: string, description: string, status: "success" | "error") => 
   {
@@ -158,6 +176,8 @@ function EasyTLPage()
       {
         throw new Error("Turnstile verification failed");
       }
+
+      localStorage.setItem(`${data.llmType}-apiKey`, data.userAPIKey);
 
       const translationInstructions = `Translate to ${data.language} with a ${data.tone} tone.`;
 
