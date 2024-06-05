@@ -31,7 +31,7 @@ def get_url() -> str:
 def get_env_variables() -> None:
 
     """
-    
+
     Only used in development. This function reads the .env file and sets the environment variables.
 
     """
@@ -79,12 +79,14 @@ V1_KAIRYOU_ROOT_KEY = os.environ.get("V1_KAIRYOU_ROOT_KEY")
 V1_EASYTL_ROOT_KEY = os.environ.get("V1_EASYTL_ROOT_KEY")
 
 ## Turnstile verification endpoint won't be used if the secret key is not set
-## but for kairyou we need to get it from env if it's not there already (cloudflare pages)
-if(not V1_KAIRYOU_ROOT_KEY):
+## but for kairyou and easytl we need to get it from env if it's not there already
+if(not V1_KAIRYOU_ROOT_KEY or not V1_EASYTL_ROOT_KEY):
     get_env_variables()
     V1_KAIRYOU_ROOT_KEY = os.environ.get("V1_KAIRYOU_ROOT_KEY")
+    V1_EASYTL_ROOT_KEY = os.environ.get("V1_EASYTL_ROOT_KEY")
 
 assert V1_KAIRYOU_ROOT_KEY, "V1_KAIRYOU_ROOT_KEY is not set in the environment variables"
+assert V1_EASYTL_ROOT_KEY, "V1_EASYTL_ROOT_KEY is not set in the environment variables"
 
 ## Routes
 
@@ -138,7 +140,7 @@ async def kairyou(request_data:KairyouRequest, request:Request):
         return JSONResponse(status_code=500, content={
             "message": "An internal error occurred. Please contact the administrator."
         })
-    
+
 ## Proxy endpoint for Kairyou
 ## Used only by Kakusui.org and testing environments
 @app.post("/proxy/kairyou")
@@ -185,12 +187,12 @@ async def easytl(request_data:EasyTLRequest, request:Request):
     VALID_LLM_TYPES = ["anthropic", "openai", "gemini"]
 
     ERRORS = {
-        "invalid_api_key": {"status_code": 401, "message": "Invalid API key. If you are actually interested in using this endpoint, please contact contact@kakusui.org."},
-        "text_too_long": {"status_code": 400, "message": "The text to translate is too long. Please keep it under 10,000 characters."},
-        "instructions_too_long": {"status_code": 400, "message": "The translation instructions are too long. Please keep it under 1,000 characters."},
-        "invalid_llm_type": {"status_code": 400, "message": "Invalid LLM type. Please use 'anthropic', 'openai', or 'gemini'."},
-        "invalid_user_api_key": {"status_code": 401, "message": "Invalid user API key. Please check your credentials."},
-        "internal_error": {"status_code": 500, "message": "An internal error occurred. Please try again later."}
+        "invalid_api_key": {"status_code": 401, "content": {"message": "Invalid API key. If you are actually interested in using this endpoint, please contact contact@kakusui.org."}},
+        "text_too_long": {"status_code": 400, "content": {"message": "The text to translate is too long. Please keep it under 10,000 characters."}},
+        "instructions_too_long": {"status_code": 400, "content": {"message": "The translation instructions are too long. Please keep it under 1,000 characters."}},
+        "invalid_llm_type": {"status_code": 400, "content": {"message": "Invalid LLM type. Please use 'anthropic', 'openai', or 'gemini'."}},
+        "invalid_user_api_key": {"status_code": 401, "content": {"message": "Invalid user API key. Please check your credentials."}},
+        "internal_error": {"status_code": 500, "content": {"message": "An internal error occurred. Please try again later."}}
     }
 
     if(api_key != V1_EASYTL_ROOT_KEY):
@@ -251,11 +253,9 @@ async def proxy_easytl(request_data:EasyTLRequest, request:Request):
 
         return JSONResponse(status_code=response.status_code, content=response.json())
 
-
 ## Turnstile verification endpoint
 @app.post("/verify-turnstile")
 async def verify_turnstile(request_data:VerifyTurnstileRequest, request:Request):
-
     origin = request.headers.get('origin')
     if(origin != "https://kakusui.org"):
         raise HTTPException(status_code=403, detail="Forbidden")

@@ -29,11 +29,11 @@ import { getURL } from "../utils";
 
 type FormInput = 
 {
-  apiKey: string,
-  llm: string,
+  userAPIKey: string,
+  llmType: string,
   model: string,
-  language: string,
   textToTranslate: string,
+  language: string,
   tone: string,
 };
 
@@ -42,7 +42,7 @@ function EasyTLPage()
   const { register, handleSubmit, watch, formState: { isSubmitting, errors } } = useForm<FormInput>({
     defaultValues: {
       tone: "Formal Polite",
-      llm: "OpenAI",
+      llmType: "OpenAI",
       model: "gpt-3.5-turbo",
     }
   });
@@ -77,7 +77,7 @@ function EasyTLPage()
 
   const handleToggleShowApiKey = () => setShowApiKey(!showApiKey);
 
-  const selectedLLM = watch("llm");
+  const selectedLLM = watch("llmType");
 
   const getModelOptions = (llm: string): string[] => 
   {
@@ -150,11 +150,13 @@ function EasyTLPage()
         throw new Error("Turnstile verification failed");
       }
 
+      const translationInstructions = `Translate to ${data.language} with a ${data.tone} tone.`;
+
       const response = await fetch(getURL("/proxy/easytl"), 
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
+        body: JSON.stringify({ ...data, translationInstructions }),
       });
 
       const result = await response.json();
@@ -196,9 +198,9 @@ function EasyTLPage()
         </FormControl>
 
         <HStack spacing={4}>
-          <FormControl isInvalid={!!errors.llm} flex={1}>
+          <FormControl isInvalid={!!errors.llmType} flex={1}>
             <FormLabel>LLM</FormLabel>
-            <Select {...register("llm", { required: true })}>
+            <Select {...register("llmType", { required: true })}>
               <option value="OpenAI">OpenAI</option>
               <option value="Gemini">Gemini</option>
               <option value="Anthropic">Anthropic</option>
@@ -214,11 +216,11 @@ function EasyTLPage()
             </Select>
           </FormControl>
 
-          <FormControl isInvalid={!!errors.apiKey} flex={1}>
+          <FormControl isInvalid={!!errors.userAPIKey} flex={1}>
             <FormLabel>API Key</FormLabel>
             <InputGroup>
               <Input
-                {...register("apiKey", { required: true })}
+                {...register("userAPIKey", { required: true })}
                 type={showApiKey ? "text" : "password"}
                 placeholder="Enter API key"
               />
