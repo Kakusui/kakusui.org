@@ -23,9 +23,10 @@ import {
   Box,
   Flex,
   Text,
+  Collapse,
 } from "@chakra-ui/react";
 
-import { ViewIcon, ViewOffIcon, DownloadIcon } from "@chakra-ui/icons";
+import { ViewIcon, ViewOffIcon, DownloadIcon, ChevronDownIcon, ChevronUpIcon } from "@chakra-ui/icons";
 
 import Turnstile from "../components/Turnstile";
 import { getURL } from "../utils";
@@ -38,6 +39,7 @@ type FormInput =
   textToTranslate: string,
   language: string,
   tone: string,
+  customInstructions: string,
 };
 
 type ResponseValues = 
@@ -52,6 +54,10 @@ function EasyTLPage()
       tone: "Formal Polite",
       llmType: "OpenAI",
       model: "gpt-3.5-turbo",
+      customInstructions: `You are a professional translator, please translate the text given to you following the below instructions. Do not use quotations or say anything else aside from the translation in your response.
+Language: {{language}}
+Tone: {{tone}}
+      `
     }
   });
 
@@ -61,6 +67,7 @@ function EasyTLPage()
   const [resetTurnstile, setResetTurnstile] = useState(false);
   const [response, setResponse] = useState<ResponseValues | null>(null);
   const [modelOptions, setModelOptions] = useState<string[]>([]);
+  const [isAdvancedSettingsVisible, setAdvancedSettingsVisible] = useState(false);
   const toast = useToast();
 
   useEffect(() => 
@@ -154,6 +161,12 @@ function EasyTLPage()
     }
   };
 
+  const validateInstructions = (instructions: string) => 
+  {
+    const requiredPlaceholders = ["{{language}}", "{{tone}}"];
+    return requiredPlaceholders.every(placeholder => instructions.includes(placeholder));
+  };
+
   const onSubmit = async (data: FormInput) => 
   {
     setResetTurnstile(false);
@@ -170,6 +183,11 @@ function EasyTLPage()
       return;
     }
 
+    if (!validateInstructions(data.customInstructions)) {
+      showToast("Invalid Instructions", "Instructions must include {{language}} and {{tone}} placeholders.", "error");
+      return;
+    }
+
     try 
     {
       if(window.location.hostname === "kakusui.org" && !(await handleVerification()))
@@ -179,11 +197,7 @@ function EasyTLPage()
 
       localStorage.setItem(`${data.llmType}-apiKey`, data.userAPIKey);
 
-      const translationInstructions = `
-      You are a professional translator, please translate the text given to you following the below instructions. Do not use quotations or say anything else aside from the translation in your response.
-      Language: ${data.language}
-      Tone: ${data.tone}
-      `;
+      const translationInstructions = data.customInstructions.replace("{{language}}", data.language).replace("{{tone}}", data.tone);
 
       const response = await fetch(getURL("/proxy/easytl"), 
       {
@@ -281,6 +295,34 @@ function EasyTLPage()
             </InputGroup>
           </FormControl>
         </HStack>
+
+        <Box width="100%">
+          <Button 
+            mt={4} 
+            width="100%" 
+            variant="outline" 
+            leftIcon={isAdvancedSettingsVisible ? <ChevronUpIcon /> : <ChevronDownIcon />}
+            onClick={() => setAdvancedSettingsVisible(!isAdvancedSettingsVisible)}
+          >
+            Advanced Settings
+          </Button>
+          <Collapse in={isAdvancedSettingsVisible} animateOpacity>
+            <FormControl mt={4} isInvalid={!!errors.customInstructions}>
+              <FormLabel>Custom Instructions</FormLabel>
+              <Textarea
+                {...register("customInstructions", { 
+                  required: true, 
+                  validate: validateInstructions 
+                })} 
+                placeholder="Enter custom instructions with placeholders {{language}} and {{tone}}"
+                rows={6}
+              />
+              <Text color="red.500" fontSize="sm" mt={2}>
+                {errors.customInstructions && "Instructions must include {{language}} and {{tone}} placeholders."}
+              </Text>
+            </FormControl>
+          </Collapse>
+        </Box>
 
         <Button
           mt={4}
