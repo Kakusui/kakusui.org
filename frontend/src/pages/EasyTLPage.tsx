@@ -25,6 +25,8 @@ import {
   Text,
   Collapse,
   useClipboard,
+  Link,
+  Stack,
 } from "@chakra-ui/react";
 
 import { ViewIcon, ViewOffIcon, DownloadIcon, ChevronDownIcon, ChevronUpIcon, CopyIcon, ArrowUpDownIcon, CheckIcon } from "@chakra-ui/icons";
@@ -71,7 +73,7 @@ Tone: {{tone}}
   const [isAdvancedSettingsVisible, setAdvancedSettingsVisible] = useState(false);
   const [copyIcon, setCopyIcon] = useState(<CopyIcon />);
   const toast = useToast();
-  const { onCopy} = useClipboard(response?.translatedText || "");
+  const { onCopy } = useClipboard(response?.translatedText || "");
 
   useEffect(() => 
   {
@@ -278,135 +280,176 @@ Tone: {{tone}}
   , [resetTurnstile]);
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)}>
-      <VStack spacing={4} align="stretch">
-        <FormControl isInvalid={!!errors.language}>
-          <FormLabel>Language</FormLabel>
-          <Input {...register("language", { required: true })} placeholder="Enter language" />
-        </FormControl>
-
-        <FormControl isInvalid={!!errors.textToTranslate}>
-          <FormLabel>Text to Translate</FormLabel>
-          <Textarea 
-            {...register("textToTranslate", { required: true })} 
-            placeholder="Enter text to translate" 
-            rows={5} 
-          />
-          <Button onClick={handlePaste} mt={2} width="100%">Paste</Button>
-        </FormControl>
-
-        <FormControl isInvalid={!!errors.tone}>
-          <FormLabel>Tone</FormLabel>
-          <Textarea {...register("tone", { required: true })} placeholder="Enter tone" rows={2} />
-        </FormControl>
-
-        <HStack spacing={4}>
-          <FormControl isInvalid={!!errors.llmType} flex={1}>
-            <FormLabel>LLM</FormLabel>
-            <Select {...register("llmType", { required: true })}>
-              <option value="OpenAI">OpenAI</option>
-              <option value="Gemini">Gemini</option>
-              <option value="Anthropic">Anthropic</option>
-            </Select>
+    <>
+      <form onSubmit={handleSubmit(onSubmit)}>
+        <VStack spacing={4} align="stretch">
+          <FormControl isInvalid={!!errors.language}>
+            <FormLabel>Language</FormLabel>
+            <Input {...register("language", { required: true })} placeholder="Enter language" />
           </FormControl>
 
-          <FormControl isInvalid={!!errors.model} flex={1}>
-            <FormLabel>Model</FormLabel>
-            <Select {...register("model", { required: true })}>
-              {modelOptions.map((model) => (
-                <option key={model} value={model}>{model}</option>
-              ))}
-            </Select>
+          <FormControl isInvalid={!!errors.textToTranslate}>
+            <FormLabel>Text to Translate</FormLabel>
+            <Textarea 
+              {...register("textToTranslate", { required: true })} 
+              placeholder="Enter text to translate" 
+              rows={5} 
+            />
+            <Button onClick={handlePaste} mt={2} width="100%">Paste</Button>
           </FormControl>
 
-          <FormControl isInvalid={!!errors.userAPIKey} flex={1}>
-            <FormLabel>API Key</FormLabel>
-            <InputGroup>
-              <Input
-                {...register("userAPIKey", { required: true })}
-                type={showApiKey ? "text" : "password"}
-                placeholder="Enter API key"
-              />
-              <InputRightElement>
-                <IconButton
-                  aria-label={showApiKey ? "Hide API key" : "Show API key"}
-                  icon={showApiKey ? <ViewOffIcon /> : <ViewIcon />}
-                  onClick={handleToggleShowApiKey}
-                  variant="ghost"
-                />
-              </InputRightElement>
-            </InputGroup>
+          <FormControl isInvalid={!!errors.tone}>
+            <FormLabel>Tone</FormLabel>
+            <Textarea {...register("tone", { required: true })} placeholder="Enter tone" rows={2} />
           </FormControl>
-        </HStack>
 
-        <Box width="100%">
-          <Button 
-            mt={4} 
-            width="100%" 
-            variant="outline" 
-            leftIcon={isAdvancedSettingsVisible ? <ChevronUpIcon /> : <ChevronDownIcon />}
-            onClick={() => setAdvancedSettingsVisible(!isAdvancedSettingsVisible)}
-          >
-            Advanced Settings
-          </Button>
-          <Collapse in={isAdvancedSettingsVisible} animateOpacity>
-            <FormControl mt={4} isInvalid={!!errors.customInstructions}>
-              <FormLabel>Custom Instructions</FormLabel>
-              <Textarea
-                {...register("customInstructions", { 
-                  required: true, 
-                  validate: validateInstructions 
-                })} 
-                placeholder="Enter custom instructions with placeholders {{language}} and {{tone}}"
-                rows={6}
-              />
-              <Text color="red.500" fontSize="sm" mt={2}>
-                {errors.customInstructions && "Instructions must include {{language}} and {{tone}} placeholders."}
-              </Text>
+          <HStack spacing={4}>
+            <FormControl isInvalid={!!errors.llmType} flex={1}>
+              <FormLabel>LLM</FormLabel>
+              <Select {...register("llmType", { required: true })}>
+                <option value="OpenAI">OpenAI</option>
+                <option value="Gemini">Gemini</option>
+                <option value="Anthropic">Anthropic</option>
+              </Select>
             </FormControl>
-          </Collapse>
-        </Box>
 
-        <Button
-          mt={4}
-          width="100%"
-          type="submit"
-          bg="orange.400"
-          color="white"
-          _hover={{ bg: 'orange.500' }}
-          isLoading={isSubmitting}
-        >
-          Submit
-        </Button>
-      </VStack>
+            <FormControl isInvalid={!!errors.model} flex={1}>
+              <FormLabel>Model</FormLabel>
+              <Select {...register("model", { required: true })}>
+                {modelOptions.map((model) => (
+                  <option key={model} value={model}>{model}</option>
+                ))}
+              </Select>
+            </FormControl>
 
-      {!isBlacklistedDomain && (
-        <Center mt={4}>
-          {memoizedTurnstile}
-        </Center>
-      )}
+            <FormControl isInvalid={!!errors.userAPIKey} flex={1}>
+              <FormLabel>API Key</FormLabel>
+              <InputGroup>
+                <Input
+                  {...register("userAPIKey", { required: true })}
+                  type={showApiKey ? "text" : "password"}
+                  placeholder="Enter API key"
+                />
+                <InputRightElement>
+                  <IconButton
+                    aria-label={showApiKey ? "Hide API key" : "Show API key"}
+                    icon={showApiKey ? <ViewOffIcon /> : <ViewIcon />}
+                    onClick={handleToggleShowApiKey}
+                    variant="ghost"
+                  />
+                </InputRightElement>
+              </InputGroup>
+            </FormControl>
+          </HStack>
 
-      {response && (
-        <>
-          <Flex align="center" mt={17} gap={2}>
-            <Box flex={1}>
-              <Text mb="8px">
-                Translated Text
-                <IconButton onClick={() => downloadOutput("translatedText")} variant="ghost" size="xl" aria-label="Download translated text" icon={<DownloadIcon />} />
-                <IconButton ml={1.5} onClick={handleCopy} variant="ghost" size="xl" aria-label="Copy translated text" icon={copyIcon} />
-              </Text>
-              <Box overflowY="scroll" height={200}>
-                <Text style={{ whiteSpace: "pre-wrap" }}>{response.translatedText}</Text>
-              </Box>
-            </Box>
-            <IconButton onClick={handleSwap} variant="ghost" size="xl" aria-label="Swap text" icon={<ArrowUpDownIcon />} />
-          </Flex>
-          <Center>
-            <Button onClick={() => setResponse(null)} mb={17} colorScheme="orange" variant="ghost">Clear Logs</Button>
+          <Box width="100%">
+            <Button 
+              mt={4} 
+              width="100%" 
+              variant="outline" 
+              leftIcon={isAdvancedSettingsVisible ? <ChevronUpIcon /> : <ChevronDownIcon />}
+              onClick={() => setAdvancedSettingsVisible(!isAdvancedSettingsVisible)}
+            >
+              Advanced Settings
+            </Button>
+            <Collapse in={isAdvancedSettingsVisible} animateOpacity>
+              <FormControl mt={4} isInvalid={!!errors.customInstructions}>
+                <FormLabel>Custom Instructions</FormLabel>
+                <Textarea
+                  {...register("customInstructions", { 
+                    required: true, 
+                    validate: validateInstructions 
+                  })} 
+                  placeholder="Enter custom instructions with placeholders {{language}} and {{tone}}"
+                  rows={6}
+                />
+                <Text color="red.500" fontSize="sm" mt={2}>
+                  {errors.customInstructions && "Instructions must include {{language}} and {{tone}} placeholders."}
+                </Text>
+              </FormControl>
+            </Collapse>
+          </Box>
+
+          <Button
+            mt={4}
+            width="100%"
+            type="submit"
+            bg="orange.400"
+            color="white"
+            _hover={{ bg: 'orange.500' }}
+            isLoading={isSubmitting}
+          >
+            Submit
+          </Button>
+        </VStack>
+
+        {!isBlacklistedDomain && (
+          <Center mt={4}>
+            {memoizedTurnstile}
           </Center>
-        </>
-      )}
-    </form>
+        )}
+
+        {response && (
+          <>
+            <Flex align="center" mt={17} gap={2}>
+              <Box flex={1}>
+                <Text mb="8px">
+                  Translated Text
+                  <IconButton onClick={() => downloadOutput("translatedText")} variant="ghost" size="xl" aria-label="Download translated text" icon={<DownloadIcon />} />
+                  <IconButton ml={1.5} onClick={handleCopy} variant="ghost" size="xl" aria-label="Copy translated text" icon={copyIcon} />
+                </Text>
+                <Box overflowY="scroll" height={200}>
+                  <Text style={{ whiteSpace: "pre-wrap" }}>{response.translatedText}</Text>
+                </Box>
+              </Box>
+              <IconButton onClick={handleSwap} variant="ghost" size="xl" aria-label="Swap text" icon={<ArrowUpDownIcon />} />
+            </Flex>
+            <Center>
+              <Button onClick={() => setResponse(null)} mb={17} colorScheme="orange" variant="ghost">Clear Logs</Button>
+            </Center>
+          </>
+        )}
+      </form>
+
+      <Box mt={17} p={4} bg="gray.800" color="gray.500">
+        <Text fontSize="lg" mb={4} color="white">How to Use</Text>
+        <Text mb={2}>
+          Please note that EasyTL is originally a python package, Kakusui provides this GUI for easy access to the tool.
+          For more info on EasyTL please visit the <Link href="https://github.com/Bikatr7/Kairyou" color="orange.400" isExternal>Package GitHub repository README</Link>.
+        </Text>
+        <Text mb={2}>
+          EasyTL is a tool for translating text using various language models. You can input text directly, specify the translation instructions, and the tool will return the translated text.
+        </Text>
+        <Text>
+          Follow these steps:
+        </Text>
+        <Text>
+          1. Input the text you want to translate.<br />
+          2. Specify the language and tone for the translation.<br />
+          3. Select the LLM and model you want to use.<br />
+          4. Provide your API key.<br />
+          5. Click "Submit" to get the translated text.<br />
+          6. Review the translated text and download or copy if necessary.<br />
+        </Text>
+        <Text mt={2}>
+          Please note that the Turnstile verification is required to use this tool. This is in place to prevent abuse and ensure fair usage. You must complete the verification for every submission.
+        </Text>
+        <Text mt={2}>
+          The EasyTL endpoint access is provided for free here, but please be mindful of the usage and do not abuse the service.
+        </Text>
+        <Text mt={2}>
+          If you wish to actually directly use the endpoint, We'd be interested, contact us at <Link href="mailto:contact@kakusui.org" color="orange.400">contact@kakusui.org</Link>.
+        </Text>
+      </Box>
+
+      <Box mt={5} p={2} bg="gray.800">
+        <Stack direction="row">
+          <Link href="/easytl/tos" color="orange.400">Terms of Service</Link>
+          <Link href="/easytl/privacy" color="orange.400">Privacy Policy</Link>
+          <Link href="/easytl/license" color="orange.400">License</Link>
+        </Stack>
+      </Box>
+    </>
   );
 }
 

@@ -25,7 +25,7 @@ const KairyouPrivacyPolicyPage: React.FC = () => {
 
             <Heading as="h2" size="md" mt={4} mb={2}>3. Data Usage</Heading>
             <Text mb={4}>
-                The Kairyou endpoint and it's page on our itself website collect no data nor logs. Data is limited to what is used for functionality only, and no data is shared ever.
+                The Kairyou endpoint and it's page on our website collects no data nor logs outside of standard endpoint interactions, which contain no info aside from HTTP error codes. Data is limited to what is used for functionality only, and no data is shared ever.
             </Text>
 
             <Heading as="h2" size="md" mt={4} mb={2}>4. Data Encryption</Heading>
@@ -49,7 +49,13 @@ const KairyouPrivacyPolicyPage: React.FC = () => {
             </Text>
 
             <Text mt={4} fontSize="sm" color="gray.500">
-                Last updated: 2024-06-01
+                Last updated: 2024-06-06
+            </Text>
+
+            <Text mt={4} fontSize="sm" color="gray.500">
+                Changelog: <br />
+                2024-06-06: Slight wording changes to clarify the lack of data collection & typo fixes. <br />
+                2024-06-01: Initial version.
             </Text>
 
             <Box mt={4}>
