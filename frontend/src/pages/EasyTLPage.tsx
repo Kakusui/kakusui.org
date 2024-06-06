@@ -24,9 +24,10 @@ import {
   Flex,
   Text,
   Collapse,
+  useClipboard,
 } from "@chakra-ui/react";
 
-import { ViewIcon, ViewOffIcon, DownloadIcon, ChevronDownIcon, ChevronUpIcon } from "@chakra-ui/icons";
+import { ViewIcon, ViewOffIcon, DownloadIcon, ChevronDownIcon, ChevronUpIcon, CopyIcon, ArrowUpDownIcon, CheckIcon } from "@chakra-ui/icons";
 
 import Turnstile from "../components/Turnstile";
 import { getURL } from "../utils";
@@ -49,7 +50,7 @@ type ResponseValues =
 
 function EasyTLPage() 
 {
-  const { register, handleSubmit, watch, formState: { isSubmitting, errors }, setValue } = useForm<FormInput>({
+  const { register, handleSubmit, watch, formState: { isSubmitting, errors }, setValue, getValues } = useForm<FormInput>({
     defaultValues: {
       tone: "Formal Polite",
       llmType: "OpenAI",
@@ -68,7 +69,9 @@ Tone: {{tone}}
   const [response, setResponse] = useState<ResponseValues | null>(null);
   const [modelOptions, setModelOptions] = useState<string[]>([]);
   const [isAdvancedSettingsVisible, setAdvancedSettingsVisible] = useState(false);
+  const [copyIcon, setCopyIcon] = useState(<CopyIcon />);
   const toast = useToast();
+  const { onCopy} = useClipboard(response?.translatedText || "");
 
   useEffect(() => 
   {
@@ -91,6 +94,16 @@ Tone: {{tone}}
     const currentDomain = window.location.hostname;
     setBlacklistedDomain(currentDomain !== "kakusui.org");
   }, []);
+
+  useEffect(() => {
+    const savedTone = localStorage.getItem('tone');
+    const savedLanguage = localStorage.getItem('language');
+    const savedCustomInstructions = localStorage.getItem('customInstructions');
+    
+    if (savedTone) setValue('tone', savedTone);
+    if (savedLanguage) setValue('language', savedLanguage);
+    if (savedCustomInstructions) setValue('customInstructions', savedCustomInstructions);
+  }, [setValue]);
 
   const selectedLLM = watch("llmType");
   const selectedModel = watch("model");
@@ -196,6 +209,9 @@ Tone: {{tone}}
       }
 
       localStorage.setItem(`${data.llmType}-apiKey`, data.userAPIKey);
+      localStorage.setItem('tone', data.tone);
+      localStorage.setItem('language', data.language);
+      localStorage.setItem('customInstructions', data.customInstructions);
 
       const translationInstructions = data.customInstructions.replace("{{language}}", data.language).replace("{{tone}}", data.tone);
 
@@ -235,6 +251,28 @@ Tone: {{tone}}
     link.click();
   };
 
+  const handlePaste = async () => {
+    try {
+      const text = await navigator.clipboard.readText();
+      setValue("textToTranslate", text);
+    } catch (error) {
+      showToast("Error", "Failed to read clipboard contents", "error");
+    }
+  };
+
+  const handleSwap = () => {
+    const currentInput = getValues("textToTranslate");
+    const currentOutput = response?.translatedText || "";
+    setValue("textToTranslate", currentOutput);
+    setResponse({ translatedText: currentInput });
+  };
+
+  const handleCopy = () => {
+    onCopy();
+    setCopyIcon(<CheckIcon color="green.500" />);
+    setTimeout(() => setCopyIcon(<CopyIcon />), 2000);
+  };
+
   const memoizedTurnstile = useMemo(() =>
     <Turnstile siteKey="0x4AAAAAAAbu-SlGyNF03684" onVerify={setTurnstileToken} resetKey={resetTurnstile} />
   , [resetTurnstile]);
@@ -249,7 +287,12 @@ Tone: {{tone}}
 
         <FormControl isInvalid={!!errors.textToTranslate}>
           <FormLabel>Text to Translate</FormLabel>
-          <Textarea {...register("textToTranslate", { required: true })} placeholder="Enter text to translate" rows={5} />
+          <Textarea 
+            {...register("textToTranslate", { required: true })} 
+            placeholder="Enter text to translate" 
+            rows={5} 
+          />
+          <Button onClick={handlePaste} mt={2} width="100%">Paste</Button>
         </FormControl>
 
         <FormControl isInvalid={!!errors.tone}>
@@ -345,16 +388,18 @@ Tone: {{tone}}
 
       {response && (
         <>
-          <Flex mt={17} gap={2}>
+          <Flex align="center" mt={17} gap={2}>
             <Box flex={1}>
               <Text mb="8px">
                 Translated Text
                 <IconButton onClick={() => downloadOutput("translatedText")} variant="ghost" size="xl" aria-label="Download translated text" icon={<DownloadIcon />} />
+                <IconButton ml={1.5} onClick={handleCopy} variant="ghost" size="xl" aria-label="Copy translated text" icon={copyIcon} />
               </Text>
               <Box overflowY="scroll" height={200}>
                 <Text style={{ whiteSpace: "pre-wrap" }}>{response.translatedText}</Text>
               </Box>
             </Box>
+            <IconButton onClick={handleSwap} variant="ghost" size="xl" aria-label="Swap text" icon={<ArrowUpDownIcon />} />
           </Flex>
           <Center>
             <Button onClick={() => setResponse(null)} mb={17} colorScheme="orange" variant="ghost">Clear Logs</Button>
