@@ -195,6 +195,15 @@ async def easytl(request_data:EasyTLRequest, request:Request):
         "internal_error": {"status_code": 500, "content": {"message": "An internal error occurred. Please try again later."}}
     }
 
+    ## these models don't listen to translation instructions well, so we need to do something different
+    ## what we do is put the instructions in the text to translate
+    unsophisticated_models_whitelist = [
+        "gpt-3.5-turbo",
+        "claude-3-haiku-20240307", 
+        "claude-3-sonnet-20240229", 
+        "claude-3-opus-20240229"
+    ]
+
     if(api_key != V1_EASYTL_ROOT_KEY):
         return JSONResponse(**ERRORS["invalid_api_key"])
     
@@ -215,6 +224,10 @@ async def easytl(request_data:EasyTLRequest, request:Request):
         return JSONResponse(**ERRORS["invalid_user_api_key"])
 
     try:
+
+        if(model in unsophisticated_models_whitelist):
+            text_to_translate = f"{translation_instructions}\n{text_to_translate}"
+            translation_instructions = "Your instructions are in the other text."
 
         translated_text = await EasyTL.translate_async(text=text_to_translate, 
                                                        service=llm_type, # type: ignore 

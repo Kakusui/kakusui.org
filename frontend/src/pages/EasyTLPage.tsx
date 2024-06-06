@@ -179,7 +179,11 @@ function EasyTLPage()
 
       localStorage.setItem(`${data.llmType}-apiKey`, data.userAPIKey);
 
-      const translationInstructions = `Translate to ${data.language} with a ${data.tone} tone.`;
+      const translationInstructions = `
+      You are a professional translator, please translate the text given to you following the below instructions. Do not use quotations or say anything else aside from the translation in your response.
+      Language: ${data.language}
+      Tone: ${data.tone}
+      `;
 
       const response = await fetch(getURL("/proxy/easytl"), 
       {
