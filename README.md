@@ -31,11 +31,11 @@ npm 10.8.0
 ## **Python Requirements**<a name="python-requirements"></a>
 fastapi==0.110.3
 
-kairyou==1.6.1
+kairyou==1.6.2
 
 uvicorn==0.30.0
 
-ja-core-news-lg==3.7.0 (this is not a pip package, it is a spacy model) Must be installed via spacy.
+ja-core-news-lg==3.7.0 (this is not a pip package, it is a spacy model) Must be installed via spacy. (Done in setup.py)
 
 httpx==0.25.1
 
@@ -50,7 +50,7 @@ See `frontend/package.json` for a list of node requirements.
 1. Clone the repo, make sure you are using the correct branch (currently `production`)
 2. Navigate to the `backend` directory. `cd backend`. Inside is the python backend.
 3. Run the setup script with the local argument. This will install all requirements and setup the local env `python setup.py local`.
-4. Run the server. For local `uvicorn main:app --reload --port 5000` 
+4. Run the server. For local `uvicorn main:app --reload --port 5000 --workers 2 --limit-max-requests 25`
 5. Open a new terminal and navigate to the `frontend` directory. `cd frontend`. Inside is the react (vite) frontend.
 6. First install all required packages, these are in `package.json`. Do `npm i`. Then run the dev server with `npm run dev`
 7. Website will be on localhost:5173 (frontend) and localhost:5000 (backend)

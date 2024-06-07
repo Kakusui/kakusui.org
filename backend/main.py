@@ -156,7 +156,7 @@ async def proxy_kairyou(request_data:KairyouRequest, request:Request):
     if(origin is not None and not any(origin.endswith(domain) for domain in allowed_domains)):
         raise HTTPException(status_code=403, detail="Forbidden")
 
-    async with httpx.AsyncClient() as client:
+    async with httpx.AsyncClient(timeout=None) as client:
         headers = {
             "Content-Type": "application/json",
             "X-API-Key": V1_KAIRYOU_ROOT_KEY
@@ -280,7 +280,7 @@ async def verify_turnstile(request_data:VerifyTurnstileRequest, request:Request)
             'response': request_data.token
         }
 
-        async with httpx.AsyncClient() as client:
+        async with httpx.AsyncClient(timeout=None) as client:
             response = await client.post(url, data=data)
             result = response.json()
             
