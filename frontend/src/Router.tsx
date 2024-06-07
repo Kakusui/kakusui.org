@@ -9,6 +9,9 @@ import {createBrowserRouter, RouterProvider} from 'react-router-dom';
 import HomePage from "./pages/HomePage.tsx";
 
 import EasyTLPage from './pages/EasyTLPage.tsx';
+import EasyTLTermsOfServicePage from './pages/easytl_mds/EasyTLTosPage.tsx';
+import EasyTLPrivacyPolicyPage from './pages/easytl_mds/EasyTLPrivacyPolicyPage.tsx';
+import EasyTLLicensePage from './pages/easytl_mds/EasyTLLicensePage.tsx';
 
 import KairyouPage from "./pages/KairyouPage.tsx";
 import KairyouTermsOfServicePage from './pages/kairyou_mds/KairyouTosPage.tsx';
@@ -27,6 +30,9 @@ import InternalErrorPage from './pages/error_pages/500.tsx';
 const routes = [
     { path: '/', element: <HomePage/> },
     { path: '/easytl', element: <EasyTLPage/> },
+    { path: '/easytl/tos', element: <EasyTLTermsOfServicePage/> },
+    { path: '/easytl/privacy', element: <EasyTLPrivacyPolicyPage/> },
+    { path: '/easytl/license', element: <EasyTLLicensePage/> },
     { path: '/kairyou', element: <KairyouPage/> },
     { path: '/kairyou/tos', element: <KairyouTermsOfServicePage/> },
     { path: '/kairyou/privacy', element: <KairyouPrivacyPolicyPage/> },
