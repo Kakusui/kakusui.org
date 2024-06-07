@@ -14,9 +14,14 @@ import Turnstile from "../components/Turnstile";
 
 // chakra things
 import {
-    Box, Button, Flex, FormErrorMessage, FormControl, FormLabel, IconButton, Link, Text, Textarea, useToast, Stack, Center
+    Box, Button, Flex, FormErrorMessage, FormControl, FormLabel, IconButton, Text, Textarea, useToast, Center
 } from "@chakra-ui/react";
-import { ArrowUpIcon, DownloadIcon } from "@chakra-ui/icons";
+import { ArrowUpIcon } from "@chakra-ui/icons";
+
+import CopyButton from "../components/CopyButton";
+import DownloadButton from "../components/DownloadButton";
+import HowToUseSection from "../components/HowToUseSection";
+import LegalLinks from "../components/LegalLinks";
 
 type FormInput = 
 {
@@ -170,19 +175,6 @@ function KairyouPage()
         fileTypeHandlers[file.type]?.(input);
     };
 
-    const downloadOutput = (input: 'preprocessing_log' | 'preprocessedText') => 
-    {
-        const content = input === 'preprocessing_log' ? response?.preprocessingLog : response?.preprocessedText;
-        if(!content) return;
-
-        const blob = new Blob([content], { type: "text/plain" });
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement("a");
-        link.download = `${input}.txt`;
-        link.href = url;
-        link.click();
-    };
-
     const memoizedTurnstile = useMemo(() => 
     (
         <Turnstile siteKey="0x4AAAAAAAbu-SlGyNF03684" onVerify={onTurnstileVerify} resetKey={resetTurnstile} />
@@ -234,7 +226,8 @@ function KairyouPage()
                         <Box flex={1}>
                             <Text mb="8px">
                                 Preprocessing Log
-                                <IconButton onClick={() => downloadOutput("preprocessing_log")} variant="ghost" size="xl" aria-label="Download preprocessing log" icon={<DownloadIcon />} />
+                                <DownloadButton text={response.preprocessingLog} fileName="preprocessing_log" />
+                                <CopyButton text={response.preprocessingLog} />
                             </Text>
                             <Box overflowY="scroll" height={200}>
                                 <Text style={{ whiteSpace: "pre-wrap" }}>{response.preprocessingLog}</Text>
@@ -251,7 +244,8 @@ function KairyouPage()
                             <Box flex={1}>
                                 <Text mb="8px">
                                     Output
-                                    <IconButton onClick={() => downloadOutput("preprocessedText")} variant="ghost" size="xl" aria-label="Download output" icon={<DownloadIcon />} />
+                                    <DownloadButton text={response.preprocessedText} fileName="preprocessedText" />
+                                    <CopyButton text={response.preprocessedText} />
                                 </Text>
                                 <Box overflowY="scroll" height={200}>
                                     <Text style={{ whiteSpace: "pre-wrap" }}>{response.preprocessedText}</Text>
@@ -265,46 +259,23 @@ function KairyouPage()
                 </>
             )}
 
-            <Box mt={17} p={4} bg="gray.800" color="gray.500">
-                <Text fontSize="lg" mb={4} color="white">How to Use</Text>
-                <Text mb={2}>
-                    For detailed usage instructions, please visit the <Link href="https://github.com/Bikatr7/Kairyou" color="orange.400" isExternal
+            <HowToUseSection
+                repositoryUrl="https://github.com/Bikatr7/Kairyou"
+                steps={[
+                    "Upload or input the text you want to preprocess.",
+                    "Upload or input the JSON file with replacement rules.",
+                    "Click 'Submit' to preprocess the text.",
+                    "Review the preprocessing log and output, and download if necessary.",
+                    "If there are any errors, they will be displayed in the error log."
+                ]}
+                notes={[
+                    "Please note that the Turnstile verification is required to use this tool. This is in place to prevent abuse and ensure fair usage. You must complete the verification for every submission.",
+                    "The Kairyou endpoint access is provided for free here, but please be mindful of the usage and do not abuse the service."
+                ]}
+                contactEmail="contact@kakusui.org"
+            />
 
->GitHub repository README</Link>.
-                </Text>
-                <Text mb={2}>
-                    Kairyou is a tool for preprocessing Japanese text. You can upload a text file or input text directly, and provide a JSON file with replacement rules. The tool will preprocess the text according to the provided rules and return the results.
-                </Text>
-                <Text>
-                    Follow these steps:
-                </Text>
-                <Text>
-                    1. Upload or input the text you want to preprocess.<br />
-                    2. Upload or input the JSON file with replacement rules.<br />
-                    3. Click "Submit" to preprocess the text.<br />
-                    4. Review the preprocessing log and output, and download if necessary.<br />
-                    5. If there are any errors, they will be displayed in the error log.
-                </Text>
-                <Text mt={2}>
-                    Please note that the Turnstile verification is required to use this tool. 
-                    This is in place to prevent abuse and ensure fair usage. 
-                    You must complete the verification for every submission.
-                </Text>
-                <Text mt={2}>
-                    The Kairyou endpoint access is provided for free here, but please be mindful of the usage and do not abuse the service.
-                </Text>
-                <Text mt={2}>
-                    If you wish to actually directly use the endpoint, We'd be interested, contact us at <Link href="mailto:contact@kakusui.org" color="orange.400">contact@kakusui.org</Link>.
-                </Text>
-            </Box>
-
-            <Box mt={5} p={2} bg="gray.800">
-                <Stack direction="row">
-                    <Link href="/kairyou/tos" color="orange.400">Terms of Service</Link>
-                    <Link href="/kairyou/privacy" color="orange.400">Privacy Policy</Link>
-                    <Link href="/kairyou/license" color="orange.400">License</Link>
-                </Stack>
-            </Box>
+            <LegalLinks basePath="/kairyou" />
         </>
     );
 }

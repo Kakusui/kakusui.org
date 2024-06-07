@@ -23,15 +23,16 @@ import {
   Box,
   Flex,
   Text,
-  Collapse,
-  useClipboard,
-  Link,
-  Stack,
+  Collapse
 } from "@chakra-ui/react";
 
-import { ViewIcon, ViewOffIcon, DownloadIcon, ChevronDownIcon, ChevronUpIcon, CopyIcon, ArrowUpDownIcon, CheckIcon } from "@chakra-ui/icons";
+import { ViewIcon, ViewOffIcon, ChevronDownIcon, ChevronUpIcon, ArrowUpDownIcon } from "@chakra-ui/icons";
 
 import Turnstile from "../components/Turnstile";
+import CopyButton from "../components/CopyButton";
+import DownloadButton from "../components/DownloadButton";
+import HowToUseSection from "../components/HowToUseSection";
+import LegalLinks from "../components/LegalLinks";
 import { getURL } from "../utils";
 
 type FormInput = 
@@ -71,9 +72,7 @@ Tone: {{tone}}
   const [response, setResponse] = useState<ResponseValues | null>(null);
   const [modelOptions, setModelOptions] = useState<string[]>([]);
   const [isAdvancedSettingsVisible, setAdvancedSettingsVisible] = useState(false);
-  const [copyIcon, setCopyIcon] = useState(<CopyIcon />);
   const toast = useToast();
-  const { onCopy } = useClipboard(response?.translatedText || "");
 
   useEffect(() => 
   {
@@ -240,19 +239,6 @@ Tone: {{tone}}
     }
   };
 
-  const downloadOutput = (input: 'translatedText') => 
-  {
-    const content = response?.translatedText;
-    if(!content) return;
-
-    const blob = new Blob([content], { type: "text/plain" });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.download = `${input}.txt`;
-    link.href = url;
-    link.click();
-  };
-
   const handlePaste = async () => {
     try {
       const text = await navigator.clipboard.readText();
@@ -267,12 +253,6 @@ Tone: {{tone}}
     const currentOutput = response?.translatedText || "";
     setValue("textToTranslate", currentOutput);
     setResponse({ translatedText: currentInput });
-  };
-
-  const handleCopy = () => {
-    onCopy();
-    setCopyIcon(<CheckIcon color="green.500" />);
-    setTimeout(() => setCopyIcon(<CopyIcon />), 2000);
   };
 
   const memoizedTurnstile = useMemo(() =>
@@ -395,8 +375,8 @@ Tone: {{tone}}
               <Box flex={1}>
                 <Text mb="8px">
                   Translated Text
-                  <IconButton onClick={() => downloadOutput("translatedText")} variant="ghost" size="xl" aria-label="Download translated text" icon={<DownloadIcon />} />
-                  <IconButton ml={1.5} onClick={handleCopy} variant="ghost" size="xl" aria-label="Copy translated text" icon={copyIcon} />
+                  <DownloadButton text={response.translatedText} fileName="translatedText" />
+                  <CopyButton text={response.translatedText} />
                 </Text>
                 <Box overflowY="scroll" height={200}>
                   <Text style={{ whiteSpace: "pre-wrap" }}>{response.translatedText}</Text>
@@ -411,44 +391,24 @@ Tone: {{tone}}
         )}
       </form>
 
-      <Box mt={17} p={4} bg="gray.800" color="gray.500">
-        <Text fontSize="lg" mb={4} color="white">How to Use</Text>
-        <Text mb={2}>
-          Please note that EasyTL is originally a python package, Kakusui provides this GUI for easy access to the tool.
-          For more info on EasyTL please visit the <Link href="https://github.com/Bikatr7/Kairyou" color="orange.400" isExternal>Package GitHub repository README</Link>.
-        </Text>
-        <Text mb={2}>
-          EasyTL is a tool for translating text using various language models. You can input text directly, specify the translation instructions, and the tool will return the translated text.
-        </Text>
-        <Text>
-          Follow these steps:
-        </Text>
-        <Text>
-          1. Input the text you want to translate.<br />
-          2. Specify the language and tone for the translation.<br />
-          3. Select the LLM and model you want to use.<br />
-          4. Provide your API key.<br />
-          5. Click "Submit" to get the translated text.<br />
-          6. Review the translated text and download or copy if necessary.<br />
-        </Text>
-        <Text mt={2}>
-          Please note that the Turnstile verification is required to use this tool. This is in place to prevent abuse and ensure fair usage. You must complete the verification for every submission.
-        </Text>
-        <Text mt={2}>
-          The EasyTL endpoint access is provided for free here, but please be mindful of the usage and do not abuse the service.
-        </Text>
-        <Text mt={2}>
-          If you wish to actually directly use the endpoint, We'd be interested, contact us at <Link href="mailto:contact@kakusui.org" color="orange.400">contact@kakusui.org</Link>.
-        </Text>
-      </Box>
+      <HowToUseSection
+        repositoryUrl="https://github.com/Bikatr7/Kairyou"
+        steps={[
+          "Input the text you want to translate.",
+          "Specify the language and tone for the translation.",
+          "Select the LLM and model you want to use.",
+          "Provide your API key.",
+          "Click 'Submit' to get the translated text.",
+          "Review the translated text and download or copy if necessary."
+        ]}
+        notes={[
+          "Please note that the Turnstile verification is required to use this tool. This is in place to prevent abuse and ensure fair usage. You must complete the verification for every submission.",
+          "The EasyTL endpoint access is provided for free here, but please be mindful of the usage and do not abuse the service."
+        ]}
+        contactEmail="contact@kakusui.org"
+      />
 
-      <Box mt={5} p={2} bg="gray.800">
-        <Stack direction="row">
-          <Link href="/easytl/tos" color="orange.400">Terms of Service</Link>
-          <Link href="/easytl/privacy" color="orange.400">Privacy Policy</Link>
-          <Link href="/easytl/license" color="orange.400">License</Link>
-        </Stack>
-      </Box>
+      <LegalLinks basePath="/easytl" />
     </>
   );
 }
