@@ -4,6 +4,9 @@ Use of this source code is governed by a GNU General Public License v3.0
 license that can be found in the LICENSE file.
 */
 
+// react
+import { useEffect } from 'react';
+
 // chakra-ui
 import {
     AbsoluteCenter,
@@ -30,6 +33,12 @@ import { IconBrandGithub } from '@tabler/icons-react';
 import ApplicationSection from "../components/ApplicationSection";
 
 function HomePage() {
+
+    useEffect(() => {
+        document.title = 'Kakusui | Home';
+
+    }, []);
+
     return (
         <>
             <Kakusui />

@@ -38,6 +38,12 @@ type ResponseValues =
 
 function KairyouPage() 
 {
+
+    useEffect(() => {
+        document.title = 'Kakusui | Kairyou';
+
+    }, []);
+
     const textRef = useRef<HTMLInputElement>(null);
     const jsonRef = useRef<HTMLInputElement>(null);
     const [turnstileToken, setTurnstileToken] = useState<string | null>(null);

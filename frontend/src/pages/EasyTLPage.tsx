@@ -53,6 +53,12 @@ type ResponseValues =
 
 function EasyTLPage() 
 {
+
+  useEffect(() => {
+        document.title = 'Kakusui | EasyTL';
+
+  }, []);
+
   const { register, handleSubmit, watch, formState: { isSubmitting, errors }, setValue, getValues } = useForm<FormInput>({
     defaultValues: {
       tone: "Formal Polite",

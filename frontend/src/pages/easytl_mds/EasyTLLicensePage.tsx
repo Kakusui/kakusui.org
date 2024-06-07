@@ -4,10 +4,16 @@ Use of this source code is governed by a GNU Lesser General Public License v3.0
 license that can be found in the LICENSE file.
 */
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Box, Heading, Text, Link } from '@chakra-ui/react';
 
 const EasyTLLicensePage: React.FC = () => {
+
+    useEffect(() => {
+        document.title = 'Kakusui - EasyTL | License';
+
+    }, []);
+
     return (
         <Box p={4}>
             <Heading as="h1" mb={4}>License for EasyTL</Heading>
