@@ -1,13 +1,17 @@
+## Copyright Kakusui LLC 2024 (https://kakusui.org) (https://github.com/Kakusui)
+## Use of this source code is governed by a GNU General Public License v3.0
+## license that can be found in the LICENSE file.
+
 ## Stage 1: Build backend
 FROM python:3.11.8-slim as backend-build
 WORKDIR /app/backend
 COPY backend/main.py backend/requirements.txt ./
 
-## Stage 2: Final stage
+## Install required Python packages
 FROM python:3.11.8-slim
 WORKDIR /app
 
-## Install required packages
+## Install required packages (linux)
 RUN apt-get update && apt-get install -y --no-install-recommends \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 

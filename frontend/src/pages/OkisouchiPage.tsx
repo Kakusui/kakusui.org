@@ -4,11 +4,18 @@ Use of this source code is governed by a GNU General Public License v3.0
 license that can be found in the LICENSE file.
 */
 
+import { useEffect } from 'react';
 import { Box, Button, Heading, Link, Stack, Text } from "@chakra-ui/react";
 import { ExternalLinkIcon } from "@chakra-ui/icons";
 
 function OkisouchiPage() 
 {
+
+    useEffect(() => {
+        document.title = 'Kakusui | Okisouchi';
+
+    }, []);
+
     return (
         <Box p={4} bg="gray.800">
             <Heading as="h1" mb={4} color="white">Okisouchi</Heading>

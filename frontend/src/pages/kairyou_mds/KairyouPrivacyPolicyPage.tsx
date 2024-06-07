@@ -1,13 +1,19 @@
 /*
 Copyright Kakusui LLC 2024 (https://kakusui.org) (https://github.com/Kakusui)
-Use of this source code is governed by a GNU Lesser General Public License v2.1
+Use of this source code is governed by a GNU General Public License v3.0
 license that can be found in the LICENSE file.
 */
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Box, Heading, Text, Link } from '@chakra-ui/react';
 
 const KairyouPrivacyPolicyPage: React.FC = () => {
+
+    useEffect(() => {
+        document.title = 'Kakusui - Kairyou | Privacy Policy';
+
+    }, []);
+
     return (
         <Box p={4}>
             <Heading as="h1" mb={4}>Privacy Policy for Kairyou</Heading>
@@ -25,7 +31,7 @@ const KairyouPrivacyPolicyPage: React.FC = () => {
 
             <Heading as="h2" size="md" mt={4} mb={2}>3. Data Usage</Heading>
             <Text mb={4}>
-                The Kairyou endpoint and it's page on our itself website collect no data nor logs. Data is limited to what is used for functionality only, and no data is shared ever.
+                The Kairyou endpoint and it's page on our website collects no data nor logs outside of standard endpoint interactions, which contain no info aside from HTTP error codes. Data is limited to what is used for functionality only, and no data is shared ever.
             </Text>
 
             <Heading as="h2" size="md" mt={4} mb={2}>4. Data Encryption</Heading>
@@ -49,7 +55,13 @@ const KairyouPrivacyPolicyPage: React.FC = () => {
             </Text>
 
             <Text mt={4} fontSize="sm" color="gray.500">
-                Last updated: 2024-06-01
+                Last updated: 2024-06-06
+            </Text>
+
+            <Text mt={4} fontSize="sm" color="gray.500">
+                Changelog: <br />
+                2024-06-06: Slight wording changes to clarify the lack of data collection & typo fixes. <br />
+                2024-06-01: Initial version.
             </Text>
 
             <Box mt={4}>

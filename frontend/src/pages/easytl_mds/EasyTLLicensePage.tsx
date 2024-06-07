@@ -7,21 +7,19 @@ license that can be found in the LICENSE file.
 import React, { useEffect } from 'react';
 import { Box, Heading, Text, Link } from '@chakra-ui/react';
 
-const KairyouLicensePage: React.FC = () => {
-    
+const EasyTLLicensePage: React.FC = () => {
+
     useEffect(() => {
-        document.title = 'Kakusui - Kairyou | License';
+        document.title = 'Kakusui - EasyTL | License';
 
     }, []);
 
     return (
-
-        
         <Box p={4}>
-            <Heading as="h1" mb={4}>License for Kairyou</Heading>
+            <Heading as="h1" mb={4}>License for EasyTL</Heading>
 
             <Text mb={4}>
-                Kairyou is licensed under the GNU Lesser General Public License version 2.1 (LGPLv2.1). This license is designed to allow Kairyou to be used freely in both open-source and proprietary projects while ensuring that modifications to Kairyou itself remain open-source.
+                EasyTL is licensed under the GNU Lesser General Public License version 2.1 (LGPLv2.1). This license is designed to allow EasyTL to be used freely in both open-source and proprietary projects while ensuring that modifications to EasyTL itself remain open-source.
             </Text>
 
             <Heading as="h2" size="md" mt={4} mb={2}>Key Points of LGPLv2.1</Heading>
@@ -35,7 +33,7 @@ const KairyouLicensePage: React.FC = () => {
             </Text>
 
             <Text mb={4}>
-                The LGPLv2.1 ensures that any modifications to Kairyou must be released under the same LGPLv2.1 license, while allowing you to use Kairyou in your proprietary software.
+                The LGPLv2.1 ensures that any modifications to EasyTL must be released under the same LGPLv2.1 license, while allowing you to use EasyTL in your proprietary software.
             </Text>
 
             <Text mb={4}>
@@ -48,7 +46,7 @@ const KairyouLicensePage: React.FC = () => {
 
             <Heading as="h2" size="md" mt={4} mb={2}>License for API and Website</Heading>
             <Text mb={4}>
-                The Kairyou instance hosted on <Link href="https://kakusui.org/kairyou" color="orange.400" isExternal>Kakusui.org/kairyou</Link> and its API endpoint at <Link href="https://api.kakusui.org/v1/kairyou" color="orange.400" isExternal>api.kakusui.org/v1/kairyou</Link> are licensed under the GNU General Public License version 3 (GPLv3). This license ensures that the API and website remain free and open-source.
+                The EasyTL instance hosted on <Link href="https://kakusui.org/easytl" color="orange.400" isExternal>Kakusui.org/easytl</Link> and its API endpoint at <Link href="https://api.kakusui.org/v1/easytl" color="orange.400" isExternal>api.kakusui.org/v1/easytl</Link> are licensed under the GNU General Public License version 3 (GPLv3). This license ensures that the API and website remain free and open-source.
             </Text>
 
             <Link href="https://www.gnu.org/licenses/gpl-3.0.html" color="orange.400" isExternal>
@@ -56,7 +54,7 @@ const KairyouLicensePage: React.FC = () => {
             </Link>
 
             <Text mt={4} fontSize="sm" color="gray.500">
-                Last updated: 2024-06-01
+                Last updated: 2024-06-06
             </Text>
 
             <Box mt={4}>
@@ -66,4 +64,4 @@ const KairyouLicensePage: React.FC = () => {
     );
 }
 
-export default KairyouLicensePage;
+export default EasyTLLicensePage;

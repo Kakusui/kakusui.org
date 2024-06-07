@@ -234,6 +234,13 @@ const NAV_ITEMS: Array<NavItem> = [
         label: 'Applications',
         children: [
             {
+                label: 'EasyTL',
+                subLabel: 'A simple and easy to use custom translator.',
+                href: '/easytl',
+            },
+
+            
+            {
                 label: 'Kairyou',
                 subLabel: 'A NER/NLP powered Japanese prepreprocessor.',
                 href: '/kairyou',

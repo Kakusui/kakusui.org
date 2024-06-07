@@ -1,6 +1,10 @@
+## Copyright Kakusui LLC 2024 (https://kakusui.org) (https://github.com/Kakusui)
+## Use of this source code is governed by a GNU General Public License v3.0
+## license that can be found in the LICENSE file.
+
 app = 'kakusui-org'
 primary_region = 'den'
-swap_size_mb = 2048
+swap_size_mb = 3072
 
 [build]
   dockerfile = 'build.dockerfile'
