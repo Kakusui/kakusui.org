@@ -9,9 +9,9 @@ import os
 
 ## Define the paths relative to the current working directory of the script
 current_dir = os.path.dirname(os.path.abspath(__file__))
+
 FRONTEND_ENV = os.path.join(current_dir, "../frontend/.env")
 BACKEND_ENV = os.path.join(current_dir, ".env")
-
 
 ##-------------------start-of-install_dependencies()---------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 def install_dependencies() -> None:
@@ -70,7 +70,7 @@ def setup_local_environment() -> None:
             print("Setting up local environment...")
 
             to_write_frontend = 'NODE_ENV=development\n'
-            to_write_backend = 'V1_KAIRYOU_ROOT_KEY=test\n'
+            to_write_backend = 'V1_KAIRYOU_ROOT_KEY=test\nV1_EASYTL_ROOT_KEY=test\n'
         else:
 
             print("Setting up production environment...")
