@@ -31,13 +31,15 @@ npm 10.8.0
 ## **Python Requirements**<a name="python-requirements"></a>
 fastapi==0.110.3
 
-kairyou==1.6.2
+kairyou==1.6.4
 
 uvicorn==0.30.0
 
 ja-core-news-lg==3.7.0 (this is not a pip package, it is a spacy model) Must be installed via spacy. (Done in setup.py)
 
 httpx==0.25.1
+
+easytl==0.4.3
 
 --------------------------------------------------------------------------------------------------------------------------------------------------
 
