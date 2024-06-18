@@ -31,7 +31,7 @@ npm 10.8.0
 ## **Python Requirements**<a name="python-requirements"></a>
 fastapi==0.110.3
 
-kairyou==1.6.4
+kairyou==1.6.5
 
 uvicorn==0.30.0
 
