@@ -45,7 +45,11 @@ export default function Navbar() {
                     <Flex
                         flex={{base: 1, md: 'auto'}}
                         ml={{base: -2}}
-                        display={{base: 'flex', md: 'none'}}>
+                        display={{base: 'flex', md: 'none'}}
+                        alignItems={'center'}
+                        justifyContent={'space-between'}
+                        width={'100%'}
+                    >
                         <IconButton
                             onClick={onToggle}
                             icon={
@@ -54,9 +58,11 @@ export default function Navbar() {
                             variant={'ghost'}
                             aria-label={'Toggle Navigation'}
                         />
+
+                        <Image src={logo} boxSize='30px' />
                     </Flex>
                     <Flex flex={{base: 1}} justify={{base: 'center', md: 'start'}}>
-                        <Image src={logo} boxSize='30px'/>
+                        <Image src={logo} boxSize='30px' display={{base: 'none', md: 'block'}}/>
 
                         <Flex display={{base: 'none', md: 'flex'}} ml={10}>
                             <DesktopNav/>
