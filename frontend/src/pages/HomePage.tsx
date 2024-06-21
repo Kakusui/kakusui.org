@@ -88,7 +88,7 @@ function HomePage() {
                 imageUrl={okisouchi_sync}
                 imageAlt="Okisouchi Sync"
                 linkUrl="/okisouchi"
-                githubUrl="https://github.com/Kakusui"
+                githubUrl="https://github.com/Kakusui/OSC_Interface"
             />
         </>
     );
