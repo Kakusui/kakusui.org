@@ -41,6 +41,7 @@ const routes = [
     { path: '/okisouchi/tos', element: <OkisouchiTermsOfServicePage/> },
     { path: '/okisouchi/privacy', element: <OkisouchiPrivacyPolicyPage/> },
     { path: '/okisouchi/license', element: <OkisouchiLicensePage/> },
+    { path: '/404', element: <NotFoundPage/> },
     { path: '/403', element: <ForbiddenPage/> },
     { path: '/500', element: <InternalErrorPage/> },
     { path: '*', element: <NotFoundPage/> },
