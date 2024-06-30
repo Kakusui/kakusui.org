@@ -1,5 +1,5 @@
 /*
-Copyright Kakusui LLC 2024 (https://kakusui.org) (https://github.com/Kakusui)
+Copyright 2024 Kakusui LLC (https://kakusui.org) (https://github.com/Kakusui) (https://github.com/Kakusui/kakusui.org)
 Use of this source code is governed by a GNU General Public License v3.0
 license that can be found in the LICENSE file.
 */
@@ -142,9 +142,9 @@ Tone: {{tone}}
       case "OpenAI":
         return ["gpt-3.5-turbo", "gpt-4", "gpt-4-turbo", "gpt-4o"];
       case "Gemini":
-        return ["gemini-1.0-pro", "gemini-1.5-pro"];
+        return ["gemini-1.0-pro", "gemini-1.5-pro", "gemini-1.5-flash"];
       case "Anthropic":
-        return ["claude-3-haiku-20240307", "claude-3-sonnet-20240229", "claude-3-opus-20240229"];
+        return ["claude-3-haiku-20240307", "claude-3-sonnet-20240229", "claude-3-opus-20240229", "claude-3-5-sonnet-20240620"]
       default:
         return [];
     }
@@ -398,7 +398,7 @@ Tone: {{tone}}
       </form>
 
       <HowToUseSection
-        repositoryUrl="https://github.com/Bikatr7/Kairyou"
+        repositoryUrl="https://github.com/Bikatr7/EasyTL"
         steps={[
           "Input the text you want to translate.",
           "Specify the language and tone for the translation.",

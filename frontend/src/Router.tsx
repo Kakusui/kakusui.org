@@ -1,5 +1,5 @@
 /*
-Copyright Kakusui LLC 2024 (https://kakusui.org) (https://github.com/Kakusui)
+Copyright 2024 Kakusui LLC (https://kakusui.org) (https://github.com/Kakusui) (https://github.com/Kakusui/kakusui.org)
 Use of this source code is governed by a GNU General Public License v3.0
 license that can be found in the LICENSE file.
 */
@@ -41,6 +41,7 @@ const routes = [
     { path: '/okisouchi/tos', element: <OkisouchiTermsOfServicePage/> },
     { path: '/okisouchi/privacy', element: <OkisouchiPrivacyPolicyPage/> },
     { path: '/okisouchi/license', element: <OkisouchiLicensePage/> },
+    { path: '/404', element: <NotFoundPage/> },
     { path: '/403', element: <ForbiddenPage/> },
     { path: '/500', element: <InternalErrorPage/> },
     { path: '*', element: <NotFoundPage/> },
