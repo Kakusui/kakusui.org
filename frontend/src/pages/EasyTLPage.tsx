@@ -398,7 +398,7 @@ Tone: {{tone}}
       </form>
 
       <HowToUseSection
-        repositoryUrl="https://github.com/Bikatr7/Kairyou"
+        repositoryUrl="https://github.com/Bikatr7/EasyTL"
         steps={[
           "Input the text you want to translate.",
           "Specify the language and tone for the translation.",
