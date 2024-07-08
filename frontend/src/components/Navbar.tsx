@@ -240,6 +240,11 @@ const NAV_ITEMS: Array<NavItem> = [
         label: 'Applications',
         children: [
             {
+                label: 'Elucidate',
+                subLabel: 'Smarter Translations through LLM Self-Evaluation (Coming Soon!)',
+                href: '/elucidate',
+            },
+            {
                 label: 'EasyTL',
                 subLabel: 'A simple and easy to use custom translator.',
                 href: '/easytl',
