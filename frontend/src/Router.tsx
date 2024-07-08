@@ -8,6 +8,8 @@ import {createBrowserRouter, RouterProvider} from 'react-router-dom';
 
 import HomePage from "./pages/HomePage.tsx";
 
+import ElucidatePage from './pages/ElucidatePage.tsx';
+
 import EasyTLPage from './pages/EasyTLPage.tsx';
 import EasyTLTermsOfServicePage from './pages/easytl_mds/EasyTLTosPage.tsx';
 import EasyTLPrivacyPolicyPage from './pages/easytl_mds/EasyTLPrivacyPolicyPage.tsx';
@@ -29,6 +31,7 @@ import InternalErrorPage from './pages/error_pages/500.tsx';
 
 const routes = [
     { path: '/', element: <HomePage/> },
+    { path: '/elucidate', element: <ElucidatePage/> },
     { path: '/easytl', element: <EasyTLPage/> },
     { path: '/easytl/tos', element: <EasyTLTermsOfServicePage/> },
     { path: '/easytl/privacy', element: <EasyTLPrivacyPolicyPage/> },
