@@ -5,7 +5,7 @@ license that can be found in the LICENSE file.
 */
 
 import { useEffect } from 'react';
-import { Box, Button, Heading, Link, Stack, Text } from "@chakra-ui/react";
+import { Box, Button, Heading, Link, Text } from "@chakra-ui/react";
 import { ExternalLinkIcon } from "@chakra-ui/icons";
 
 function ElucidatePage() 
