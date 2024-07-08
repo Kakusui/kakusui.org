@@ -26,12 +26,11 @@ function ElucidatePage()
                     GitHub
                 </Button>
             </Link>
-
-            <Stack direction="row" spacing={4} mt={8}>
+            {/* <Stack direction="row" spacing={4} mt={8}>
                 <Link href="/elucidate/tos" color="orange.400">Terms of Service</Link>
                 <Link href="/elucidate/privacy" color="orange.400">Privacy Policy</Link>
                 <Link href="/elucidate/license" color="orange.400">License</Link>
-            </Stack>
+            </Stack> */}
         </Box>
     );
 }
