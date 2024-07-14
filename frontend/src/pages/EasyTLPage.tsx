@@ -43,7 +43,8 @@ type FormInput =
   textToTranslate: string,
   language: string,
   tone: string,
-  customInstructions: string,
+  additional_instructions: string,
+  customInstructionFormat: string,
 };
 
 type ResponseValues = 
@@ -53,20 +54,22 @@ type ResponseValues =
 
 function EasyTLPage() 
 {
-
   useEffect(() => {
-        document.title = 'Kakusui | EasyTL';
-
+    document.title = 'Kakusui | EasyTL';
   }, []);
 
   const { register, handleSubmit, watch, formState: { isSubmitting, errors }, setValue, getValues } = useForm<FormInput>({
     defaultValues: {
-      tone: "Formal Polite",
+      tone: "Formal; Polite",
       llmType: "OpenAI",
       model: "gpt-3.5-turbo",
-      customInstructions: `You are a professional translator, please translate the text given to you following the below instructions. Do not use quotations or say anything else aside from the translation in your response.
+      customInstructionFormat: `You are a professional translator, please translate the text given to you following the below instructions. Do not use quotations or say anything else aside from the translation in your response.
 Language: {{language}}
 Tone: {{tone}}
+{{#if additional_instructions}}
+Additional instructions:
+{{additional_instructions}}
+{{/if}}
       `
     }
   });
@@ -105,11 +108,13 @@ Tone: {{tone}}
   useEffect(() => {
     const savedTone = localStorage.getItem('tone');
     const savedLanguage = localStorage.getItem('language');
-    const savedCustomInstructions = localStorage.getItem('customInstructions');
+    const savedAdditionalInstructions = localStorage.getItem('additional_instructions');
+    const savedCustomInstructionFormat = localStorage.getItem('customInstructionFormat');
     
     if (savedTone) setValue('tone', savedTone);
     if (savedLanguage) setValue('language', savedLanguage);
-    if (savedCustomInstructions) setValue('customInstructions', savedCustomInstructions);
+    if (savedCustomInstructionFormat) setValue('customInstructionFormat', savedCustomInstructionFormat);
+    if (savedAdditionalInstructions) setValue('additional_instructions', savedAdditionalInstructions);
   }, [setValue]);
 
   const selectedLLM = watch("llmType");
@@ -203,7 +208,7 @@ Tone: {{tone}}
       return;
     }
 
-    if (!validateInstructions(data.customInstructions)) {
+    if (!validateInstructions(data.customInstructionFormat)) {
       showToast("Invalid Instructions", "Instructions must include {{language}} and {{tone}} placeholders.", "error");
       return;
     }
@@ -212,15 +217,27 @@ Tone: {{tone}}
     {
       if(window.location.hostname === "kakusui.org" && !(await handleVerification()))
       {
-        throw new Error("Turnstile verification failed");
+        throw new Error("Turnstile verification failed. Please try again.");
       }
 
       localStorage.setItem(`${data.llmType}-apiKey`, data.userAPIKey);
       localStorage.setItem('tone', data.tone);
       localStorage.setItem('language', data.language);
-      localStorage.setItem('customInstructions', data.customInstructions);
+      localStorage.setItem('additional_instructions', data.additional_instructions);
+      localStorage.setItem('customInstructionFormat', data.customInstructionFormat);
 
-      const translationInstructions = data.customInstructions.replace("{{language}}", data.language).replace("{{tone}}", data.tone);
+      let translationInstructions = data.customInstructionFormat
+        .replace("{{language}}", data.language)
+        .replace("{{tone}}", data.tone);
+
+      if (data.additional_instructions) 
+      {
+        translationInstructions = translationInstructions.replace("{{#if additional_instructions}}\nAdditional instructions:\n{{additional_instructions}}\n{{/if}}", `Additional instructions:\n${data.additional_instructions}`);
+      } 
+      else 
+      {
+        translationInstructions = translationInstructions.replace("{{#if additional_instructions}}\nAdditional instructions:\n{{additional_instructions}}\n{{/if}}", '');
+      }
 
       const response = await fetch(getURL("/proxy/easytl"), 
       {
@@ -286,7 +303,16 @@ Tone: {{tone}}
 
           <FormControl isInvalid={!!errors.tone}>
             <FormLabel>Tone</FormLabel>
-            <Textarea {...register("tone", { required: true })} placeholder="Enter tone" rows={2} />
+            <Textarea {...register("tone", { required: true })} placeholder="Enter tone (use semicolons for separators; words/phrases only)" rows={2} />
+          </FormControl>
+
+          <FormControl isInvalid={!!errors.additional_instructions}>
+            <FormLabel>Additional Instructions</FormLabel>
+            <Textarea
+              {...register("additional_instructions")} 
+              placeholder="Enter any additional instructions (optional)"
+              rows={4}
+            />
           </FormControl>
 
           <HStack spacing={4}>
@@ -339,10 +365,10 @@ Tone: {{tone}}
               Advanced Settings
             </Button>
             <Collapse in={isAdvancedSettingsVisible} animateOpacity>
-              <FormControl mt={4} isInvalid={!!errors.customInstructions}>
-                <FormLabel>Custom Instructions</FormLabel>
+              <FormControl mt={4} isInvalid={!!errors.customInstructionFormat}>
+                <FormLabel>Custom Instruction Format</FormLabel>
                 <Textarea
-                  {...register("customInstructions", { 
+                  {...register("customInstructionFormat", { 
                     required: true, 
                     validate: validateInstructions 
                   })} 
@@ -350,7 +376,7 @@ Tone: {{tone}}
                   rows={6}
                 />
                 <Text color="red.500" fontSize="sm" mt={2}>
-                  {errors.customInstructions && "Instructions must include {{language}} and {{tone}} placeholders."}
+                  {errors.customInstructionFormat && "Instructions must include {{language}} and {{tone}} placeholders."}
                 </Text>
               </FormControl>
             </Collapse>
@@ -402,14 +428,16 @@ Tone: {{tone}}
         steps={[
           "Input the text you want to translate.",
           "Specify the language and tone for the translation.",
+          "Include optional additional instructions.",
           "Select the LLM and model you want to use.",
           "Provide your API key.",
           "Click 'Submit' to get the translated text.",
-          "Review the translated text and download or copy if necessary."
+          "Review the translated text and download or copy if necessary.",
+          "(For custom format specifiers click the dropdown)"
         ]}
         notes={[
           "Please note that the Turnstile verification is required to use this tool. This is in place to prevent abuse and ensure fair usage. You must complete the verification for every submission.",
-          "The EasyTL endpoint access is provided for free here, but please be mindful of the usage and do not abuse the service."
+          "The EasyTL endpoint access is provided for free here (excluding LLM costs), but please be mindful of the usage and do not abuse the service."
         ]}
         contactEmail="contact@kakusui.org"
       />

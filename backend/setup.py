@@ -70,7 +70,7 @@ def setup_local_environment() -> None:
             print("Setting up local environment...")
 
             to_write_frontend = 'NODE_ENV=development\n'
-            to_write_backend = 'V1_KAIRYOU_ROOT_KEY=test\nV1_EASYTL_ROOT_KEY=test\n'
+            to_write_backend = 'V1_KAIRYOU_ROOT_KEY=test\nV1_EASYTL_ROOT_KEY=test\nV1_ELUCIDATE_ROOT_KEY=test'
         else:
 
             print("Setting up production environment...")
