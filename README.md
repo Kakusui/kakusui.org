@@ -7,8 +7,10 @@
 - [**Node Requirements**](#node-requirements)
 - [**To build locally**](#to-build-locally)
 - [**For Production**](#for-production)
-  - [To test the dockerfile locally](#to-test-the-dockerfile-locally)
-  - [To deploy to fly.io](#to-deploy-to-flyio)
+  - [Frontend](#frontend)
+  - [Backend](#backend)
+    - [To test the dockerfile locally](#to-test-the-dockerfile-locally)
+    - [To deploy to fly.io](#to-deploy-to-flyio)
 - [**Contributing**](#contributing)
 - [**License**](#license)
 
@@ -29,17 +31,19 @@ npm 10.8.0
 --------------------------------------------------------------------------------------------------------------------------------------------------
 
 ## **Python Requirements**<a name="python-requirements"></a>
+ja-core-news-lg==3.7.0 (this is not a pip package, it is a spacy model) Must be installed via spacy. (Done in setup.py)
+
 fastapi==0.110.3
 
 kairyou==1.6.5
 
 uvicorn==0.30.0
 
-ja-core-news-lg==3.7.0 (this is not a pip package, it is a spacy model) Must be installed via spacy. (Done in setup.py)
+easytl==0.4.4
 
 httpx==0.25.1
 
-easytl==0.4.3
+elucidate==0.0.1-beta
 
 --------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -61,22 +65,26 @@ See `frontend/package.json` for a list of node requirements.
 
 ## **For Production**<a name="for-production"></a>
 
+### Frontend
+
+Frontend is hosted on cloudflare pages. To deploy, push to the `production` branch. Development branch is for development only, intermediate builds deploy every commit.
+
+### Backend
+
 For production, the backend is hosted on fly.io via a dockerfile.
 
-### To test the dockerfile locally
+#### To test the dockerfile locally
 1. docker build -t kakusui-org -f build.dockerfile .
 2. docker run -p 8000:8000 kakusui-org
 
-### To deploy to fly.io
+#### To deploy to fly.io
 1. Make sure you have the fly cli installed and are logged in.
 2. Run `fly deploy` in the root directory. This will build the dockerfile and deploy it to fly.io.
-
-Frontend is hosted on cloudflare pages. To deploy, push to the `production` branch. Development branch is for development only, intermediate builds deploy every commit.
 
 --------------------------------------------------------------------------------------------------------------------------------------------------
 
 ## **Contributing**<a name="contributing"></a>
-If you would like to contribute, please open an issue or a pull request. No specific guidelines yet, but please be respectful.
+If you would like to contribute, please open an issue or a pull request. No specific guidelines, but remain professional.
 
 --------------------------------------------------------------------------------------------------------------------------------------------------
 
