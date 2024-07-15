@@ -240,8 +240,8 @@ const NAV_ITEMS: Array<NavItem> = [
         label: 'Applications',
         children: [
             {
-                label: 'Elucidate',
-                subLabel: 'Smarter Translations through LLM Self-Evaluation (Coming Soon!)',
+                label: 'Elucidate (Beta)',
+                subLabel: 'Smarter Translations through LLM Self-Evaluation',
                 href: '/elucidate',
             },
             {
