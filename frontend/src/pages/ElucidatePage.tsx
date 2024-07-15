@@ -43,6 +43,7 @@ type FormInput = {
   translatedText: string,
   evaluationInstructions: string,
   customInstructionFormat: string,
+  instructionPreset: string,
 };
 
 type ResponseValues = {
@@ -58,7 +59,8 @@ function ElucidatePage() {
     defaultValues: {
       llmType: "OpenAI",
       model: "gpt-3.5-turbo",
-      customInstructionFormat: `You are a professional translation evaluator. Please evaluate the provided translation according to the instructions below.
+      instructionPreset: "minimal",
+      customInstructionFormat: `You are a professional translation evaluator. Please evaluate the provided translation according to the instructions below. Your response should not contain anything aside from the re-evaluated text.
 Untranslated Text:
 {{untranslatedText}}
 Translated Text:
@@ -99,13 +101,16 @@ Evaluation Instructions:
   useEffect(() => {
     const savedEvaluationInstructions = localStorage.getItem('evaluationInstructions');
     const savedCustomInstructionFormat = localStorage.getItem('customInstructionFormat');
+    const savedInstructionPreset = localStorage.getItem('instructionPreset');
     
     if (savedEvaluationInstructions) setValue('evaluationInstructions', savedEvaluationInstructions);
     if (savedCustomInstructionFormat) setValue('customInstructionFormat', savedCustomInstructionFormat);
+    if (savedInstructionPreset) setValue('instructionPreset', savedInstructionPreset);
   }, [setValue]);
 
   const selectedLLM = watch("llmType");
   const selectedModel = watch("model");
+  const selectedInstructionPreset = watch("instructionPreset");
 
   useEffect(() => {
     const updateModelOptions = () => {
@@ -124,6 +129,32 @@ Evaluation Instructions:
     updateModelOptions();
     updateApiKey();
   }, [selectedLLM, setValue]);
+
+  useEffect(() => {
+    if (selectedInstructionPreset === "minimal") {
+      setValue("customInstructionFormat", `You are a professional translation evaluator. Please evaluate the provided translation according to the instructions below. Your response should not contain anything aside from the re-evaluated text.
+Untranslated Text:
+{{untranslatedText}}
+Translated Text:
+{{translatedText}}
+{{#if evaluationInstructions}}
+Evaluation Instructions:
+{{evaluationInstructions}}
+{{/if}}
+      `);
+    } else if (selectedInstructionPreset === "verbose") {
+      setValue("customInstructionFormat", `You are a professional translation evaluator. Please evaluate the provided translation according to the instructions below. Provide detailed reasoning for any changes and include the re-evaluated text at the end.
+Untranslated Text:
+{{untranslatedText}}
+Translated Text:
+{{translatedText}}
+{{#if evaluationInstructions}}
+Evaluation Instructions:
+{{evaluationInstructions}}
+{{/if}}
+      `);
+    }
+  }, [selectedInstructionPreset, setValue]);
 
   const handleToggleShowApiKey = () => setShowApiKey(!showApiKey);
 
@@ -192,6 +223,7 @@ Evaluation Instructions:
       localStorage.setItem(`${data.llmType}-apiKey`, data.userAPIKey);
       localStorage.setItem('evaluationInstructions', data.evaluationInstructions);
       localStorage.setItem('customInstructionFormat', data.customInstructionFormat);
+      localStorage.setItem('instructionPreset', data.instructionPreset);
 
       let evaluationInstructions = data.customInstructionFormat
         .replace("{{untranslatedText}}", data.untranslatedText)
@@ -275,6 +307,15 @@ Evaluation Instructions:
               placeholder="Enter evaluation instructions"
               rows={4}
             />
+          </FormControl>
+
+          <FormControl isInvalid={!!errors.instructionPreset}>
+            <FormLabel>Instruction Preset</FormLabel>
+            <Select {...register("instructionPreset", { required: true })}>
+              <option value="minimal">Minimal</option>
+              <option value="verbose">Verbose</option>
+              <option value="custom">Custom</option>
+            </Select>
           </FormControl>
 
           <HStack spacing={4}>
@@ -389,6 +430,7 @@ Evaluation Instructions:
           "Input the untranslated text.",
           "Input the translated text.",
           "Specify the evaluation instructions.",
+          "Select the instruction preset.",
           "Select the LLM and model you want to use.",
           "Provide your API key.",
           "Click 'Submit' to get the evaluated text.",
