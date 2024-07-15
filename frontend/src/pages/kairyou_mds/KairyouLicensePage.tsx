@@ -1,6 +1,6 @@
 /*
 Copyright 2024 Kakusui LLC (https://kakusui.org) (https://github.com/Kakusui) (https://github.com/Kakusui/kakusui.org)
-Use of this source code is governed by a GNU General Public License v3.0
+Use of this source code is governed by an GNU Affero General Public License v3.0
 license that can be found in the LICENSE file.
 */
 
@@ -48,15 +48,21 @@ const KairyouLicensePage: React.FC = () => {
 
             <Heading as="h2" size="md" mt={4} mb={2}>License for API and Website</Heading>
             <Text mb={4}>
-                The Kairyou instance hosted on <Link href="https://kakusui.org/kairyou" color="orange.400" isExternal>Kakusui.org/kairyou</Link> and its API endpoint at <Link href="https://api.kakusui.org/v1/kairyou" color="orange.400" isExternal>api.kakusui.org/v1/kairyou</Link> are licensed under the GNU General Public License version 3 (GPLv3). This license ensures that the API and website remain free and open-source.
+                The Kairyou instance hosted on <Link href="https://kakusui.org/kairyou" color="orange.400" isExternal>Kakusui.org/kairyou</Link> and its API endpoint at <Link href="https://api.kakusui.org/v1/kairyou" color="orange.400" isExternal>api.kakusui.org/v1/kairyou</Link> are licensed under the GNU Affero General Public License version 3 (AGPLv3). This license ensures that the API and website remain free and open-source.
             </Text>
 
-            <Link href="https://www.gnu.org/licenses/gpl-3.0.html" color="orange.400" isExternal>
-                Read the full GPLv3 License
+            <Link href="https://www.gnu.org/licenses/agpl-3.0.html" color="orange.400" isExternal>
+                Read the full AGPLv3 License
             </Link>
 
             <Text mt={4} fontSize="sm" color="gray.500">
-                Last updated: 2024-06-01
+                Last updated: 2024-07-15
+            </Text>
+
+            <Text mt={4} fontSize="sm" color="gray.500">
+                Changelog: <br />
+                2024-07-15: Switched to AGPLv3 for the API and website. <br />
+                2024-06-01: Initial version.
             </Text>
 
             <Box mt={4}>
