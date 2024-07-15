@@ -1,6 +1,6 @@
 /*
 Copyright 2024 Kakusui LLC (https://kakusui.org) (https://github.com/Kakusui) (https://github.com/Kakusui/kakusui.org)
-Use of this source code is governed by a GNU General Public License v3.0
+Use of this source code is governed by an GNU Affero General Public License v3.0
 license that can be found in the LICENSE file.
 */
 
@@ -46,15 +46,17 @@ const EasyTLLicensePage: React.FC = () => {
 
             <Heading as="h2" size="md" mt={4} mb={2}>License for API and Website</Heading>
             <Text mb={4}>
-                The EasyTL instance hosted on <Link href="https://kakusui.org/easytl" color="orange.400" isExternal>Kakusui.org/easytl</Link> and its API endpoint at <Link href="https://api.kakusui.org/v1/easytl" color="orange.400" isExternal>api.kakusui.org/v1/easytl</Link> are licensed under the GNU General Public License version 3 (GPLv3). This license ensures that the API and website remain free and open-source.
+                The EasyTL instance hosted on <Link href="https://kakusui.org/easytl" color="orange.400" isExternal>Kakusui.org/easytl</Link> and its API endpoint at <Link href="https://api.kakusui.org/v1/easytl" color="orange.400" isExternal>api.kakusui.org/v1/easytl</Link> are licensed under the GNU Affero General Public License version 3 (AGPLv3). This license ensures that the API and website remain free and open-source.
             </Text>
 
-            <Link href="https://www.gnu.org/licenses/gpl-3.0.html" color="orange.400" isExternal>
-                Read the full GPLv3 License
+            <Link href="https://www.gnu.org/licenses/agpl-3.0.html" color="orange.400" isExternal>
+                Read the full APGLv3 License
             </Link>
 
             <Text mt={4} fontSize="sm" color="gray.500">
-                Last updated: 2024-06-06
+                Changelog: <br />
+                2024-07-15: Switched to AGPLv3 for the API and website. <br />
+                2024-06-06: Initial version.
             </Text>
 
             <Box mt={4}>
