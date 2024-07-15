@@ -1,38 +1,410 @@
 /*
 Copyright 2024 Kakusui LLC (https://kakusui.org) (https://github.com/Kakusui) (https://github.com/Kakusui/kakusui.org)
-Use of this source code is governed by an GNU Affero General Public License v3.0
+Use of this source code is governed by a GNU Affero General Public License v3.0
 license that can be found in the LICENSE file.
 */
 
-import { useEffect } from 'react';
-import { Box, Button, Heading, Link, Text } from "@chakra-ui/react";
-import { ExternalLinkIcon } from "@chakra-ui/icons";
+import { useEffect, useMemo, useState } from "react";
+import { useForm } from "react-hook-form";
+import {
+  Button,
+  FormControl,
+  FormLabel,
+  Select,
+  Input,
+  Textarea,
+  VStack,
+  HStack,
+  InputGroup,
+  InputRightElement,
+  IconButton,
+  useToast,
+  Center,
+  Box,
+  Flex,
+  Text,
+  Collapse
+} from "@chakra-ui/react";
 
-function ElucidatePage() 
-{
-    useEffect(() => {
-        document.title = 'Kakusui | Elucidate';
+import { ViewIcon, ViewOffIcon, ChevronDownIcon, ChevronUpIcon, ArrowUpDownIcon } from "@chakra-ui/icons";
 
-    }, []);
+import Turnstile from "../components/Turnstile";
+import CopyButton from "../components/CopyButton";
+import DownloadButton from "../components/DownloadButton";
+import HowToUseSection from "../components/HowToUseSection";
+import LegalLinks from "../components/LegalLinks";
+import { getURL } from "../utils";
 
-    return (
-        <Box p={4} bg="gray.800">
-            <Heading as="h1" mb={4} color="white">Elucidate</Heading>
-            <Text mb={4} color="gray.500">
-                Elucidate is an upcoming project that aims to bring clarity and innovation to translation. Stay tuned for more details and updates as we work towards launching this exciting new tool.
-            </Text>
-            <Link href="https://github.com/Kakusui/Elucidate" isExternal>
-                <Button leftIcon={<ExternalLinkIcon />} bg="orange.400" color="white" _hover={{ bg: 'orange.500' }} variant="outline">
-                    GitHub
-                </Button>
-            </Link>
-            {/* <Stack direction="row" spacing={4} mt={8}>
-                <Link href="/elucidate/tos" color="orange.400">Terms of Service</Link>
-                <Link href="/elucidate/privacy" color="orange.400">Privacy Policy</Link>
-                <Link href="/elucidate/license" color="orange.400">License</Link>
-            </Stack> */}
-        </Box>
-    );
+type FormInput = {
+  userAPIKey: string,
+  llmType: string,
+  model: string,
+  untranslatedText: string,
+  translatedText: string,
+  evaluationInstructions: string,
+  customInstructionFormat: string,
+};
+
+type ResponseValues = {
+  evaluatedText: string;
+};
+
+function ElucidatePage() {
+  useEffect(() => {
+    document.title = 'Kakusui | Elucidate';
+  }, []);
+
+  const { register, handleSubmit, watch, formState: { isSubmitting, errors }, setValue, getValues } = useForm<FormInput>({
+    defaultValues: {
+      llmType: "OpenAI",
+      model: "gpt-3.5-turbo",
+      customInstructionFormat: `You are a professional translation evaluator. Please evaluate the provided translation according to the instructions below.
+Untranslated Text:
+{{untranslatedText}}
+Translated Text:
+{{translatedText}}
+{{#if evaluationInstructions}}
+Evaluation Instructions:
+{{evaluationInstructions}}
+{{/if}}
+      `
+    }
+  });
+
+  const [showApiKey, setShowApiKey] = useState(false);
+  const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
+  const [isBlacklistedDomain, setBlacklistedDomain] = useState(false);
+  const [resetTurnstile, setResetTurnstile] = useState(false);
+  const [response, setResponse] = useState<ResponseValues | null>(null);
+  const [modelOptions, setModelOptions] = useState<string[]>([]);
+  const [isAdvancedSettingsVisible, setAdvancedSettingsVisible] = useState(false);
+  const toast = useToast();
+
+  useEffect(() => {
+    const warmUpAPI = async () => {
+      try {
+        await fetch(getURL("/v1/elucidate"), { method: "GET" });
+      } catch {
+        // handle error silently
+      }
+    };
+    warmUpAPI();
+  }, []);
+
+  useEffect(() => {
+    const currentDomain = window.location.hostname;
+    setBlacklistedDomain(currentDomain !== "kakusui.org");
+  }, []);
+
+  useEffect(() => {
+    const savedEvaluationInstructions = localStorage.getItem('evaluationInstructions');
+    const savedCustomInstructionFormat = localStorage.getItem('customInstructionFormat');
+    
+    if (savedEvaluationInstructions) setValue('evaluationInstructions', savedEvaluationInstructions);
+    if (savedCustomInstructionFormat) setValue('customInstructionFormat', savedCustomInstructionFormat);
+  }, [setValue]);
+
+  const selectedLLM = watch("llmType");
+  const selectedModel = watch("model");
+
+  useEffect(() => {
+    const updateModelOptions = () => {
+      const options = getModelOptions(selectedLLM);
+      setModelOptions(options);
+      if (!options.includes(selectedModel)) {
+        setValue("model", options[0]);
+      }
+    };
+
+    const updateApiKey = () => {
+      const savedApiKey = localStorage.getItem(`${selectedLLM}-apiKey`);
+      setValue("userAPIKey", savedApiKey || "");
+    };
+
+    updateModelOptions();
+    updateApiKey();
+  }, [selectedLLM, setValue]);
+
+  const handleToggleShowApiKey = () => setShowApiKey(!showApiKey);
+
+  const getModelOptions = (llm: string): string[] => {
+    switch (llm) {
+      case "OpenAI":
+        return ["gpt-3.5-turbo", "gpt-4", "gpt-4-turbo", "gpt-4o"];
+      default:
+        return [];
+    }
+  };
+
+  const showToast = (title: string, description: string, status: "success" | "error") => {
+    toast({
+      title,
+      description,
+      status,
+      duration: 5000,
+      isClosable: true,
+    });
+  };
+
+  const handleVerification = async () => {
+    try {
+      const verificationResponse = await fetch(getURL("/verify-turnstile"), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token: turnstileToken }),
+      });
+
+      const verificationResult = await verificationResponse.json();
+      return verificationResult.success;
+    } catch {
+      return false;
+    }
+  };
+
+  const validateInstructions = (instructions: string) => {
+    const requiredPlaceholders = ["{{untranslatedText}}", "{{translatedText}}", "{{evaluationInstructions}}"];
+    return requiredPlaceholders.every(placeholder => instructions.includes(placeholder));
+  };
+
+  const onSubmit = async (data: FormInput) => {
+    setResetTurnstile(false);
+
+    if (window.location.hostname === "kakusui-org.pages.dev") {
+      showToast("Access Denied", "This domain is not for end user usage, please use kakusui.org", "error");
+      return;
+    }
+
+    if (!turnstileToken && window.location.hostname === "kakusui.org") {
+      showToast("Verification failed", "Please complete the verification", "error");
+      return;
+    }
+
+    if (!validateInstructions(data.customInstructionFormat)) {
+      showToast("Invalid Instructions", "Instructions must include {{untranslatedText}}, {{translatedText}}, and {{evaluationInstructions}} placeholders.", "error");
+      return;
+    }
+
+    try {
+      if (window.location.hostname === "kakusui.org" && !(await handleVerification())) {
+        throw new Error("Turnstile verification failed. Please try again.");
+      }
+
+      localStorage.setItem(`${data.llmType}-apiKey`, data.userAPIKey);
+      localStorage.setItem('evaluationInstructions', data.evaluationInstructions);
+      localStorage.setItem('customInstructionFormat', data.customInstructionFormat);
+
+      let evaluationInstructions = data.customInstructionFormat
+        .replace("{{untranslatedText}}", data.untranslatedText)
+        .replace("{{translatedText}}", data.translatedText)
+        .replace("{{evaluationInstructions}}", data.evaluationInstructions);
+
+      if (data.evaluationInstructions) {
+        evaluationInstructions = evaluationInstructions.replace("{{#if evaluationInstructions}}\nEvaluation instructions:\n{{evaluationInstructions}}\n{{/if}}", `Evaluation instructions:\n${data.evaluationInstructions}`);
+      } else {
+        evaluationInstructions = evaluationInstructions.replace("{{#if evaluationInstructions}}\nEvaluation instructions:\n{{evaluationInstructions}}\n{{/if}}", '');
+      }
+
+      const textToEvaluate = `Untranslated Text:\n${data.untranslatedText}\n\nTranslated Text:\n${data.translatedText}`;
+
+      const response = await fetch(getURL("/proxy/elucidate"), {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ...data, textToEvaluate, evaluationInstructions }),
+      });
+
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.message || "An unknown error occurred");
+
+      setResponse(result);
+    } catch (error) {
+      console.error("Error Occurred:", error);
+      showToast("An error occurred.", (error as Error).message || "An error occurred.", "error");
+    } finally {
+      setResetTurnstile(true);
+    }
+  };
+
+  const handlePaste = async (field: "untranslatedText" | "translatedText") => {
+    try {
+      const text = await navigator.clipboard.readText();
+      setValue(field, text);
+    } catch (error) {
+      showToast("Error", "Failed to read clipboard contents", "error");
+    }
+  };
+
+  const handleSwap = () => {
+    const currentInput = getValues("untranslatedText");
+    const currentOutput = response?.evaluatedText || "";
+    setValue("untranslatedText", currentOutput);
+    setResponse({ evaluatedText: currentInput });
+  };
+
+  const memoizedTurnstile = useMemo(() =>
+    <Turnstile siteKey="0x4AAAAAAAbu-SlGyNF03684" onVerify={setTurnstileToken} resetKey={resetTurnstile} />
+    , [resetTurnstile]);
+
+  return (
+    <>
+      <form onSubmit={handleSubmit(onSubmit)}>
+        <VStack spacing={4} align="stretch">
+          <FormControl isInvalid={!!errors.untranslatedText}>
+            <FormLabel>Untranslated Text</FormLabel>
+            <Textarea
+              {...register("untranslatedText", { required: true })}
+              placeholder="Enter untranslated text"
+              rows={5}
+            />
+            <Button onClick={() => handlePaste("untranslatedText")} mt={2} width="100%">Paste</Button>
+          </FormControl>
+
+          <FormControl isInvalid={!!errors.translatedText}>
+            <FormLabel>Translated Text</FormLabel>
+            <Textarea
+              {...register("translatedText", { required: true })}
+              placeholder="Enter translated text"
+              rows={5}
+            />
+            <Button onClick={() => handlePaste("translatedText")} mt={2} width="100%">Paste</Button>
+          </FormControl>
+
+          <FormControl isInvalid={!!errors.evaluationInstructions}>
+            <FormLabel>Evaluation Instructions</FormLabel>
+            <Textarea
+              {...register("evaluationInstructions", { required: true })}
+              placeholder="Enter evaluation instructions"
+              rows={4}
+            />
+          </FormControl>
+
+          <HStack spacing={4}>
+            <FormControl isInvalid={!!errors.llmType} flex={1}>
+              <FormLabel>LLM</FormLabel>
+              <Select {...register("llmType", { required: true })}>
+                <option value="OpenAI">OpenAI</option>
+              </Select>
+            </FormControl>
+
+            <FormControl isInvalid={!!errors.model} flex={1}>
+              <FormLabel>Model</FormLabel>
+              <Select {...register("model", { required: true })}>
+                {modelOptions.map((model) => (
+                  <option key={model} value={model}>{model}</option>
+                ))}
+              </Select>
+            </FormControl>
+
+            <FormControl isInvalid={!!errors.userAPIKey} flex={1}>
+              <FormLabel>API Key</FormLabel>
+              <InputGroup>
+                <Input
+                  {...register("userAPIKey", { required: true })}
+                  type={showApiKey ? "text" : "password"}
+                  placeholder="Enter API key"
+                />
+                <InputRightElement>
+                  <IconButton
+                    aria-label={showApiKey ? "Hide API key" : "Show API key"}
+                    icon={showApiKey ? <ViewOffIcon /> : <ViewIcon />}
+                    onClick={handleToggleShowApiKey}
+                    variant="ghost"
+                  />
+                </InputRightElement>
+              </InputGroup>
+            </FormControl>
+          </HStack>
+
+          <Box width="100%">
+            <Button
+              mt={4}
+              width="100%"
+              variant="outline"
+              leftIcon={isAdvancedSettingsVisible ? <ChevronUpIcon /> : <ChevronDownIcon />}
+              onClick={() => setAdvancedSettingsVisible(!isAdvancedSettingsVisible)}
+            >
+              Advanced Settings
+            </Button>
+            <Collapse in={isAdvancedSettingsVisible} animateOpacity>
+              <FormControl mt={4} isInvalid={!!errors.customInstructionFormat}>
+                <FormLabel>Custom Instruction Format</FormLabel>
+                <Textarea
+                  {...register("customInstructionFormat", {
+                    required: true,
+                    validate: validateInstructions
+                  })}
+                  placeholder="Enter custom instructions with placeholders {{untranslatedText}}, {{translatedText}}, and {{evaluationInstructions}}"
+                  rows={6}
+                />
+                <Text color="red.500" fontSize="sm" mt={2}>
+                  {errors.customInstructionFormat && "Instructions must include {{untranslatedText}}, {{translatedText}}, and {{evaluationInstructions}} placeholders."}
+                </Text>
+              </FormControl>
+            </Collapse>
+          </Box>
+
+          <Button
+            mt={4}
+            width="100%"
+            type="submit"
+            bg="orange.400"
+            color="white"
+            _hover={{ bg: 'orange.500' }}
+            isLoading={isSubmitting}
+          >
+            Submit
+          </Button>
+        </VStack>
+
+        {!isBlacklistedDomain && (
+          <Center mt={4}>
+            {memoizedTurnstile}
+          </Center>
+        )}
+
+        {response && (
+          <>
+            <Flex align="center" mt={17} gap={2}>
+              <Box flex={1}>
+                <Text mb="8px">
+                  Evaluated Text
+                  <DownloadButton text={response.evaluatedText} fileName="evaluatedText" />
+                  <CopyButton text={response.evaluatedText} />
+                </Text>
+                <Box overflowY="scroll" height={200}>
+                  <Text style={{ whiteSpace: "pre-wrap" }}>{response.evaluatedText}</Text>
+                </Box>
+              </Box>
+              <IconButton onClick={handleSwap} variant="ghost" size="xl" aria-label="Swap text" icon={<ArrowUpDownIcon />} />
+            </Flex>
+            <Center>
+              <Button onClick={() => setResponse(null)} mb={17} colorScheme="orange" variant="ghost">Clear Logs</Button>
+            </Center>
+          </>
+        )}
+      </form>
+
+      <HowToUseSection
+        repositoryUrl="https://github.com/Bikatr7/Elucidate"
+        steps={[
+          "Input the untranslated text.",
+          "Input the translated text.",
+          "Specify the evaluation instructions.",
+          "Select the LLM and model you want to use.",
+          "Provide your API key.",
+          "Click 'Submit' to get the evaluated text.",
+          "Review the evaluated text and download or copy if necessary.",
+          "(For custom format specifiers click the dropdown)"
+        ]}
+        notes={[
+          "Please note that the Turnstile verification is required to use this tool. This is in place to prevent abuse and ensure fair usage. You must complete the verification for every submission.",
+          "The Elucidate endpoint access is provided for free here (excluding LLM costs), but please be mindful of the usage and do not abuse the service."
+        ]}
+        contactEmail="contact@kakusui.org"
+      />
+
+      <LegalLinks basePath="/elucidate" />
+    </>
+  );
 }
 
 export default ElucidatePage;
