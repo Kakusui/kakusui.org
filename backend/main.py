@@ -273,7 +273,7 @@ async def elucidate(request_data:ElucidateRequest, request:Request):
         "claude-3-opus-20240229"
     ]
 
-    if(api_key != V1_EASYTL_ROOT_KEY):
+    if(api_key != V1_ELUCIDATE_ROOT_KEY):
         return JSONResponse(**ERRORS["invalid_api_key"])
     
     if(len(text_to_evaluate) > MAX_TEXT_LENGTH):
