@@ -42,7 +42,7 @@ type FormInput = {
   untranslatedText: string,
   translatedText: string,
   evaluationInstructions: string,
-  customInstructionFormat: string,
+  elucidateCustomInstructionFormat: string,
   instructionPreset: string,
 };
 
@@ -60,7 +60,7 @@ function ElucidatePage() {
       llmType: "OpenAI",
       model: "gpt-3.5-turbo",
       instructionPreset: "minimal",
-      customInstructionFormat: `You are a professional translation evaluator. Please evaluate the provided translation according to the instructions below. Your response should not contain anything aside from the re-evaluated text.
+      elucidateCustomInstructionFormat: `You are a professional translation evaluator. Please evaluate the provided translation according to the instructions below. Your response should not contain anything aside from the re-evaluated text.
 Untranslated Text:
 {{untranslatedText}}
 Translated Text:
@@ -100,11 +100,11 @@ Evaluation Instructions:
 
   useEffect(() => {
     const savedEvaluationInstructions = localStorage.getItem('evaluationInstructions');
-    const savedCustomInstructionFormat = localStorage.getItem('customInstructionFormat');
+    const savedElucidateCustomInstructionFormat = localStorage.getItem('elucidateCustomInstructionFormat');
     const savedInstructionPreset = localStorage.getItem('instructionPreset');
     
     if (savedEvaluationInstructions) setValue('evaluationInstructions', savedEvaluationInstructions);
-    if (savedCustomInstructionFormat) setValue('customInstructionFormat', savedCustomInstructionFormat);
+    if (savedElucidateCustomInstructionFormat) setValue('elucidateCustomInstructionFormat', savedElucidateCustomInstructionFormat);
     if (savedInstructionPreset) setValue('instructionPreset', savedInstructionPreset);
   }, [setValue]);
 
@@ -132,7 +132,7 @@ Evaluation Instructions:
 
   useEffect(() => {
     if (selectedInstructionPreset === "minimal") {
-      setValue("customInstructionFormat", `You are a professional translation evaluator. Please evaluate the provided translation according to the instructions below. Your response should not contain anything aside from the re-evaluated text.
+      setValue("elucidateCustomInstructionFormat", `You are a professional translation evaluator. Please evaluate the provided translation according to the instructions below. Your response should not contain anything aside from the re-evaluated text.
 Untranslated Text:
 {{untranslatedText}}
 Translated Text:
@@ -143,7 +143,7 @@ Evaluation Instructions:
 {{/if}}
       `);
     } else if (selectedInstructionPreset === "verbose") {
-      setValue("customInstructionFormat", `You are a professional translation evaluator. Please evaluate the provided translation according to the instructions below. Provide detailed reasoning for any changes and include the re-evaluated text at the end.
+      setValue("elucidateCustomInstructionFormat", `You are a professional translation evaluator. Please evaluate the provided translation according to the instructions below. Provide detailed reasoning for any changes and include the re-evaluated text at the end.
 Untranslated Text:
 {{untranslatedText}}
 Translated Text:
@@ -210,7 +210,7 @@ Evaluation Instructions:
       return;
     }
 
-    if (!validateInstructions(data.customInstructionFormat)) {
+    if (!validateInstructions(data.elucidateCustomInstructionFormat)) {
       showToast("Invalid Instructions", "Instructions must include {{untranslatedText}}, {{translatedText}}, and {{evaluationInstructions}} placeholders.", "error");
       return;
     }
@@ -222,10 +222,10 @@ Evaluation Instructions:
 
       localStorage.setItem(`${data.llmType}-apiKey`, data.userAPIKey);
       localStorage.setItem('evaluationInstructions', data.evaluationInstructions);
-      localStorage.setItem('customInstructionFormat', data.customInstructionFormat);
+      localStorage.setItem('elucidateCustomInstructionFormat', data.elucidateCustomInstructionFormat);
       localStorage.setItem('instructionPreset', data.instructionPreset);
 
-      let evaluationInstructions = data.customInstructionFormat
+      let evaluationInstructions = data.elucidateCustomInstructionFormat
         .replace("{{untranslatedText}}", data.untranslatedText)
         .replace("{{translatedText}}", data.translatedText)
         .replace("{{evaluationInstructions}}", data.evaluationInstructions);
@@ -366,10 +366,10 @@ Evaluation Instructions:
               Advanced Settings
             </Button>
             <Collapse in={isAdvancedSettingsVisible} animateOpacity>
-              <FormControl mt={4} isInvalid={!!errors.customInstructionFormat}>
+              <FormControl mt={4} isInvalid={!!errors.elucidateCustomInstructionFormat}>
                 <FormLabel>Custom Instruction Format</FormLabel>
                 <Textarea
-                  {...register("customInstructionFormat", {
+                  {...register("elucidateCustomInstructionFormat", {
                     required: true,
                     validate: validateInstructions
                   })}
@@ -377,7 +377,7 @@ Evaluation Instructions:
                   rows={6}
                 />
                 <Text color="red.500" fontSize="sm" mt={2}>
-                  {errors.customInstructionFormat && "Instructions must include {{untranslatedText}}, {{translatedText}}, and {{evaluationInstructions}} placeholders."}
+                  {errors.elucidateCustomInstructionFormat && "Instructions must include {{untranslatedText}}, {{translatedText}}, and {{evaluationInstructions}} placeholders."}
                 </Text>
               </FormControl>
             </Collapse>
