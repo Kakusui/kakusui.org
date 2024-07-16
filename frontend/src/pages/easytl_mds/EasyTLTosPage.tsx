@@ -44,7 +44,7 @@ const EasyTLTermsOfServicePage: React.FC = () => {
 
             <Heading as="h2" size="md" mt={4} mb={2}>5. Modifications to the Software</Heading>
             <Text mb={4}>
-                You may modify the source code of EasyTL for your personal use or to contribute to the community. Any modifications or derivative works of the library must be distributed under the LGPLv2.1 license, while modifications to the website's instance or endpoint must be distributed under the GPLv3 license.
+                You may modify the source code of EasyTL for your personal use or to contribute to the community. Any modifications or derivative works of the library must be distributed under the LGPLv2.1 license, while modifications to the website's instance or endpoint must be distributed under the AGPLv3 license.
             </Text>
 
             <Heading as="h2" size="md" mt={4} mb={2}>6. Intellectual Property</Heading>
