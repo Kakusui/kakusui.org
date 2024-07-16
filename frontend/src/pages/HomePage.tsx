@@ -25,6 +25,7 @@ import logo from '../assets/images/kakusui_logo.png';
 import okisouchi_sync from '../assets/images/okisouchi_sync_image.png';
 import kairyou_logo from '../assets/images/kairyou_logo.png';
 import easytl_logo from '../assets/images/easytl_logo.png';
+import elucidate_logo from '../assets/images/elucidate_logo.png';
 
 // icons
 import { IconBrandGithub } from '@tabler/icons-react';
@@ -48,6 +49,23 @@ function HomePage() {
                     Applications
                 </AbsoluteCenter>
             </Box>
+            <ApplicationSection
+                title="Elucidate (beta)"
+                subtitle="Smarter Translations through LLM Self-Evaluation"
+                description="Elucidate is a tool to that allows for the evaluation of translation utilizing LLMs."
+                imageUrl={elucidate_logo}
+                imageAlt="Elucidate Logo"
+                linkUrl="/elucidate"
+                githubUrl="https://github.com/Kakusui/Elucidate"
+                reverse
+                features={[
+                    { heading: "LLM Self-Evaluation", text: "Elucidate allows users to evaluate translations using LLMs, providing insights into the quality of translations." },
+                    { heading: "Customizable Evaluation", text: "Users can customize the evaluation process, allowing for a wide range of evaluation options." },
+                    { heading: "Multiple LLM Options", text: "Elucidate supports multiple LLMs, including OpenAI, Anthropic, and Gemini, providing a wide range of evaluation options. (Coming Soon)" },
+                    { heading: "User-Friendly Interface", text: "Elucidate is user-friendly, with a simple interface that allows users to quickly evaluate translations." }
+                ]}
+            />
+                
             <ApplicationSection
                 title="EasyTL"
                 subtitle="Simplifying Language Barriers with custom translation using AI and LLMs"
