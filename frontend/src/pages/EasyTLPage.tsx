@@ -44,7 +44,7 @@ type FormInput =
   language: string,
   tone: string,
   additional_instructions: string,
-  customInstructionFormat: string,
+  easytlCustomInstructionFormat: string,
 };
 
 type ResponseValues = 
@@ -63,7 +63,7 @@ function EasyTLPage()
       tone: "Formal; Polite",
       llmType: "OpenAI",
       model: "gpt-3.5-turbo",
-      customInstructionFormat: `You are a professional translator, please translate the text given to you following the below instructions. Do not use quotations or say anything else aside from the translation in your response.
+      easytlCustomInstructionFormat: `You are a professional translator, please translate the text given to you following the below instructions. Do not use quotations or say anything else aside from the translation in your response.
 Language: {{language}}
 Tone: {{tone}}
 {{#if additional_instructions}}
@@ -109,11 +109,11 @@ Additional instructions:
     const savedTone = localStorage.getItem('tone');
     const savedLanguage = localStorage.getItem('language');
     const savedAdditionalInstructions = localStorage.getItem('additional_instructions');
-    const savedCustomInstructionFormat = localStorage.getItem('customInstructionFormat');
+    const savedEasytlCustomInstructionFormat = localStorage.getItem('easytlCustomInstructionFormat');
     
     if (savedTone) setValue('tone', savedTone);
     if (savedLanguage) setValue('language', savedLanguage);
-    if (savedCustomInstructionFormat) setValue('customInstructionFormat', savedCustomInstructionFormat);
+    if (savedEasytlCustomInstructionFormat) setValue('easytlCustomInstructionFormat', savedEasytlCustomInstructionFormat);
     if (savedAdditionalInstructions) setValue('additional_instructions', savedAdditionalInstructions);
   }, [setValue]);
 
@@ -208,7 +208,7 @@ Additional instructions:
       return;
     }
 
-    if (!validateInstructions(data.customInstructionFormat)) {
+    if (!validateInstructions(data.easytlCustomInstructionFormat)) {
       showToast("Invalid Instructions", "Instructions must include {{language}} and {{tone}} placeholders.", "error");
       return;
     }
@@ -224,9 +224,9 @@ Additional instructions:
       localStorage.setItem('tone', data.tone);
       localStorage.setItem('language', data.language);
       localStorage.setItem('additional_instructions', data.additional_instructions);
-      localStorage.setItem('customInstructionFormat', data.customInstructionFormat);
+      localStorage.setItem('easytlCustomInstructionFormat', data.easytlCustomInstructionFormat);
 
-      let translationInstructions = data.customInstructionFormat
+      let translationInstructions = data.easytlCustomInstructionFormat
         .replace("{{language}}", data.language)
         .replace("{{tone}}", data.tone);
 
@@ -365,10 +365,10 @@ Additional instructions:
               Advanced Settings
             </Button>
             <Collapse in={isAdvancedSettingsVisible} animateOpacity>
-              <FormControl mt={4} isInvalid={!!errors.customInstructionFormat}>
+              <FormControl mt={4} isInvalid={!!errors.easytlCustomInstructionFormat}>
                 <FormLabel>Custom Instruction Format</FormLabel>
                 <Textarea
-                  {...register("customInstructionFormat", { 
+                  {...register("easytlCustomInstructionFormat", { 
                     required: true, 
                     validate: validateInstructions 
                   })} 
@@ -376,7 +376,7 @@ Additional instructions:
                   rows={6}
                 />
                 <Text color="red.500" fontSize="sm" mt={2}>
-                  {errors.customInstructionFormat && "Instructions must include {{language}} and {{tone}} placeholders."}
+                  {errors.easytlCustomInstructionFormat && "Instructions must include {{language}} and {{tone}} placeholders."}
                 </Text>
               </FormControl>
             </Collapse>
