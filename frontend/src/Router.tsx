@@ -9,6 +9,9 @@ import {createBrowserRouter, RouterProvider} from 'react-router-dom';
 import HomePage from "./pages/HomePage.tsx";
 
 import ElucidatePage from './pages/ElucidatePage.tsx';
+import ElucidateTermsOfServicePage from './pages/elucidate_mds/ElucidateTosPage.tsx';
+import ElucidatePrivacyPolicyPage from './pages/elucidate_mds/ElucidatePrivacyPolicyPage.tsx';
+import ElucidateLicensePage from './pages/elucidate_mds/ElucidateLicensePage.tsx';
 
 import EasyTLPage from './pages/EasyTLPage.tsx';
 import EasyTLTermsOfServicePage from './pages/easytl_mds/EasyTLTosPage.tsx';
@@ -32,6 +35,9 @@ import InternalErrorPage from './pages/error_pages/500.tsx';
 const routes = [
     { path: '/', element: <HomePage/> },
     { path: '/elucidate', element: <ElucidatePage/> },
+    { path: '/elucidate/tos', element: <ElucidateTermsOfServicePage/> },
+    { path: '/elucidate/privacy', element: <ElucidatePrivacyPolicyPage/> },
+    { path: '/elucidate/license', element: <ElucidateLicensePage/> },
     { path: '/easytl', element: <EasyTLPage/> },
     { path: '/easytl/tos', element: <EasyTLTermsOfServicePage/> },
     { path: '/easytl/privacy', element: <EasyTLPrivacyPolicyPage/> },
