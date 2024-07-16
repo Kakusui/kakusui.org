@@ -21,11 +21,11 @@ import {
 } from "@chakra-ui/react";
 
 // logos and images
-import logo from '../assets/images/kakusui_logo.png';
-import okisouchi_sync from '../assets/images/okisouchi_sync_image.png';
-import kairyou_logo from '../assets/images/kairyou_logo.png';
-import easytl_logo from '../assets/images/easytl_logo.png';
-import elucidate_logo from '../assets/images/elucidate_logo.png';
+import logo from '../assets/images/kakusui_logo.webp';
+import okisouchi_sync from '../assets/images/okisouchi_sync_image.webp';
+import kairyou_logo from '../assets/images/kairyou_logo.webp';
+import easytl_logo from '../assets/images/easytl_logo.webp';
+import elucidate_logo from '../assets/images/elucidate_logo.webp';
 
 // icons
 import { IconBrandGithub } from '@tabler/icons-react';

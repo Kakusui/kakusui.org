@@ -18,7 +18,7 @@ from kairyou.exceptions import InvalidReplacementJsonKeys, InvalidReplacementJso
 
 from easytl import EasyTL
 
-from elucidate import Elucidate
+from elucidate import Elucidate, __version__ as ELUCIDATE_VERSION
 
 import httpx
 
@@ -132,7 +132,7 @@ async def kairyou(request_data:KairyouRequest, request:Request):
 
     if(api_key != V1_KAIRYOU_ROOT_KEY):
         return JSONResponse(status_code=401, content={
-            "message": "Invalid API key. If you are actually interested in using this endpoint, please contact contact@kakusui.org."
+            "message": "Invalid endpoint API key. If you are actually interested in using this endpoint, please contact us at contact@kakusui.org."
         })
 
     if(len(text_to_preprocess) > 175000):
@@ -181,7 +181,7 @@ async def easytl(request_data:EasyTLRequest, request:Request):
     VALID_LLM_TYPES = ["anthropic", "openai", "gemini"]
 
     ERRORS = {
-        "invalid_api_key": {"status_code": 401, "content": {"message": "Invalid API key. If you are actually interested in using this endpoint, please contact contact@kakusui.org."}},
+        "invalid_api_key": {"status_code": 401, "content": {"message": "Invalid endpoint API key. If you are actually interested in using this endpoint, please contact us at contact@kakusui.org."}},
         "text_too_long": {"status_code": 400, "content": {"message": "The text to translate is too long. Please keep it under 10,000 characters."}},
         "instructions_too_long": {"status_code": 400, "content": {"message": "The translation instructions are too long. Please keep it under 1,000 characters."}},
         "invalid_llm_type": {"status_code": 400, "content": {"message": "Invalid LLM type. Please use 'anthropic', 'openai', or 'gemini'."}},
@@ -250,13 +250,12 @@ async def elucidate(request_data:ElucidateRequest, request:Request):
 
     api_key = request.headers.get("X-API-Key")
 
-    ELUCIDATE_VERSION = "v0.0.1-beta"
     MAX_TEXT_LENGTH = 10000
     MAX_INSTRUCTIONS_LENGTH = 1000
     VALID_LLM_TYPES = ["openai"]
 
     ERRORS = {
-        "invalid_api_key": {"status_code": 401, "content": {"message": "Invalid API key. If you are actually interested in using this endpoint, please contact contact@kakusui.org."}},
+        "invalid_api_key": {"status_code": 401, "content": {"message": "Invalid endpoint API key. If you are actually interested in using this endpoint, please contact us at contact@kakusui.org."}},
         "text_too_long": {"status_code": 400, "content": {"message": "The text to evaluate is too long. Please keep it under 10,000 characters."}},
         "instructions_too_long": {"status_code": 400, "content": {"message": "The evaluation instructions are too long. Please keep it under 1,000 characters."}},
         "invalid_llm_type": {"status_code": 400, "content": {"message": f"Invalid LLM type. As of Elucidate {ELUCIDATE_VERSION}, only 'openai' is supported."}}, 
@@ -273,7 +272,7 @@ async def elucidate(request_data:ElucidateRequest, request:Request):
         "claude-3-opus-20240229"
     ]
 
-    if(api_key != V1_EASYTL_ROOT_KEY):
+    if(api_key != V1_ELUCIDATE_ROOT_KEY):
         return JSONResponse(**ERRORS["invalid_api_key"])
     
     if(len(text_to_evaluate) > MAX_TEXT_LENGTH):
