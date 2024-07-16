@@ -24,7 +24,7 @@ import {
 
 import {ChevronDownIcon, ChevronRightIcon, CloseIcon, HamburgerIcon,} from '@chakra-ui/icons';
 
-import logo from '../assets/images/kakusui_logo.png'
+import logo from '../assets/images/kakusui_logo.webp';
 
 export default function Navbar() {
     const {isOpen, onToggle} = useDisclosure();
@@ -59,10 +59,10 @@ export default function Navbar() {
                             aria-label={'Toggle Navigation'}
                         />
 
-                        <Image src={logo} boxSize='30px' />
+                        <Image src={logo} boxSize='30px' alt='Kakusui Logo'/>
                     </Flex>
                     <Flex flex={{base: 1}} justify={{base: 'center', md: 'start'}}>
-                        <Image src={logo} boxSize='30px' display={{base: 'none', md: 'block'}}/>
+                        <Image src={logo} boxSize='30px' display={{base: 'none', md: 'block'}} alt='Kakusui Logo'/>
 
                         <Flex display={{base: 'none', md: 'flex'}} ml={10}>
                             <DesktopNav/>

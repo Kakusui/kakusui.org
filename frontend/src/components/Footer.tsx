@@ -6,7 +6,7 @@ license that can be found in the LICENSE file.
 
 import { Box, Container, Flex, IconButton, Image, Stack, Text, useColorModeValue } from '@chakra-ui/react';
 import { IconBrandGithub } from '@tabler/icons-react';
-import logo from '../assets/images/kakusui_logo.png';
+import logo from '../assets/images/kakusui_logo.webp';
 
 function Footer() {
     return (
@@ -25,10 +25,10 @@ function Footer() {
                 <Flex display={{ base: 'flex', md: 'none' }} width="100%" justify="space-between" align="center">
                     <IconButton as='a' href='https://github.com/Kakusui' aria-label='Github' icon={<IconBrandGithub />} />
                     <Text textAlign="center">© 2024 Kakusui LLC. All rights reserved</Text>
-                    <Image src={logo} boxSize='30px' />
+                    <Image src={logo} boxSize='30px' alt='Kakusui Logo' />
                 </Flex>
                 <Flex display={{ base: 'none', md: 'flex' }} width="100%" justify="space-between" align="center">
-                    <Image src={logo} boxSize='30px' />
+                    <Image src={logo} boxSize='30px' alt='Kakusui Logo' />
                     <Text textAlign="center" flex="1">© 2024 Kakusui LLC. All rights reserved</Text>
                     <IconButton as='a' href='https://github.com/Kakusui' aria-label='Github' icon={<IconBrandGithub />} />
                 </Flex>
