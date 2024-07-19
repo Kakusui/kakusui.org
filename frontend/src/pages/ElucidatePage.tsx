@@ -162,6 +162,10 @@ Evaluation Instructions:
     switch (llm) {
       case "OpenAI":
         return ["gpt-3.5-turbo", "gpt-4", "gpt-4-turbo", "gpt-4o"];
+      case "Gemini":
+        return ["gemini-1.0-pro", "gemini-1.5-pro", "gemini-1.5-flash"];
+      case "Anthropic":
+        return ["claude-3-haiku-20240307", "claude-3-sonnet-20240229", "claude-3-opus-20240229", "claude-3-5-sonnet-20240620"]
       default:
         return [];
     }
@@ -323,6 +327,8 @@ Evaluation Instructions:
               <FormLabel>LLM</FormLabel>
               <Select {...register("llmType", { required: true })}>
                 <option value="OpenAI">OpenAI</option>
+                <option value="Gemini">Gemini</option>
+                <option value="Anthropic">Anthropic</option>
               </Select>
             </FormControl>
 

@@ -252,13 +252,13 @@ async def elucidate(request_data:ElucidateRequest, request:Request):
 
     MAX_TEXT_LENGTH = 10000
     MAX_INSTRUCTIONS_LENGTH = 1000
-    VALID_LLM_TYPES = ["openai"]
+    VALID_LLM_TYPES = ["openai", "anthropic", "gemini"]
 
     ERRORS = {
         "invalid_api_key": {"status_code": 401, "content": {"message": "Invalid endpoint API key. If you are actually interested in using this endpoint, please contact us at contact@kakusui.org."}},
         "text_too_long": {"status_code": 400, "content": {"message": "The text to evaluate is too long. Please keep it under 10,000 characters."}},
         "instructions_too_long": {"status_code": 400, "content": {"message": "The evaluation instructions are too long. Please keep it under 1,000 characters."}},
-        "invalid_llm_type": {"status_code": 400, "content": {"message": f"Invalid LLM type. As of Elucidate {ELUCIDATE_VERSION}, only 'openai' is supported."}}, 
+        "invalid_llm_type": {"status_code": 400, "content": {"message": f"Invalid LLM type. As of Elucidate {ELUCIDATE_VERSION}, only 'openai', 'anthropic', and 'gemini' are supported."}},
         "invalid_user_api_key": {"status_code": 401, "content": {"message": "Invalid user API key. Please check your credentials."}},
         "internal_error": {"status_code": 500, "content": {"message": "An internal error occurred. Please try again later."}}
     }
@@ -297,9 +297,9 @@ async def elucidate(request_data:ElucidateRequest, request:Request):
             text_to_evaluate = f"{evaluation_instructions}\n{text_to_evaluate}"
             evaluation_instructions = "Your instructions are in the other text."
 
-        evaluated_text = await EasyTL.translate_async(text=text_to_evaluate,
+        evaluated_text = await Elucidate.evaluate_async(text=text_to_evaluate,
                                                        service=llm_type, # type: ignore 
-                                                       translation_instructions=evaluation_instructions,
+                                                       evaluation_instructions=evaluation_instructions,
                                                        model=model
                                                        ) 
 
