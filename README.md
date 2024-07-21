@@ -39,7 +39,7 @@ kairyou==1.6.5
 
 uvicorn==0.30.0
 
-easytl==0.4.6
+easytl==0.4.7
 
 httpx==0.25.1
 

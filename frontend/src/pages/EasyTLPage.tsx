@@ -62,7 +62,7 @@ function EasyTLPage()
     defaultValues: {
       tone: "Formal; Polite",
       llmType: "OpenAI",
-      model: "gpt-3.5-turbo",
+      model: "gpt-4o-mini",
       easytlCustomInstructionFormat: `You are a professional translator, please translate the text given to you following the below instructions. Do not use quotations or say anything else aside from the translation in your response.
 Language: {{language}}
 Tone: {{tone}}
@@ -145,7 +145,7 @@ Additional instructions:
     switch (llm) 
     {
       case "OpenAI":
-        return ["gpt-3.5-turbo", "gpt-4", "gpt-4-turbo", "gpt-4o"];
+        return ["gpt-3.5-turbo", "gpt-4", "gpt-4-turbo", "gpt-4o", "gpt-4o-mini"]
       case "Gemini":
         return ["gemini-1.0-pro", "gemini-1.5-pro", "gemini-1.5-flash"];
       case "Anthropic":
