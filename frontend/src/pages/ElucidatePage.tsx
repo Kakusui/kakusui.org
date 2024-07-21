@@ -58,7 +58,7 @@ function ElucidatePage() {
   const { register, handleSubmit, watch, formState: { isSubmitting, errors }, setValue, getValues } = useForm<FormInput>({
     defaultValues: {
       llmType: "OpenAI",
-      model: "gpt-3.5-turbo",
+      model: "gpt-4o-mini",
       instructionPreset: "minimal",
       elucidateCustomInstructionFormat: `You are a professional translation evaluator. Please evaluate the provided translation according to the instructions below. Your response should not contain anything aside from the re-evaluated text.
 Untranslated Text:
@@ -161,7 +161,7 @@ Evaluation Instructions:
   const getModelOptions = (llm: string): string[] => {
     switch (llm) {
       case "OpenAI":
-        return ["gpt-3.5-turbo", "gpt-4", "gpt-4-turbo", "gpt-4o"];
+        return ["gpt-3.5-turbo", "gpt-4", "gpt-4-turbo", "gpt-4o", "gpt-4o-mini"]
       case "Gemini":
         return ["gemini-1.0-pro", "gemini-1.5-pro", "gemini-1.5-flash"];
       case "Anthropic":
