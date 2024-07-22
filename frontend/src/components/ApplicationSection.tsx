@@ -26,7 +26,7 @@ const ApplicationSection: React.FC<ApplicationSectionProps> = ({ title, subtitle
         <>
             <Stack direction={{ base: 'column', md: reverse ? 'row-reverse' : 'row' }} mt={14}>
                 <Flex flex={1}>
-                    <Image boxSize={400} alt={imageAlt} objectFit="cover" src={imageUrl} />
+                    <Image boxSize={400} alt={imageAlt} objectFit="cover" src={imageUrl} borderRadius={"full"} />
                 </Flex>
                 <Flex p={8} flex={1} align="center">
                     <Stack spacing={6} w="full" maxW="xl">

@@ -50,9 +50,9 @@ function HomePage() {
                 </AbsoluteCenter>
             </Box>
             <ApplicationSection
-                title="Elucidate (beta)"
+                title="Elucidate"
                 subtitle="Smarter Translations through LLM Self-Evaluation"
-                description="Elucidate is a tool to that allows for the evaluation of translation utilizing LLMs."
+                description="Elucidate is a tool to that allows for the evaluation of translation utilizing LLMs. It provides insights into the quality of translations and allows for customizable evaluation options, making it a versatile tool for all your translation needs."
                 imageUrl={elucidate_logo}
                 imageAlt="Elucidate Logo"
                 linkUrl="/elucidate"
@@ -61,7 +61,7 @@ function HomePage() {
                 features={[
                     { heading: "LLM Self-Evaluation", text: "Elucidate allows users to evaluate translations using LLMs, providing insights into the quality of translations." },
                     { heading: "Customizable Evaluation", text: "Users can customize the evaluation process, allowing for a wide range of evaluation options." },
-                    { heading: "Multiple LLM Options", text: "Elucidate supports multiple LLMs, including OpenAI, Anthropic, and Gemini, providing a wide range of evaluation options. (Coming Soon)" },
+                    { heading: "Multiple LLM Options", text: "Elucidate supports multiple LLMs, including OpenAI, Anthropic, and Gemini, providing a wide range of evaluation options." },
                     { heading: "User-Friendly Interface", text: "Elucidate is user-friendly, with a simple interface that allows users to quickly evaluate translations." }
                 ]}
             />
@@ -146,7 +146,7 @@ function Kakusui() {
                 </Stack>
             </Flex>
             <Flex flex={1}>
-                <Image boxSize={400} alt="Kakusui Logo" objectFit="cover" src={logo} />
+                <Image boxSize={400} alt="Kakusui Logo" objectFit="cover" src={logo} borderRadius={"full"}/>
             </Flex>
         </Stack>
     );
