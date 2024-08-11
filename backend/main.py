@@ -176,8 +176,8 @@ async def easytl(request_data:EasyTLRequest, request:Request):
 
     api_key = request.headers.get("X-API-Key")
 
-    MAX_TEXT_LENGTH = 10000
-    MAX_INSTRUCTIONS_LENGTH = 1000
+    MAX_TEXT_LENGTH = 100000
+    MAX_INSTRUCTIONS_LENGTH = 5000
     VALID_LLM_TYPES = ["anthropic", "openai", "gemini"]
 
     ERRORS = {
@@ -250,8 +250,8 @@ async def elucidate(request_data:ElucidateRequest, request:Request):
 
     api_key = request.headers.get("X-API-Key")
 
-    MAX_TEXT_LENGTH = 10000
-    MAX_INSTRUCTIONS_LENGTH = 1000
+    MAX_TEXT_LENGTH = 100000
+    MAX_INSTRUCTIONS_LENGTH = 5000
     VALID_LLM_TYPES = ["openai", "anthropic", "gemini"]
 
     ERRORS = {
