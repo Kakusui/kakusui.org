@@ -3,7 +3,7 @@
 ## license that can be found in the LICENSE file.
 
 app = 'kakusui-org'
-primary_region = 'den'
+primary_region = 'iad'
 swap_size_mb = 3072
 
 [build]
@@ -12,7 +12,7 @@ swap_size_mb = 3072
 [http_service]
   internal_port = 8000
   force_https = true
-  auto_stop_machines = true
+  auto_stop_machines = 'stop'
   auto_start_machines = true
   min_machines_running = 0
   processes = ['app']
