@@ -76,14 +76,17 @@ def setup_local_environment() -> None:
             print("Setting up production environment...")
 
             to_write_frontend = 'NODE_ENV=production\n'
+            to_write_backend = ''
         
         os.makedirs(os.path.dirname(FRONTEND_ENV), exist_ok=True)
 
         with open(FRONTEND_ENV, 'w') as f:
             f.write(to_write_frontend)
 
-        with open(BACKEND_ENV, 'w') as f:
-            f.write(to_write_backend)
+        if(to_write_backend != ''):
+
+            with open(BACKEND_ENV, 'w') as f:
+                f.write(to_write_backend)
 
         print("Environment setup successfully")
 

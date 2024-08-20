@@ -22,7 +22,6 @@ import {
 
 // logos and images
 import logo from '../assets/images/kakusui_logo.webp';
-import okisouchi_sync from '../assets/images/okisouchi_sync_image.webp';
 import kairyou_logo from '../assets/images/kairyou_logo.webp';
 import easytl_logo from '../assets/images/easytl_logo.webp';
 import elucidate_logo from '../assets/images/elucidate_logo.webp';
@@ -97,16 +96,6 @@ function HomePage() {
                     { heading: "Katakana Utility", text: "Includes versatile utilities such as KatakanaUtil for specialized text manipulation, allowing users to tailor preprocessing to specific needs." },
                     { heading: "Name Indexing", text: "Supports name indexing for discovering new named entities, which can be used for other NLP tasks." }
                 ]}
-            />
-            <Divider mt={14} variant="dashed" />
-            <ApplicationSection
-                title="Okisouchi"
-                subtitle="Automating the transfer of files from Google Drive"
-                description="Okisouchi is a robust, open-source tool for automating the transfer of files from Google Drive to designated locations, streamlining file management and organization with user-configured settings while ensuring data privacy and adherence to GPLv3 open-source licensing."
-                imageUrl={okisouchi_sync}
-                imageAlt="Okisouchi Sync"
-                linkUrl="/okisouchi"
-                githubUrl="https://github.com/Kakusui/OSC_Interface"
             />
         </>
     );

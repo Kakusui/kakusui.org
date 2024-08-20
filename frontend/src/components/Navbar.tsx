@@ -255,12 +255,7 @@ const NAV_ITEMS: Array<NavItem> = [
                 label: 'Kairyou',
                 subLabel: 'A NER/NLP powered Japanese prepreprocessor.',
                 href: '/kairyou',
-            },
-            {
-                label: 'Okisouchi',
-                subLabel: 'Automate the transfer of files from Google Drive to designated locations.',
-                href: '/okisouchi',
-            },
+            }
         ],
     },
 ];

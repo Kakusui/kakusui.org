@@ -23,11 +23,6 @@ import KairyouTermsOfServicePage from './pages/kairyou_mds/KairyouTosPage.tsx';
 import KairyouPrivacyPolicyPage from './pages/kairyou_mds/KairyouPrivacyPolicyPage.tsx';
 import KairyouLicensePage from './pages/kairyou_mds/KairyouLicensePage.tsx';
 
-import OkisouchiPage from './pages/OkisouchiPage.tsx';
-import OkisouchiTermsOfServicePage from './pages/okisouchi_mds/OkisouchiTosPage.tsx';
-import OkisouchiPrivacyPolicyPage from './pages/okisouchi_mds/OkisouchiPrivacyPolicyPage.tsx';
-import OkisouchiLicensePage from './pages/okisouchi_mds/OkisouchiLicensePage.tsx';
-
 import NotFoundPage from './pages/error_pages/404.tsx';
 import ForbiddenPage from './pages/error_pages/403.tsx';
 import InternalErrorPage from './pages/error_pages/500.tsx';
@@ -46,10 +41,6 @@ const routes = [
     { path: '/kairyou/tos', element: <KairyouTermsOfServicePage/> },
     { path: '/kairyou/privacy', element: <KairyouPrivacyPolicyPage/> },
     { path: '/kairyou/license', element: <KairyouLicensePage/> },
-    { path: '/okisouchi', element: <OkisouchiPage/> },
-    { path: '/okisouchi/tos', element: <OkisouchiTermsOfServicePage/> },
-    { path: '/okisouchi/privacy', element: <OkisouchiPrivacyPolicyPage/> },
-    { path: '/okisouchi/license', element: <OkisouchiLicensePage/> },
     { path: '/404', element: <NotFoundPage/> },
     { path: '/403', element: <ForbiddenPage/> },
     { path: '/500', element: <InternalErrorPage/> },
