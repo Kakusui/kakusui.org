@@ -18,7 +18,6 @@ import {
     PopoverTrigger,
     Stack,
     Text,
-    useColorModeValue,
     useDisclosure,
 } from '@chakra-ui/react';
 
@@ -32,14 +31,14 @@ export default function Navbar() {
     return (
         <Box>
             <Flex
-                bg={useColorModeValue('white', 'gray.800')}
-                color={useColorModeValue('gray.600', 'white')}
+                bg="#14192b"
+                color="white"
                 minH={'60px'}
                 py={{base: 2}}
                 px={{base: 4}}
-                borderBottom={1}
-                borderStyle={'solid'}
-                borderColor={useColorModeValue('gray.200', 'gray.900')}
+                borderBottom="1px"
+                borderColor="rgba(255, 255, 255, 0.1)"
+                boxShadow="0 1px 2px 0 rgba(0, 0, 0, 0.05)"
                 align={'center'}>
                 <Container maxW={'6xl'}>
                     <Flex
@@ -57,6 +56,7 @@ export default function Navbar() {
                             }
                             variant={'ghost'}
                             aria-label={'Toggle Navigation'}
+                            color="white"
                         />
 
                         <Image src={logo} boxSize='30px' alt='Kakusui Logo'/>
@@ -79,9 +79,9 @@ export default function Navbar() {
 }
 
 const DesktopNav = () => {
-    const linkColor = useColorModeValue('gray.600', 'gray.200');
-    const linkHoverColor = useColorModeValue('gray.800', 'white');
-    const popoverContentBgColor = useColorModeValue('white', 'gray.800');
+    const linkColor = 'gray.300';
+    const linkHoverColor = 'white';
+    const popoverContentBgColor = '#14192b';
 
     return (
         <Stack direction={'row'} spacing={4}>
@@ -134,7 +134,7 @@ const DesktopSubNav = ({label, href, subLabel}: NavItem) => {
             display={'block'}
             p={2}
             rounded={'md'}
-            _hover={{bg: useColorModeValue('orange.50', 'gray.900')}}>
+            _hover={{bg: 'rgba(255, 255, 255, 0.1)'}}>
             <Stack direction={'row'} align={'center'}>
                 <Box>
                     <Text
@@ -143,7 +143,7 @@ const DesktopSubNav = ({label, href, subLabel}: NavItem) => {
                         fontWeight={500}>
                         {label}
                     </Text>
-                    <Text fontSize={'sm'}>{subLabel}</Text>
+                    <Text fontSize={'sm'} color="gray.400">{subLabel}</Text>
                 </Box>
                 <Flex
                     transition={'all .3s ease'}
@@ -163,7 +163,7 @@ const DesktopSubNav = ({label, href, subLabel}: NavItem) => {
 const MobileNav = () => {
     return (
         <Stack
-            bg={useColorModeValue('white', 'gray.800')}
+            bg="#14192b"
             p={4}
             display={{md: 'none'}}>
             {NAV_ITEMS.map((navItem) => (
@@ -190,7 +190,7 @@ const MobileNavItem = ({label, children, href}: NavItem) => {
                 onClick={(e) => children && e.preventDefault()}>
                 <Text
                     fontWeight={600}
-                    color={useColorModeValue('gray.600', 'gray.200')}>
+                    color="gray.300">
                     {label}
                 </Text>
                 {children && (
@@ -200,6 +200,7 @@ const MobileNavItem = ({label, children, href}: NavItem) => {
                         transform={isOpen ? 'rotate(180deg)' : ''}
                         w={6}
                         h={6}
+                        color="gray.300"
                     />
                 )}
             </Flex>
@@ -210,11 +211,11 @@ const MobileNavItem = ({label, children, href}: NavItem) => {
                     pl={4}
                     borderLeft={1}
                     borderStyle={'solid'}
-                    borderColor={useColorModeValue('gray.200', 'gray.700')}
+                    borderColor="rgba(255, 255, 255, 0.1)"
                     align={'start'}>
                     {children &&
                         children.map((child) => (
-                            <Link key={child.label} py={2} href={child.href}>
+                            <Link key={child.label} py={2} href={child.href} color="gray.400">
                                 {child.label}
                             </Link>
                         ))}
@@ -249,8 +250,6 @@ const NAV_ITEMS: Array<NavItem> = [
                 subLabel: 'A simple and easy to use custom translator.',
                 href: '/easytl',
             },
-
-            
             {
                 label: 'Kairyou',
                 subLabel: 'A NER/NLP powered Japanese prepreprocessor.',

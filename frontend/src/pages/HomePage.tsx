@@ -44,7 +44,7 @@ function HomePage() {
             <Kakusui />
             <Box position="relative" padding="10">
                 <Divider />
-                <AbsoluteCenter bg="gray.800" px="4" id="applications">
+                <AbsoluteCenter bg="#14192b" px="4" id="applications">
                     Applications
                 </AbsoluteCenter>
             </Box>
