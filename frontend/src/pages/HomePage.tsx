@@ -47,24 +47,7 @@ function HomePage() {
                 <AbsoluteCenter bg="#14192b" px="4" id="applications">
                     Applications
                 </AbsoluteCenter>
-            </Box>
-            <ApplicationSection
-                title="Elucidate"
-                subtitle="Smarter Translations through LLM Self-Evaluation"
-                description="Elucidate is a tool to that allows for the evaluation of translation utilizing LLMs. It provides insights into the quality of translations and allows for customizable evaluation options, making it a versatile tool for all your translation needs."
-                imageUrl={elucidate_logo}
-                imageAlt="Elucidate Logo"
-                linkUrl="/elucidate"
-                githubUrl="https://github.com/Kakusui/Elucidate"
-                reverse
-                features={[
-                    { heading: "LLM Self-Evaluation", text: "Elucidate allows users to evaluate translations using LLMs, providing insights into the quality of translations." },
-                    { heading: "Customizable Evaluation", text: "Users can customize the evaluation process, allowing for a wide range of evaluation options." },
-                    { heading: "Multiple LLM Options", text: "Elucidate supports multiple LLMs, including OpenAI, Anthropic, and Gemini, providing a wide range of evaluation options." },
-                    { heading: "User-Friendly Interface", text: "Elucidate is user-friendly, with a simple interface that allows users to quickly evaluate translations." }
-                ]}
-            />
-                
+            </Box>                
             <ApplicationSection
                 title="EasyTL"
                 subtitle="Simplifying Language Barriers with custom translation using AI and LLMs"
@@ -95,6 +78,22 @@ function HomePage() {
                     { heading: "Translation preparation", text: "Automatically replaces named entities with placeholders, making it easier to translate Japanese text." },
                     { heading: "Katakana Utility", text: "Includes versatile utilities such as KatakanaUtil for specialized text manipulation, allowing users to tailor preprocessing to specific needs." },
                     { heading: "Name Indexing", text: "Supports name indexing for discovering new named entities, which can be used for other NLP tasks." }
+                ]}
+            />
+            <ApplicationSection
+                title="Elucidate"
+                subtitle="Smarter Translations through LLM Self-Evaluation"
+                description="Elucidate is a tool to that allows for the evaluation of translation utilizing LLMs. It provides insights into the quality of translations and allows for customizable evaluation options, making it a versatile tool for all your translation needs."
+                imageUrl={elucidate_logo}
+                imageAlt="Elucidate Logo"
+                linkUrl="/elucidate"
+                githubUrl="https://github.com/Kakusui/Elucidate"
+                reverse
+                features={[
+                    { heading: "LLM Self-Evaluation", text: "Elucidate allows users to evaluate translations using LLMs, providing insights into the quality of translations." },
+                    { heading: "Customizable Evaluation", text: "Users can customize the evaluation process, allowing for a wide range of evaluation options." },
+                    { heading: "Multiple LLM Options", text: "Elucidate supports multiple LLMs, including OpenAI, Anthropic, and Gemini, providing a wide range of evaluation options." },
+                    { heading: "User-Friendly Interface", text: "Elucidate is user-friendly, with a simple interface that allows users to quickly evaluate translations." }
                 ]}
             />
         </>

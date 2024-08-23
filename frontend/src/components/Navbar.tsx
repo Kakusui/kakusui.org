@@ -39,7 +39,8 @@ export default function Navbar() {
                 borderBottom="1px"
                 borderColor="rgba(255, 255, 255, 0.1)"
                 boxShadow="0 1px 2px 0 rgba(0, 0, 0, 0.05)"
-                align={'center'}>
+                align={'center'}
+                mb={6}>
                 <Container maxW={'6xl'}>
                     <Flex
                         flex={{base: 1, md: 'auto'}}
@@ -235,16 +236,11 @@ interface NavItem {
 const NAV_ITEMS: Array<NavItem> = [
     {
         label: 'Home',
-        href: '/',
+        href: '/home',
     },
     {
         label: 'Applications',
         children: [
-            {
-                label: 'Elucidate',
-                subLabel: 'Smarter Translations through LLM Self-Evaluation',
-                href: '/elucidate',
-            },
             {
                 label: 'EasyTL',
                 subLabel: 'A simple and easy to use custom translator.',
@@ -254,6 +250,11 @@ const NAV_ITEMS: Array<NavItem> = [
                 label: 'Kairyou',
                 subLabel: 'A NER/NLP powered Japanese prepreprocessor.',
                 href: '/kairyou',
+            },
+            {
+                label: 'Elucidate',
+                subLabel: 'Smarter Translations through LLM Self-Evaluation',
+                href: '/elucidate',
             }
         ],
     },

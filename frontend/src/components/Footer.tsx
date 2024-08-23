@@ -16,7 +16,8 @@ function Footer() {
             borderTop="1px"
             borderColor="rgba(255, 255, 255, 0.1)"
             boxShadow="0 -1px 2px 0 rgba(0, 0, 0, 0.05)"
-            width="100%">
+            width="100%"
+            mt={6}>
             <Container
                 as={Stack}
                 maxW={'6xl'}

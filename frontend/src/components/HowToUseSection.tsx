@@ -15,7 +15,7 @@ interface HowToUseSectionProps {
 
 const HowToUseSection: React.FC<HowToUseSectionProps> = ({ repositoryUrl, steps, notes, contactEmail }) => {
     return (
-        <Box mt={17} p={4} bg="gray.800" color="gray.500">
+        <Box mt={17} p={4} bg="#14192b" color="gray.500">
             <Text fontSize="lg" mb={4} color="white">How to Use</Text>
             <Text mb={2}>
                 For detailed usage instructions, please visit the <Link href={repositoryUrl} color="orange.400" isExternal>GitHub repository README</Link>.

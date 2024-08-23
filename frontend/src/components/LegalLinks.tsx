@@ -12,7 +12,7 @@ interface LegalLinksProps {
 
 const LegalLinks: React.FC<LegalLinksProps> = ({ basePath }) => {
     return (
-        <Box mt={5} p={2} bg="gray.800">
+        <Box mt={5} p={2} bg="#14192b">
             <Stack direction="row">
                 <Link href={`${basePath}/tos`} color="orange.400">Terms of Service</Link>
                 <Link href={`${basePath}/privacy`} color="orange.400">Privacy Policy</Link>

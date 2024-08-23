@@ -4,22 +4,25 @@ Use of this source code is governed by an GNU Affero General Public License v3.0
 license that can be found in the LICENSE file.
 */
 
-import Router from "./Router.tsx";
-import {ChakraProvider, Container} from "@chakra-ui/react";
+import { useLocation } from 'react-router-dom';
+import { ChakraProvider, Container } from "@chakra-ui/react";
 import Navbar from "./components/Navbar.tsx";
 import Footer from "./components/Footer.tsx";
-import theme from "./theme.ts"; 
-
+import theme from "./theme.ts";
+import Router from "./Router.tsx";
 
 function App() 
 {
+    const location = useLocation();
+    const isLandingPage = location.pathname === '/';
+
     return (
         <ChakraProvider theme={theme}>
-            <Navbar/>
-            <Container maxW={'6xl'}>
-                <Router/>
+            {!isLandingPage && <Navbar />}
+            <Container maxW={isLandingPage ? "100%" : "container.xl"} p={isLandingPage ? 0 : undefined}>
+                <Router />
             </Container>
-            <Footer/>
+            {!isLandingPage && <Footer />}
         </ChakraProvider>
     );
 }

@@ -4,9 +4,11 @@ Use of this source code is governed by an GNU Affero General Public License v3.0
 license that can be found in the LICENSE file.
 */
 
-import {createBrowserRouter, RouterProvider} from 'react-router-dom';
+import { Routes, Route } from 'react-router-dom';
 
 import HomePage from "./pages/HomePage.tsx";
+
+import LandingPage from "./pages/LandingPage.tsx";
 
 import ElucidatePage from './pages/ElucidatePage.tsx';
 import ElucidateTermsOfServicePage from './pages/elucidate_mds/ElucidateTosPage.tsx';
@@ -27,31 +29,30 @@ import NotFoundPage from './pages/error_pages/404.tsx';
 import ForbiddenPage from './pages/error_pages/403.tsx';
 import InternalErrorPage from './pages/error_pages/500.tsx';
 
-const routes = [
-    { path: '/', element: <HomePage/> },
-    { path: '/elucidate', element: <ElucidatePage/> },
-    { path: '/elucidate/tos', element: <ElucidateTermsOfServicePage/> },
-    { path: '/elucidate/privacy', element: <ElucidatePrivacyPolicyPage/> },
-    { path: '/elucidate/license', element: <ElucidateLicensePage/> },
-    { path: '/easytl', element: <EasyTLPage/> },
-    { path: '/easytl/tos', element: <EasyTLTermsOfServicePage/> },
-    { path: '/easytl/privacy', element: <EasyTLPrivacyPolicyPage/> },
-    { path: '/easytl/license', element: <EasyTLLicensePage/> },
-    { path: '/kairyou', element: <KairyouPage/> },
-    { path: '/kairyou/tos', element: <KairyouTermsOfServicePage/> },
-    { path: '/kairyou/privacy', element: <KairyouPrivacyPolicyPage/> },
-    { path: '/kairyou/license', element: <KairyouLicensePage/> },
-    { path: '/404', element: <NotFoundPage/> },
-    { path: '/403', element: <ForbiddenPage/> },
-    { path: '/500', element: <InternalErrorPage/> },
-    { path: '*', element: <NotFoundPage/> },
-];
-
-const router = createBrowserRouter(routes);
-
 function Router() 
 {
-    return <RouterProvider router={router}/>;
+    return (
+        <Routes>
+            <Route path="/" element={<LandingPage />} />
+            <Route path="/home" element={<HomePage />} />
+            <Route path="/elucidate" element={<ElucidatePage />} />
+            <Route path="/elucidate/tos" element={<ElucidateTermsOfServicePage />} />
+            <Route path="/elucidate/privacy" element={<ElucidatePrivacyPolicyPage />} />
+            <Route path="/elucidate/license" element={<ElucidateLicensePage />} />
+            <Route path="/easytl" element={<EasyTLPage />} />
+            <Route path="/easytl/tos" element={<EasyTLTermsOfServicePage />} />
+            <Route path="/easytl/privacy" element={<EasyTLPrivacyPolicyPage />} />
+            <Route path="/easytl/license" element={<EasyTLLicensePage />} />
+            <Route path="/kairyou" element={<KairyouPage />} />
+            <Route path="/kairyou/tos" element={<KairyouTermsOfServicePage />} />
+            <Route path="/kairyou/privacy" element={<KairyouPrivacyPolicyPage />} />
+            <Route path="/kairyou/license" element={<KairyouLicensePage />} />
+            <Route path="/404" element={<NotFoundPage />} />
+            <Route path="/403" element={<ForbiddenPage />} />
+            <Route path="/500" element={<InternalErrorPage />} />
+            <Route path="*" element={<NotFoundPage />} />
+        </Routes>
+    );
 }
 
 export default Router;
