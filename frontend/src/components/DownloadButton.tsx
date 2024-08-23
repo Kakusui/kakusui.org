@@ -1,20 +1,26 @@
-/*
-Copyright 2024 Kakusui LLC (https://kakusui.org) (https://github.com/Kakusui) (https://github.com/Kakusui/kakusui.org)
-Use of this source code is governed by an GNU Affero General Public License v3.0
-license that can be found in the LICENSE file.
-*/
+// Copyright 2024 Kakusui LLC (https://kakusui.org) (https://github.com/Kakusui) (https://github.com/Kakusui/kakusui.org)
+// Use of this source code is governed by an GNU Affero General Public License v3.0
+// license that can be found in the LICENSE file.
 
+// maintain allman bracket style for consistency
+
+// react
 import React from 'react';
+
+// chakra-ui
 import { IconButton } from '@chakra-ui/react';
 import { DownloadIcon } from '@chakra-ui/icons';
 
-interface DownloadButtonProps {
+interface DownloadButtonProps 
+{
     text: string;
     fileName: string;
 }
 
-const DownloadButton: React.FC<DownloadButtonProps> = ({ text, fileName }) => {
-    const handleDownload = () => {
+const DownloadButton: React.FC<DownloadButtonProps> = ({ text, fileName }) => 
+{
+    const handleDownload = () => 
+    {
         const blob = new Blob([text], { type: 'text/plain' });
         const url = URL.createObjectURL(blob);
         const link = document.createElement('a');

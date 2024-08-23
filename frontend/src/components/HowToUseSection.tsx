@@ -1,19 +1,22 @@
-/*
-Copyright 2024 Kakusui LLC (https://kakusui.org) (https://github.com/Kakusui) (https://github.com/Kakusui/kakusui.org)
-Use of this source code is governed by an GNU Affero General Public License v3.0
-license that can be found in the LICENSE file.
-*/
+// Copyright 2024 Kakusui LLC (https://kakusui.org) (https://github.com/Kakusui) (https://github.com/Kakusui/kakusui.org)
+// Use of this source code is governed by an GNU Affero General Public License v3.0
+// license that can be found in the LICENSE file.
 
+// maintain allman bracket style for consistency
+
+// chakra-ui
 import { Box, Text, Link } from '@chakra-ui/react';
 
-interface HowToUseSectionProps {
+interface HowToUseSectionProps 
+{
     repositoryUrl: string;
     steps: string[];
     notes: string[];
     contactEmail: string;
 }
 
-const HowToUseSection: React.FC<HowToUseSectionProps> = ({ repositoryUrl, steps, notes, contactEmail }) => {
+const HowToUseSection: React.FC<HowToUseSectionProps> = ({ repositoryUrl, steps, notes, contactEmail }) => 
+{
     return (
         <Box mt={17} p={4} bg="#14192b" color="gray.500">
             <Text fontSize="lg" mb={4} color="white">How to Use</Text>

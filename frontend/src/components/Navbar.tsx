@@ -1,9 +1,10 @@
-/*
-Copyright 2024 Kakusui LLC (https://kakusui.org) (https://github.com/Kakusui) (https://github.com/Kakusui/kakusui.org)
-Use of this source code is governed by an GNU Affero General Public License v3.0
-license that can be found in the LICENSE file.
-*/
+// Copyright 2024 Kakusui LLC (https://kakusui.org) (https://github.com/Kakusui) (https://github.com/Kakusui/kakusui.org)
+// Use of this source code is governed by an GNU Affero General Public License v3.0
+// license that can be found in the LICENSE file.
 
+// maintain allman bracket style for consistency
+
+// chakra-ui
 import {
     Box,
     Collapse,
@@ -23,9 +24,11 @@ import {
 
 import {ChevronDownIcon, ChevronRightIcon, CloseIcon, HamburgerIcon,} from '@chakra-ui/icons';
 
+// images
 import logo from '../assets/images/kakusui_logo.webp';
 
-export default function Navbar() {
+export default function Navbar() 
+{
     const {isOpen, onToggle} = useDisclosure();
 
     return (
@@ -79,7 +82,8 @@ export default function Navbar() {
     );
 }
 
-const DesktopNav = () => {
+const DesktopNav = () => 
+{
     const linkColor = 'gray.300';
     const linkHoverColor = 'white';
     const popoverContentBgColor = '#14192b';
@@ -127,7 +131,8 @@ const DesktopNav = () => {
     );
 };
 
-const DesktopSubNav = ({label, href, subLabel}: NavItem) => {
+const DesktopSubNav = ({label, href, subLabel}: NavItem) => 
+{
     return (
         <Link
             href={href}
@@ -161,7 +166,8 @@ const DesktopSubNav = ({label, href, subLabel}: NavItem) => {
     );
 };
 
-const MobileNav = () => {
+const MobileNav = () => 
+{
     return (
         <Stack
             bg="#14192b"
@@ -174,7 +180,8 @@ const MobileNav = () => {
     );
 };
 
-const MobileNavItem = ({label, children, href}: NavItem) => {
+const MobileNavItem = ({label, children, href}: NavItem) => 
+{
     const {isOpen, onToggle} = useDisclosure();
 
     return (
@@ -226,14 +233,16 @@ const MobileNavItem = ({label, children, href}: NavItem) => {
     );
 };
 
-interface NavItem {
+interface NavItem 
+{
     label: string;
     subLabel?: string;
     children?: Array<NavItem>;
     href?: string;
 }
 
-const NAV_ITEMS: Array<NavItem> = [
+const NAV_ITEMS: Array<NavItem> = 
+[
     {
         label: 'Home',
         href: '/home',

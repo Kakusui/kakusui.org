@@ -1,11 +1,14 @@
-/*
-Copyright 2024 Kakusui LLC (https://kakusui.org) (https://github.com/Kakusui) (https://github.com/Kakusui/kakusui.org)
-Use of this source code is governed by an GNU Affero General Public License v3.0
-license that can be found in the LICENSE file.
-*/
+// Copyright 2024 Kakusui LLC (https://kakusui.org) (https://github.com/Kakusui) (https://github.com/Kakusui/kakusui.org)
+// Use of this source code is governed by an GNU Affero General Public License v3.0
+// license that can be found in the LICENSE file.
 
+// maintain allman bracket style for consistency
+
+// react
 import { useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
+
+// chakra-ui
 import {
   Button,
   FormControl,
@@ -28,6 +31,7 @@ import {
 
 import { ViewIcon, ViewOffIcon, ChevronDownIcon, ChevronUpIcon, ArrowUpDownIcon } from "@chakra-ui/icons";
 
+// components and custom things
 import Turnstile from "../components/Turnstile";
 import CopyButton from "../components/CopyButton";
 import DownloadButton from "../components/DownloadButton";
@@ -59,7 +63,8 @@ function EasyTLPage()
   }, []);
 
   const { register, handleSubmit, watch, formState: { isSubmitting, errors }, setValue, getValues } = useForm<FormInput>({
-    defaultValues: {
+    defaultValues: 
+    {
       tone: "Formal; Polite",
       llmType: "OpenAI",
       model: "gpt-4o-mini",
@@ -93,7 +98,7 @@ Additional instructions:
       } 
       catch 
       {
-        // handle error silently
+        // ignore
       }
     };
     warmUpAPI();

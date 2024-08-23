@@ -1,8 +1,8 @@
-/*
-Copyright 2024 Kakusui LLC (https://kakusui.org) (https://github.com/Kakusui) (https://github.com/Kakusui/kakusui.org)
-Use of this source code is governed by an GNU Affero General Public License v3.0
-license that can be found in the LICENSE file.
-*/
+// Copyright 2024 Kakusui LLC (https://kakusui.org) (https://github.com/Kakusui) (https://github.com/Kakusui/kakusui.org)
+// Use of this source code is governed by an GNU Affero General Public License v3.0
+// license that can be found in the LICENSE file.
+
+// maintain allman bracket style for consistency
 
 // react
 import { useEffect } from 'react';
@@ -32,11 +32,12 @@ import { IconBrandGithub } from '@tabler/icons-react';
 // components
 import ApplicationSection from "../components/ApplicationSection";
 
-function HomePage() {
+function HomePage() 
+{
 
-    useEffect(() => {
+    useEffect(() => 
+    {
         document.title = 'Kakusui | Home';
-
     }, []);
 
     return (
@@ -102,11 +103,9 @@ function HomePage() {
 
 export default HomePage;
 
-//
-// Components
-//
 
-function Kakusui() {
+function Kakusui() 
+{
     return (
         <Stack direction={{ base: 'column', md: 'row' }}>
             <Flex p={8} flex={1} align="center">

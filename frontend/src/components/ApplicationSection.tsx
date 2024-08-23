@@ -1,15 +1,23 @@
-/*
-Copyright 2024 Kakusui LLC (https://kakusui.org) (https://github.com/Kakusui) (https://github.com/Kakusui/kakusui.org)
-Use of this source code is governed by a GNU General Public License v3.0
-license that can be found in the LICENSE file.
-*/
+// Copyright 2024 Kakusui LLC (https://kakusui.org) (https://github.com/Kakusui) (https://github.com/Kakusui/kakusui.org)
+// Use of this source code is governed by an GNU Affero General Public License v3.0
+// license that can be found in the LICENSE file.
 
+// maintain allman bracket style for consistency
+
+// react
 import React from 'react';
+
+// chakra-ui
 import { Stack, Flex, Image, Heading, Text, Button, Box, Container, Divider, Grid } from '@chakra-ui/react';
+
+// icons
 import { IconBrandGithub } from "@tabler/icons-react";
+
+// components
 import Feature from "../components/Feature";
 
-interface ApplicationSectionProps {
+interface ApplicationSectionProps 
+{
     title: string;
     subtitle: string;
     description: string;
@@ -21,7 +29,8 @@ interface ApplicationSectionProps {
     reverse?: boolean;
 }
 
-const ApplicationSection: React.FC<ApplicationSectionProps> = ({ title, subtitle, description, imageUrl, imageAlt, linkUrl, githubUrl, features, reverse }) => {
+const ApplicationSection: React.FC<ApplicationSectionProps> = ({ title, subtitle, description, imageUrl, imageAlt, linkUrl, githubUrl, features, reverse }) => 
+{
     return (
         <>
             <Stack direction={{ base: 'column', md: reverse ? 'row-reverse' : 'row' }} mt={14}>

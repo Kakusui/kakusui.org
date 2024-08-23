@@ -1,17 +1,26 @@
+// Copyright 2024 Kakusui LLC (https://kakusui.org) (https://github.com/Kakusui) (https://github.com/Kakusui/kakusui.org)
+// Use of this source code is governed by an GNU Affero General Public License v3.0
+// license that can be found in the LICENSE file.
+
+// maintain allman bracket style for consistency
+
+// react
 import { useEffect } from 'react';
-import {
-    Box,
-    Button,
-    Flex,
-    Heading,
-    Text,
-} from "@chakra-ui/react";
 import { Link as RouterLink } from 'react-router-dom';
+
+// chakra-ui
+import { Box, Button, Flex, Heading, Text } from "@chakra-ui/react";
+
+// icons
 import { IconBrandGithub } from '@tabler/icons-react';
+
+// images
 import landingPageBg from '../assets/images/landing_page.webp';
 
-function LandingPage() {
-    useEffect(() => {
+function LandingPage() 
+{
+    useEffect(() => 
+    {
         document.title = 'Welcome to Kakusui';
     }, []);
 
