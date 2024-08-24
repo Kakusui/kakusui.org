@@ -45,7 +45,7 @@ function HomePage()
     return (
         <PageWrapper showBackground={true}>
             <HomeHeader />
-            <Box px={4} pt="60px" pb="60px">
+            <Box px={4} pt="60px" pb="100px">
                 <Kakusui />
                 <Box position="relative" padding="10">
                     <Divider />
