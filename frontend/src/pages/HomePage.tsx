@@ -31,17 +31,17 @@ import { IconBrandGithub } from '@tabler/icons-react';
 
 // components
 import ApplicationSection from "../components/ApplicationSection";
+import PageWrapper from "../components/PageWrapper";
 
 function HomePage() 
 {
-
     useEffect(() => 
     {
         document.title = 'Kakusui | Home';
     }, []);
 
     return (
-        <>
+        <PageWrapper showBackground={true}>
             <Kakusui />
             <Box position="relative" padding="10">
                 <Divider />
@@ -97,12 +97,11 @@ function HomePage()
                     { heading: "User-Friendly Interface", text: "Elucidate is user-friendly, with a simple interface that allows users to quickly evaluate translations." }
                 ]}
             />
-        </>
+        </PageWrapper>
     );
 }
 
 export default HomePage;
-
 
 function Kakusui() 
 {

@@ -8,11 +8,12 @@
 import { useLocation } from 'react-router-dom';
 
 // chakra-ui
-import { ChakraProvider, Container } from "@chakra-ui/react";
+import { ChakraProvider } from "@chakra-ui/react";
 
 // components
 import Navbar from "./components/Navbar.tsx";
 import Footer from "./components/Footer.tsx";
+import PageWrapper from "./components/PageWrapper.tsx";
 import theme from "./theme.ts";
 import Router from "./Router.tsx";
 
@@ -20,13 +21,18 @@ function App()
 {
     const location = useLocation();
     const isLandingPage = location.pathname === '/';
+    const isHomePage = location.pathname === '/home';
 
     return (
         <ChakraProvider theme={theme}>
             {!isLandingPage && <Navbar />}
-            <Container maxW={isLandingPage ? "100%" : "container.xl"} p={isLandingPage ? 0 : undefined}>
+            {isLandingPage ? (
                 <Router />
-            </Container>
+            ) : (
+                <PageWrapper showBackground={isHomePage}>
+                    <Router />
+                </PageWrapper>
+            )}
             {!isLandingPage && <Footer />}
         </ChakraProvider>
     );

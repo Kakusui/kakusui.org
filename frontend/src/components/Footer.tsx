@@ -5,7 +5,7 @@
 // maintain allman bracket style for consistency
 
 // chakra-ui
-import { Box, Container, Flex, IconButton, Image, Stack, Text } from '@chakra-ui/react';
+import { Box, Flex, IconButton, Image, Text } from '@chakra-ui/react';
 
 // icons
 import { IconBrandGithub } from '@tabler/icons-react';
@@ -23,15 +23,17 @@ function Footer()
             borderColor="rgba(255, 255, 255, 0.1)"
             boxShadow="0 -1px 2px 0 rgba(0, 0, 0, 0.05)"
             width="100%"
-            mt={6}>
-            <Container
-                as={Stack}
-                maxW={'6xl'}
+            mt={6}
+        >
+            <Flex
+                maxWidth="container.xl"
+                margin="0 auto"
                 py={4}
+                px={4}
                 direction={{ base: 'column', md: 'row' }}
-                spacing={4}
-                justify={{ base: 'space-between', md: 'space-between' }}
-                align={{ base: 'center', md: 'center' }}>
+                justify="space-between"
+                align="center"
+            >
                 <Flex display={{ base: 'flex', md: 'none' }} width="100%" justify="space-between" align="center">
                     <IconButton 
                         as='a' 
@@ -58,7 +60,7 @@ function Footer()
                         _hover={{ bg: 'whiteAlpha.200' }}
                     />
                 </Flex>
-            </Container>
+            </Flex>
         </Box>
     );
 }

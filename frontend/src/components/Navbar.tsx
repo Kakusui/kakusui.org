@@ -8,7 +8,6 @@
 import {
     Box,
     Collapse,
-    Container,
     Flex,
     Icon,
     IconButton,
@@ -43,15 +42,19 @@ export default function Navbar()
                 borderColor="rgba(255, 255, 255, 0.1)"
                 boxShadow="0 1px 2px 0 rgba(0, 0, 0, 0.05)"
                 align={'center'}
-                mb={6}>
-                <Container maxW={'6xl'}>
+                justify={'center'}
+                mb={6}
+            >
+                <Flex
+                    width="100%"
+                    maxWidth="container.xl"
+                    align="center"
+                    justify="space-between"
+                >
                     <Flex
                         flex={{base: 1, md: 'auto'}}
                         ml={{base: -2}}
                         display={{base: 'flex', md: 'none'}}
-                        alignItems={'center'}
-                        justifyContent={'space-between'}
-                        width={'100%'}
                     >
                         <IconButton
                             onClick={onToggle}
@@ -62,17 +65,14 @@ export default function Navbar()
                             aria-label={'Toggle Navigation'}
                             color="white"
                         />
-
-                        <Image src={logo} boxSize='30px' alt='Kakusui Logo'/>
                     </Flex>
-                    <Flex flex={{base: 1}} justify={{base: 'center', md: 'start'}}>
-                        <Image src={logo} boxSize='30px' display={{base: 'none', md: 'block'}} alt='Kakusui Logo'/>
-
+                    <Flex flex={{base: 1}} justify={{base: 'center', md: 'start'}} align="center">
+                        <Image src={logo} boxSize='30px' alt='Kakusui Logo'/>
                         <Flex display={{base: 'none', md: 'flex'}} ml={10}>
                             <DesktopNav/>
                         </Flex>
                     </Flex>
-                </Container>
+                </Flex>
             </Flex>
 
             <Collapse in={isOpen} animateOpacity>
