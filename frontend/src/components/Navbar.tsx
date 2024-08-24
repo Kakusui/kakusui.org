@@ -26,21 +26,30 @@ import {ChevronDownIcon, ChevronRightIcon, CloseIcon, HamburgerIcon,} from '@cha
 // images
 import logo from '../assets/images/kakusui_logo.webp';
 
-export default function Navbar() 
+interface NavbarProps 
+{
+    isHomePage: boolean;
+}
+
+export default function Navbar({ isHomePage }: NavbarProps) 
 {
     const {isOpen, onToggle} = useDisclosure();
+
+    const bgColor = isHomePage ? 'transparent' : '#14192b';
+    const borderColor = isHomePage ? 'transparent' : 'rgba(255, 255, 255, 0.1)';
+    const boxShadow = isHomePage ? 'none' : '0 1px 2px 0 rgba(0, 0, 0, 0.05)';
 
     return (
         <Box>
             <Flex
-                bg="#14192b"
+                bg={bgColor}
                 color="white"
                 minH={'60px'}
                 py={{base: 2}}
                 px={{base: 4}}
                 borderBottom="1px"
-                borderColor="rgba(255, 255, 255, 0.1)"
-                boxShadow="0 1px 2px 0 rgba(0, 0, 0, 0.05)"
+                borderColor={borderColor}
+                boxShadow={boxShadow}
                 align={'center'}
                 justify={'center'}
                 mb={6}

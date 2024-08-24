@@ -8,12 +8,11 @@
 import { useLocation } from 'react-router-dom';
 
 // chakra-ui
-import { ChakraProvider } from "@chakra-ui/react";
+import { ChakraProvider, Box } from "@chakra-ui/react";
 
 // components
 import Navbar from "./components/Navbar.tsx";
 import Footer from "./components/Footer.tsx";
-import PageWrapper from "./components/PageWrapper.tsx";
 import theme from "./theme.ts";
 import Router from "./Router.tsx";
 
@@ -25,15 +24,11 @@ function App()
 
     return (
         <ChakraProvider theme={theme}>
-            {!isLandingPage && <Navbar />}
-            {isLandingPage ? (
+            {!isLandingPage && !isHomePage && <Navbar isHomePage={isHomePage} />}
+            <Box maxWidth={isHomePage ? "100%" : "container.xl"} margin="0 auto">
                 <Router />
-            ) : (
-                <PageWrapper showBackground={isHomePage}>
-                    <Router />
-                </PageWrapper>
-            )}
-            {!isLandingPage && <Footer />}
+            </Box>
+            {!isLandingPage && !isHomePage && <Footer />}
         </ChakraProvider>
     );
 }
