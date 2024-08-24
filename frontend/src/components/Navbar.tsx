@@ -1,13 +1,13 @@
-/*
-Copyright 2024 Kakusui LLC (https://kakusui.org) (https://github.com/Kakusui) (https://github.com/Kakusui/kakusui.org)
-Use of this source code is governed by an GNU Affero General Public License v3.0
-license that can be found in the LICENSE file.
-*/
+// Copyright 2024 Kakusui LLC (https://kakusui.org) (https://github.com/Kakusui) (https://github.com/Kakusui/kakusui.org)
+// Use of this source code is governed by an GNU Affero General Public License v3.0
+// license that can be found in the LICENSE file.
 
+// maintain allman bracket style for consistency
+
+// chakra-ui
 import {
     Box,
     Collapse,
-    Container,
     Flex,
     Icon,
     IconButton,
@@ -18,37 +18,52 @@ import {
     PopoverTrigger,
     Stack,
     Text,
-    useColorModeValue,
     useDisclosure,
 } from '@chakra-ui/react';
 
 import {ChevronDownIcon, ChevronRightIcon, CloseIcon, HamburgerIcon,} from '@chakra-ui/icons';
 
+// images
 import logo from '../assets/images/kakusui_logo.webp';
 
-export default function Navbar() {
+interface NavbarProps 
+{
+    isHomePage: boolean;
+}
+
+export default function Navbar({ isHomePage }: NavbarProps) 
+{
     const {isOpen, onToggle} = useDisclosure();
+
+    const bgColor = isHomePage ? 'transparent' : '#14192b';
+    const borderColor = isHomePage ? 'transparent' : 'rgba(255, 255, 255, 0.1)';
+    const boxShadow = isHomePage ? 'none' : '0 1px 2px 0 rgba(0, 0, 0, 0.05)';
 
     return (
         <Box>
             <Flex
-                bg={useColorModeValue('white', 'gray.800')}
-                color={useColorModeValue('gray.600', 'white')}
+                bg={bgColor}
+                color="white"
                 minH={'60px'}
                 py={{base: 2}}
                 px={{base: 4}}
-                borderBottom={1}
-                borderStyle={'solid'}
-                borderColor={useColorModeValue('gray.200', 'gray.900')}
-                align={'center'}>
-                <Container maxW={'6xl'}>
+                borderBottom="1px"
+                borderColor={borderColor}
+                boxShadow={boxShadow}
+                align={'center'}
+                justify={'center'}
+                mb={6}
+            >
+                <Flex
+                    width="100%"
+                    maxWidth="container.xl"
+                    align="center"
+                    justify="space-between"
+                >
                     <Flex
                         flex={{base: 1, md: 'auto'}}
                         ml={{base: -2}}
                         display={{base: 'flex', md: 'none'}}
-                        alignItems={'center'}
-                        justifyContent={'space-between'}
-                        width={'100%'}
                     >
                         <IconButton
                             onClick={onToggle}
@@ -57,18 +72,16 @@ export default function Navbar() {
                             }
                             variant={'ghost'}
                             aria-label={'Toggle Navigation'}
+                            color="white"
                         />
-
-                        <Image src={logo} boxSize='30px' alt='Kakusui Logo'/>
                     </Flex>
-                    <Flex flex={{base: 1}} justify={{base: 'center', md: 'start'}}>
-                        <Image src={logo} boxSize='30px' display={{base: 'none', md: 'block'}} alt='Kakusui Logo'/>
-
+                    <Flex flex={{base: 1}} justify={{base: 'center', md: 'start'}} align="center">
+                        <Image src={logo} boxSize='30px' alt='Kakusui Logo'/>
                         <Flex display={{base: 'none', md: 'flex'}} ml={10}>
                             <DesktopNav/>
                         </Flex>
                     </Flex>
-                </Container>
+                </Flex>
             </Flex>
 
             <Collapse in={isOpen} animateOpacity>
@@ -78,10 +91,11 @@ export default function Navbar() {
     );
 }
 
-const DesktopNav = () => {
-    const linkColor = useColorModeValue('gray.600', 'gray.200');
-    const linkHoverColor = useColorModeValue('gray.800', 'white');
-    const popoverContentBgColor = useColorModeValue('white', 'gray.800');
+const DesktopNav = () => 
+{
+    const linkColor = 'gray.300';
+    const linkHoverColor = 'white';
+    const popoverContentBgColor = '#14192b';
 
     return (
         <Stack direction={'row'} spacing={4}>
@@ -126,7 +140,8 @@ const DesktopNav = () => {
     );
 };
 
-const DesktopSubNav = ({label, href, subLabel}: NavItem) => {
+const DesktopSubNav = ({label, href, subLabel}: NavItem) => 
+{
     return (
         <Link
             href={href}
@@ -134,7 +149,7 @@ const DesktopSubNav = ({label, href, subLabel}: NavItem) => {
             display={'block'}
             p={2}
             rounded={'md'}
-            _hover={{bg: useColorModeValue('orange.50', 'gray.900')}}>
+            _hover={{bg: 'rgba(255, 255, 255, 0.1)'}}>
             <Stack direction={'row'} align={'center'}>
                 <Box>
                     <Text
@@ -143,7 +158,7 @@ const DesktopSubNav = ({label, href, subLabel}: NavItem) => {
                         fontWeight={500}>
                         {label}
                     </Text>
-                    <Text fontSize={'sm'}>{subLabel}</Text>
+                    <Text fontSize={'sm'} color="gray.400">{subLabel}</Text>
                 </Box>
                 <Flex
                     transition={'all .3s ease'}
@@ -160,10 +175,11 @@ const DesktopSubNav = ({label, href, subLabel}: NavItem) => {
     );
 };
 
-const MobileNav = () => {
+const MobileNav = () => 
+{
     return (
         <Stack
-            bg={useColorModeValue('white', 'gray.800')}
+            bg="#14192b"
             p={4}
             display={{md: 'none'}}>
             {NAV_ITEMS.map((navItem) => (
@@ -173,7 +189,8 @@ const MobileNav = () => {
     );
 };
 
-const MobileNavItem = ({label, children, href}: NavItem) => {
+const MobileNavItem = ({label, children, href}: NavItem) => 
+{
     const {isOpen, onToggle} = useDisclosure();
 
     return (
@@ -190,7 +207,7 @@ const MobileNavItem = ({label, children, href}: NavItem) => {
                 onClick={(e) => children && e.preventDefault()}>
                 <Text
                     fontWeight={600}
-                    color={useColorModeValue('gray.600', 'gray.200')}>
+                    color="gray.300">
                     {label}
                 </Text>
                 {children && (
@@ -200,6 +217,7 @@ const MobileNavItem = ({label, children, href}: NavItem) => {
                         transform={isOpen ? 'rotate(180deg)' : ''}
                         w={6}
                         h={6}
+                        color="gray.300"
                     />
                 )}
             </Flex>
@@ -210,11 +228,11 @@ const MobileNavItem = ({label, children, href}: NavItem) => {
                     pl={4}
                     borderLeft={1}
                     borderStyle={'solid'}
-                    borderColor={useColorModeValue('gray.200', 'gray.700')}
+                    borderColor="rgba(255, 255, 255, 0.1)"
                     align={'start'}>
                     {children &&
                         children.map((child) => (
-                            <Link key={child.label} py={2} href={child.href}>
+                            <Link key={child.label} py={2} href={child.href} color="gray.400">
                                 {child.label}
                             </Link>
                         ))}
@@ -224,37 +242,37 @@ const MobileNavItem = ({label, children, href}: NavItem) => {
     );
 };
 
-interface NavItem {
+interface NavItem 
+{
     label: string;
     subLabel?: string;
     children?: Array<NavItem>;
     href?: string;
 }
 
-const NAV_ITEMS: Array<NavItem> = [
+const NAV_ITEMS: Array<NavItem> = 
+[
     {
         label: 'Home',
-        href: '/',
+        href: '/home',
     },
     {
-        label: 'Applications',
+        label: 'Products',
         children: [
-            {
-                label: 'Elucidate',
-                subLabel: 'Smarter Translations through LLM Self-Evaluation',
-                href: '/elucidate',
-            },
             {
                 label: 'EasyTL',
                 subLabel: 'A simple and easy to use custom translator.',
                 href: '/easytl',
             },
-
-            
             {
                 label: 'Kairyou',
                 subLabel: 'A NER/NLP powered Japanese prepreprocessor.',
                 href: '/kairyou',
+            },
+            {
+                label: 'Elucidate',
+                subLabel: 'Smarter Translations through LLM Self-Evaluation',
+                href: '/elucidate',
             }
         ],
     },

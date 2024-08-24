@@ -1,11 +1,14 @@
-/*
-Copyright 2024 Kakusui LLC (https://kakusui.org) (https://github.com/Kakusui) (https://github.com/Kakusui/kakusui.org)
-Use of this source code is governed by a GNU Affero General Public License v3.0
-license that can be found in the LICENSE file.
-*/
+// Copyright 2024 Kakusui LLC (https://kakusui.org) (https://github.com/Kakusui) (https://github.com/Kakusui/kakusui.org)
+// Use of this source code is governed by an GNU Affero General Public License v3.0
+// license that can be found in the LICENSE file.
 
+// maintain allman bracket style for consistency
+
+// react
 import { useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
+
+// chakra-ui
 import {
   Button,
   FormControl,
@@ -28,6 +31,7 @@ import {
 
 import { ViewIcon, ViewOffIcon, ChevronDownIcon, ChevronUpIcon, ArrowUpDownIcon } from "@chakra-ui/icons";
 
+// components and custom things
 import Turnstile from "../components/Turnstile";
 import CopyButton from "../components/CopyButton";
 import DownloadButton from "../components/DownloadButton";
@@ -35,7 +39,8 @@ import HowToUseSection from "../components/HowToUseSection";
 import LegalLinks from "../components/LegalLinks";
 import { getURL } from "../utils";
 
-type FormInput = {
+type FormInput = 
+{
   userAPIKey: string,
   llmType: string,
   model: string,
@@ -46,17 +51,21 @@ type FormInput = {
   instructionPreset: string,
 };
 
-type ResponseValues = {
+type ResponseValues = 
+{
   evaluatedText: string;
 };
 
-function ElucidatePage() {
-  useEffect(() => {
+function ElucidatePage() 
+{
+  useEffect(() => 
+  {
     document.title = 'Kakusui | Elucidate';
   }, []);
 
   const { register, handleSubmit, watch, formState: { isSubmitting, errors }, setValue, getValues } = useForm<FormInput>({
-    defaultValues: {
+    defaultValues: 
+    {
       llmType: "OpenAI",
       model: "gpt-4o-mini",
       instructionPreset: "minimal",
@@ -82,23 +91,30 @@ Evaluation Instructions:
   const [isAdvancedSettingsVisible, setAdvancedSettingsVisible] = useState(false);
   const toast = useToast();
 
-  useEffect(() => {
-    const warmUpAPI = async () => {
-      try {
+  useEffect(() => 
+  {
+    const warmUpAPI = async () => 
+    {
+      try 
+      {
         await fetch(getURL("/v1/elucidate"), { method: "GET" });
-      } catch {
-        // handle error silently
+      }
+      catch 
+      {
+        // ignore
       }
     };
     warmUpAPI();
   }, []);
 
-  useEffect(() => {
+  useEffect(() => 
+  {
     const currentDomain = window.location.hostname;
     setBlacklistedDomain(currentDomain !== "kakusui.org");
   }, []);
 
-  useEffect(() => {
+  useEffect(() => 
+  {
     const savedEvaluationInstructions = localStorage.getItem('evaluationInstructions');
     const savedElucidateCustomInstructionFormat = localStorage.getItem('elucidateCustomInstructionFormat');
     const savedInstructionPreset = localStorage.getItem('instructionPreset');
@@ -112,16 +128,20 @@ Evaluation Instructions:
   const selectedModel = watch("model");
   const selectedInstructionPreset = watch("instructionPreset");
 
-  useEffect(() => {
-    const updateModelOptions = () => {
+  useEffect(() => 
+  {
+    const updateModelOptions = () => 
+    {
       const options = getModelOptions(selectedLLM);
       setModelOptions(options);
-      if (!options.includes(selectedModel)) {
+      if (!options.includes(selectedModel)) 
+      {
         setValue("model", options[0]);
       }
     };
 
-    const updateApiKey = () => {
+    const updateApiKey = () => 
+    {
       const savedApiKey = localStorage.getItem(`${selectedLLM}-apiKey`);
       setValue("userAPIKey", savedApiKey || "");
     };
@@ -131,7 +151,8 @@ Evaluation Instructions:
   }, [selectedLLM, setValue]);
 
   useEffect(() => {
-    if (selectedInstructionPreset === "minimal") {
+    if (selectedInstructionPreset === "minimal") 
+    {
       setValue("elucidateCustomInstructionFormat", `You are a professional translation evaluator. Please evaluate the provided translation according to the instructions below. Your response should not contain anything aside from the re-evaluated text.
 Untranslated Text:
 {{untranslatedText}}
@@ -142,7 +163,9 @@ Evaluation Instructions:
 {{evaluationInstructions}}
 {{/if}}
       `);
-    } else if (selectedInstructionPreset === "verbose") {
+    } 
+    else if (selectedInstructionPreset === "verbose") 
+    {
       setValue("elucidateCustomInstructionFormat", `You are a professional translation evaluator. Please evaluate the provided translation according to the instructions below. Provide detailed reasoning for any changes and include the re-evaluated text at the end.
 Untranslated Text:
 {{untranslatedText}}
@@ -158,8 +181,10 @@ Evaluation Instructions:
 
   const handleToggleShowApiKey = () => setShowApiKey(!showApiKey);
 
-  const getModelOptions = (llm: string): string[] => {
-    switch (llm) {
+  const getModelOptions = (llm: string): string[] => 
+  {
+    switch (llm) 
+    {
       case "OpenAI":
         return ["gpt-3.5-turbo", "gpt-4", "gpt-4-turbo", "gpt-4o", "gpt-4o-mini"]
       case "Gemini":
@@ -171,7 +196,8 @@ Evaluation Instructions:
     }
   };
 
-  const showToast = (title: string, description: string, status: "success" | "error") => {
+  const showToast = (title: string, description: string, status: "success" | "error") => 
+  {
     toast({
       title,
       description,
@@ -181,9 +207,12 @@ Evaluation Instructions:
     });
   };
 
-  const handleVerification = async () => {
-    try {
-      const verificationResponse = await fetch(getURL("/verify-turnstile"), {
+  const handleVerification = async () => 
+  {
+    try 
+    {
+      const verificationResponse = await fetch(getURL("/verify-turnstile"), 
+      {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ token: turnstileToken }),
@@ -191,36 +220,44 @@ Evaluation Instructions:
 
       const verificationResult = await verificationResponse.json();
       return verificationResult.success;
-    } catch {
+    } 
+    catch 
+    {
       return false;
     }
   };
 
-  const validateInstructions = (instructions: string) => {
+  const validateInstructions = (instructions: string) => 
+  {
     const requiredPlaceholders = ["{{untranslatedText}}", "{{translatedText}}", "{{evaluationInstructions}}"];
     return requiredPlaceholders.every(placeholder => instructions.includes(placeholder));
   };
 
-  const onSubmit = async (data: FormInput) => {
+  const onSubmit = async (data: FormInput) => 
+  {
     setResetTurnstile(false);
 
-    if (window.location.hostname === "kakusui-org.pages.dev") {
+    if (window.location.hostname === "kakusui-org.pages.dev") 
+    {
       showToast("Access Denied", "This domain is not for end user usage, please use kakusui.org", "error");
       return;
     }
 
-    if (!turnstileToken && window.location.hostname === "kakusui.org") {
+    if (!turnstileToken && window.location.hostname === "kakusui.org") 
+    {
       showToast("Verification failed", "Please complete the verification", "error");
       return;
     }
 
-    if (!validateInstructions(data.elucidateCustomInstructionFormat)) {
+    if (!validateInstructions(data.elucidateCustomInstructionFormat)) 
+    {
       showToast("Invalid Instructions", "Instructions must include {{untranslatedText}}, {{translatedText}}, and {{evaluationInstructions}} placeholders.", "error");
       return;
     }
 
     try {
-      if (window.location.hostname === "kakusui.org" && !(await handleVerification())) {
+      if (window.location.hostname === "kakusui.org" && !(await handleVerification())) 
+      {
         throw new Error("Turnstile verification failed. Please try again.");
       }
 
@@ -234,15 +271,19 @@ Evaluation Instructions:
         .replace("{{translatedText}}", data.translatedText)
         .replace("{{evaluationInstructions}}", data.evaluationInstructions);
 
-      if (data.evaluationInstructions) {
+      if (data.evaluationInstructions) 
+      {
         evaluationInstructions = evaluationInstructions.replace("{{#if evaluationInstructions}}\nEvaluation instructions:\n{{evaluationInstructions}}\n{{/if}}", `Evaluation instructions:\n${data.evaluationInstructions}`);
-      } else {
+      } 
+      else 
+      {
         evaluationInstructions = evaluationInstructions.replace("{{#if evaluationInstructions}}\nEvaluation instructions:\n{{evaluationInstructions}}\n{{/if}}", '');
       }
 
       const textToEvaluate = `Untranslated Text:\n${data.untranslatedText}\n\nTranslated Text:\n${data.translatedText}`;
 
-      const response = await fetch(getURL("/proxy/elucidate"), {
+      const response = await fetch(getURL("/proxy/elucidate"), 
+      {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ ...data, textToEvaluate, evaluationInstructions }),
@@ -252,24 +293,33 @@ Evaluation Instructions:
       if (!response.ok) throw new Error(result.message || "An unknown error occurred");
 
       setResponse(result);
-    } catch (error) {
+    } 
+    catch (error) 
+    {
       console.error("Error Occurred:", error);
       showToast("An error occurred.", (error as Error).message || "An error occurred.", "error");
-    } finally {
+    } 
+    finally 
+    {
       setResetTurnstile(true);
     }
   };
 
-  const handlePaste = async (field: "untranslatedText" | "translatedText") => {
-    try {
+  const handlePaste = async (field: "untranslatedText" | "translatedText") => 
+    {
+    try 
+    {
       const text = await navigator.clipboard.readText();
       setValue(field, text);
-    } catch (error) {
+    } 
+    catch (error) 
+    {
       showToast("Error", "Failed to read clipboard contents", "error");
     }
   };
 
-  const handleSwap = () => {
+  const handleSwap = () => 
+  {
     const currentInput = getValues("untranslatedText");
     const currentOutput = response?.evaluatedText || "";
     setValue("untranslatedText", currentOutput);
@@ -446,7 +496,6 @@ Evaluation Instructions:
         notes={[
           "Please note that the Turnstile verification is required to use this tool. This is in place to prevent abuse and ensure fair usage. You must complete the verification for every submission.",
           "The Elucidate endpoint access is provided for free here (excluding LLM costs), but please be mindful of the usage and do not abuse the service.",
-          "Elucidate is currently in beta, if any issues arise please report them to the email provided below."
         ]}
         contactEmail="contact@kakusui.org"
       />

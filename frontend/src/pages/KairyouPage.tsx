@@ -1,8 +1,8 @@
-/*
-Copyright 2024 Kakusui LLC (https://kakusui.org) (https://github.com/Kakusui) (https://github.com/Kakusui/kakusui.org)
-Use of this source code is governed by an GNU Affero General Public License v3.0
-license that can be found in the LICENSE file.
-*/
+// Copyright 2024 Kakusui LLC (https://kakusui.org) (https://github.com/Kakusui) (https://github.com/Kakusui/kakusui.org)
+// Use of this source code is governed by an GNU Affero General Public License v3.0
+// license that can be found in the LICENSE file.
+
+// maintain allman bracket style for consistency
 
 // react things
 import React, { useEffect, useMemo, useState, useRef } from "react";
@@ -10,18 +10,20 @@ import { useForm } from "react-hook-form";
 
 // custom things
 import { getURL } from "../utils";
-import Turnstile from "../components/Turnstile";
 
 // chakra things
 import {
     Box, Button, Flex, FormErrorMessage, FormControl, FormLabel, IconButton, Text, Textarea, useToast, Center
 } from "@chakra-ui/react";
+
 import { ArrowUpIcon } from "@chakra-ui/icons";
 
+// components
 import CopyButton from "../components/CopyButton";
 import DownloadButton from "../components/DownloadButton";
 import HowToUseSection from "../components/HowToUseSection";
 import LegalLinks from "../components/LegalLinks";
+import Turnstile from "../components/Turnstile";
 
 type FormInput = 
 {
@@ -39,9 +41,9 @@ type ResponseValues =
 function KairyouPage() 
 {
 
-    useEffect(() => {
+    useEffect(() => 
+    {
         document.title = 'Kakusui | Kairyou';
-
     }, []);
 
     const textRef = useRef<HTMLInputElement>(null);
@@ -63,7 +65,7 @@ function KairyouPage()
             }
             catch
             {
-                // handle error silently
+                // ignore
             }
         };
         warmUpAPI();
