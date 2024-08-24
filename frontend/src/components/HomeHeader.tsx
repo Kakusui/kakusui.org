@@ -11,20 +11,15 @@ import React from 'react';
 import {
     Box,
     Flex,
-    Icon,
     Image,
-    Link,
-    Popover,
-    PopoverContent,
-    PopoverTrigger,
-    Stack,
-    Text,
     Divider,
 } from '@chakra-ui/react';
-import {ChevronRightIcon } from '@chakra-ui/icons';
 
 // logos and images
 import logo from '../assets/images/kakusui_logo.webp';
+
+// components
+import { DesktopNav } from './NavItems';
 
 const HomeHeader: React.FC = () => 
 {
@@ -53,127 +48,5 @@ const HomeHeader: React.FC = () =>
         </Box>
     );
 };
-
-const DesktopNav = () => 
-{
-    const linkColor = 'white';
-    const linkHoverColor = 'orange.400';
-    const popoverContentBgColor = '#14192b';
-
-    return (
-        <Stack direction={'row'} spacing={4}>
-            {NAV_ITEMS.map((navItem) => (
-                <Box key={navItem.label}>
-                    <Popover trigger={'hover'} placement={'bottom-start'}>
-                        <PopoverTrigger>
-                            <Link
-                                p={2}
-                                href={navItem.href ?? '#'}
-                                fontSize={'sm'}
-                                fontWeight={500}
-                                color={linkColor}
-                                _hover={{
-                                    textDecoration: 'none',
-                                    color: linkHoverColor,
-                                }}
-                            >
-                                {navItem.label}
-                            </Link>
-                        </PopoverTrigger>
-
-                        {navItem.children && (
-                            <PopoverContent
-                                border={0}
-                                boxShadow={'xl'}
-                                bg={popoverContentBgColor}
-                                p={4}
-                                rounded={'xl'}
-                                minW={'sm'}
-                            >
-                                <Stack>
-                                    {navItem.children.map((child) => (
-                                        <DesktopSubNav key={child.label} {...child} />
-                                    ))}
-                                </Stack>
-                            </PopoverContent>
-                        )}
-                    </Popover>
-                </Box>
-            ))}
-        </Stack>
-    );
-};
-
-const DesktopSubNav = ({ label, href, subLabel }: NavItem) => 
-{
-    return (
-        <Link
-            href={href}
-            role={'group'}
-            display={'block'}
-            p={2}
-            rounded={'md'}
-            _hover={{ bg: 'rgba(255, 255, 255, 0.1)' }}
-        >
-            <Stack direction={'row'} align={'center'}>
-                <Box>
-                    <Text
-                        transition={'all .3s ease'}
-                        _groupHover={{ color: 'orange.400' }}
-                        fontWeight={500}
-                    >
-                        {label}
-                    </Text>
-                    <Text fontSize={'sm'} color="gray.400">{subLabel}</Text>
-                </Box>
-                <Flex
-                    transition={'all .3s ease'}
-                    transform={'translateX(-10px)'}
-                    opacity={0}
-                    _groupHover={{ opacity: '100%', transform: 'translateX(0)' }}
-                    justify={'flex-end'}
-                    align={'center'}
-                    flex={1}
-                >
-                    <Icon color={'orange.400'} w={5} h={5} as={ChevronRightIcon} />
-                </Flex>
-            </Stack>
-        </Link>
-    );
-};
-
-interface NavItem {
-    label: string;
-    subLabel?: string;
-    children?: Array<NavItem>;
-    href?: string;
-}
-
-const NAV_ITEMS: Array<NavItem> = [
-    {
-        label: 'Home',
-        href: '/home',
-    },
-    {
-        label: 'Products',
-        children: [
-            {
-                label: 'EasyTL',
-                subLabel: 'A simple and easy to use custom translator.',
-                href: '/easytl',
-            },
-            {
-                label: 'Kairyou',
-                subLabel: 'A NER/NLP powered Japanese prepreprocessor.',
-                href: '/kairyou',
-            },
-            {
-                label: 'Elucidate',
-                subLabel: 'Smarter Translations through LLM Self-Evaluation',
-                href: '/elucidate',
-            }
-        ],
-    },
-];
 
 export default HomeHeader;

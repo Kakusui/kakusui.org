@@ -8,13 +8,10 @@
 import React from 'react';
 
 // chakra-ui
-import { Box, Flex, IconButton, Image, Text, Divider } from '@chakra-ui/react';
+import { Box, Divider } from '@chakra-ui/react';
 
-// icons
-import { IconBrandGithub } from '@tabler/icons-react';
-
-// logos and images
-import logo from '../assets/images/kakusui_logo.webp';
+// components
+import FooterContent from './FooterContent';
 
 const HomeFooter: React.FC = () => 
 {
@@ -30,26 +27,7 @@ const HomeFooter: React.FC = () =>
             zIndex={1}
         >
             <Divider borderColor="rgba(255, 255, 255, 0.1)" mb={4} />
-            <Flex
-                maxWidth="container.xl"
-                margin="0 auto"
-                px={4}
-                direction={{ base: 'column', md: 'row' }}
-                justify="space-between"
-                align="center"
-            >
-                <Image src={logo} boxSize='30px' alt='Kakusui Logo' mr={{ base: 0, md: 4 }} mb={{ base: 4, md: 0 }} />
-                <Text textAlign="center" flex="1" mx={4} mb={{ base: 4, md: 0 }}>© 2024 Kakusui LLC. All rights reserved</Text>
-                <IconButton 
-                    as='a' 
-                    href='https://github.com/Kakusui' 
-                    aria-label='Github' 
-                    icon={<IconBrandGithub />} 
-                    color="white"
-                    bg="transparent"
-                    _hover={{ bg: 'whiteAlpha.200' }}
-                />
-            </Flex>
+            <FooterContent color="white" />
         </Box>
     );
 };
