@@ -257,7 +257,7 @@ const NAV_ITEMS: Array<NavItem> =
         href: '/home',
     },
     {
-        label: 'Applications',
+        label: 'Products',
         children: [
             {
                 label: 'EasyTL',

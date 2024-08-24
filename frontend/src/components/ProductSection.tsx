@@ -14,9 +14,9 @@ import { Stack, Flex, Image, Heading, Text, Button, Box, Container, Divider, Gri
 import { IconBrandGithub } from "@tabler/icons-react";
 
 // components
-import Feature from "../components/Feature";
+import Feature from "./Feature";
 
-interface ApplicationSectionProps 
+interface ProductSectionProps 
 {
     title: string;
     subtitle: string;
@@ -29,7 +29,7 @@ interface ApplicationSectionProps
     reverse?: boolean;
 }
 
-const ApplicationSection: React.FC<ApplicationSectionProps> = ({ title, subtitle, description, imageUrl, imageAlt, linkUrl, githubUrl, features, reverse }) => 
+const ProductSection: React.FC<ProductSectionProps> = ({ title, subtitle, description, imageUrl, imageAlt, linkUrl, githubUrl, features, reverse }) => 
 {
     return (
         <>
@@ -76,4 +76,4 @@ const ApplicationSection: React.FC<ApplicationSectionProps> = ({ title, subtitle
     );
 };
 
-export default ApplicationSection;
+export default ProductSection;

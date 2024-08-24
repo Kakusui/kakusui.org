@@ -30,7 +30,7 @@ import elucidate_logo from '../assets/images/elucidate_logo.webp';
 import { IconBrandGithub } from '@tabler/icons-react';
 
 // components
-import ApplicationSection from "../components/ApplicationSection";
+import ProductSection from "../components/ProductSection";
 import PageWrapper from "../components/PageWrapper";
 import HomeHeader from "../components/HomeHeader";
 import HomeFooter from "../components/HomeFooter";
@@ -49,11 +49,11 @@ function HomePage()
                 <Kakusui />
                 <Box position="relative" padding="10">
                     <Divider />
-                    <AbsoluteCenter bg="#14192b" px="4" id="applications">
-                        Applications
+                    <AbsoluteCenter bg="#14192b" px="4" id="products">
+                        Products
                     </AbsoluteCenter>
                 </Box>                
-                <ApplicationSection
+                <ProductSection
                     title="EasyTL"
                     subtitle="Simplifying Language Barriers with custom translation using AI and LLMs"
                     description="EasyTL is a user-friendly translation tool that leverages AI and LLMs to provide high-quality translations across multiple languages. The only limit to customization is your imagination, making it a versatile tool for all your translation needs."
@@ -69,7 +69,7 @@ function HomePage()
                     ]}
                 />
                 <Divider mt={14} variant="dashed" />
-                <ApplicationSection
+                <ProductSection
                     title="Kairyou"
                     subtitle="Quickly preprocess Japanese text using NLP/NER from SpaCy for Japanese translation or other NLP tasks."
                     description="Kairyou is a Japanese text preprocessing tool that uses SpaCy to automatically replace named entities with placeholders, making it easier to translate or analyze Japanese text. It also supports name indexing for discovering new named entities and can be used for other NLP tasks."
@@ -85,7 +85,7 @@ function HomePage()
                         { heading: "Name Indexing", text: "Supports name indexing for discovering new named entities, which can be used for other NLP tasks." }
                     ]}
                 />
-                <ApplicationSection
+                <ProductSection
                     title="Elucidate"
                     subtitle="Smarter Translations through LLM Self-Evaluation"
                     description="Elucidate is a tool to that allows for the evaluation of translation utilizing LLMs. It provides insights into the quality of translations and allows for customizable evaluation options, making it a versatile tool for all your translation needs."
@@ -128,8 +128,8 @@ function Kakusui()
                         Kakusui looks to innovate in language translation using AI, LLMs, and new machine translation technologies.
                     </Text>
                     <Stack direction={{ base: 'column', md: 'row' }} spacing={4}>
-                        <Button rounded="full" bg="orange.400" color="white" as="a" href="#applications" _hover={{ bg: 'orange.500' }}>
-                            See Applications
+                        <Button rounded="full" bg="orange.400" color="white" as="a" href="#products" _hover={{ bg: 'orange.500' }}>
+                            See Products
                         </Button>
                         <Button as="a" href="https://github.com/Kakusui" leftIcon={<IconBrandGithub />} rounded="full">
                             Github

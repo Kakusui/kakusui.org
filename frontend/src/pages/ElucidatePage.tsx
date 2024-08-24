@@ -496,7 +496,6 @@ Evaluation Instructions:
         notes={[
           "Please note that the Turnstile verification is required to use this tool. This is in place to prevent abuse and ensure fair usage. You must complete the verification for every submission.",
           "The Elucidate endpoint access is provided for free here (excluding LLM costs), but please be mindful of the usage and do not abuse the service.",
-          "Elucidate is currently in beta, if any issues arise please report them to the email provided below."
         ]}
         contactEmail="contact@kakusui.org"
       />
