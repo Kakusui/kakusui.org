@@ -13,6 +13,7 @@ import { ChakraProvider, Box } from "@chakra-ui/react";
 // components
 import Navbar from "./components/Navbar.tsx";
 import Footer from "./components/Footer.tsx";
+import PageWrapper from "./components/PageWrapper.tsx";
 import theme from "./theme.ts";
 import Router from "./Router.tsx";
 
@@ -25,9 +26,15 @@ function App()
     return (
         <ChakraProvider theme={theme}>
             {!isLandingPage && !isHomePage && <Navbar isHomePage={isHomePage} />}
-            <Box maxWidth={isHomePage ? "100%" : "container.xl"} margin="0 auto">
+            {isLandingPage ? (
                 <Router />
-            </Box>
+            ) : (
+                <PageWrapper showBackground={isHomePage}>
+                    <Box maxWidth={isHomePage ? "100%" : "container.xl"} margin="0 auto">
+                        <Router />
+                    </Box>
+                </PageWrapper>
+            )}
             {!isLandingPage && !isHomePage && <Footer />}
         </ChakraProvider>
     );

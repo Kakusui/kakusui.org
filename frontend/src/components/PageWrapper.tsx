@@ -17,9 +17,10 @@ interface PageWrapperProps
 {
     children: React.ReactNode;
     showBackground?: boolean;
+    zIndex?: number;
 }
 
-function PageWrapper({ children, showBackground = false }: PageWrapperProps) 
+function PageWrapper({ children, showBackground = false, zIndex = 1 }: PageWrapperProps) 
 {
     return (
         <Box
@@ -29,6 +30,7 @@ function PageWrapper({ children, showBackground = false }: PageWrapperProps)
             backgroundSize="cover"
             backgroundPosition="center"
             backgroundAttachment="fixed"
+            zIndex={zIndex}
         >
             {showBackground && (
                 <Box
@@ -38,6 +40,7 @@ function PageWrapper({ children, showBackground = false }: PageWrapperProps)
                     right="0"
                     bottom="0"
                     backgroundColor="rgba(0, 0, 0, 0.7)"
+                    zIndex={zIndex - 1}
                 />
             )}
             <Box
@@ -46,7 +49,8 @@ function PageWrapper({ children, showBackground = false }: PageWrapperProps)
                 margin="0 auto"
                 backgroundColor="#14192b"
                 minHeight="100vh"
-                px={4} // Add padding to ensure content doesn't touch the edges
+                px={4}
+                zIndex={zIndex}
             >
                 {children}
             </Box>
