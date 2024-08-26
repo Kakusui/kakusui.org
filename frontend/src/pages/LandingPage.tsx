@@ -47,6 +47,7 @@ function LandingPage()
                 height="100%"
                 alignItems="center"
                 justifyContent="center"
+                flexDirection="column"
             >
                 <Flex
                     direction="column"
@@ -87,6 +88,17 @@ function LandingPage()
                         </Button>
                     </Flex>
                 </Flex>
+                <Text
+                    position="absolute"
+                    bottom="6"
+                    left="0"
+                    right="0"
+                    textAlign="center"
+                    color="white"
+                    fontSize="sm"
+                >
+                    © Copyright 2024 Kakusui LLC
+                </Text>
             </Flex>
         </Box>
     );

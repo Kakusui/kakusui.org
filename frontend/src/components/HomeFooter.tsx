@@ -25,6 +25,7 @@ const HomeFooter: React.FC = () =>
             color="white"
             py={4}
             zIndex={1}
+            marginTop={10}
         >
             <Divider borderColor="rgba(255, 255, 255, 0.1)" mb={4} />
             <FooterContent color="white" />

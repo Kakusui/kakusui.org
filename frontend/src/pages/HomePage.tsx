@@ -6,19 +6,10 @@
 
 // react
 import { useEffect } from 'react';
+import { motion } from 'framer-motion';
 
 // chakra-ui
-import {
-    AbsoluteCenter,
-    Box,
-    Button,
-    Divider,
-    Flex,
-    Heading,
-    Image,
-    Stack,
-    Text
-} from "@chakra-ui/react";
+import { AbsoluteCenter, Box, Button, Divider, Flex, Heading, Image, Stack, Text } from "@chakra-ui/react";
 
 // logos and images
 import logo from '../assets/images/kakusui_logo.webp';
@@ -93,7 +84,6 @@ function HomePage()
                     imageAlt="Elucidate Logo"
                     linkUrl="/elucidate"
                     githubUrl="https://github.com/Kakusui/Elucidate"
-                    reverse
                     features={[
                         { heading: "LLM Self-Evaluation", text: "Elucidate allows users to evaluate translations using LLMs, providing insights into the quality of translations." },
                         { heading: "Customizable Evaluation", text: "Users can customize the evaluation process, allowing for a wide range of evaluation options." },
@@ -111,34 +101,111 @@ export default HomePage;
 
 function Kakusui() 
 {
-    return (
+    const textVariants = 
+    {
+        hidden: { opacity: 0, y: 20 },
+        visible: 
+        { 
+            opacity: 1, 
+            y: 0,
+            transition: { duration: 0.5, ease: "easeOut" }
+        }
+    };
+
+    const containerVariants = 
+    {
+        hidden: { opacity: 0 },
+        visible: 
+        {
+            opacity: 1,
+            transition: 
+            {
+                staggerChildren: 0.2
+            }
+        }
+    };
+
+    const imageVariants = 
+    {
+        hover: 
+        { 
+            scale: 1.05,
+            transition: { duration: 0.3 }
+        }
+    };
+
+    const buttonVariants = 
+    {
+        hover: 
+        { 
+            scale: 1.05,
+            transition: 
+            { 
+                duration: 0.3,
+                yoyo: Infinity
+            }
+        }
+    };
+
+    const githubButtonVariants = 
+    {
+        hover: 
+        { 
+            x: [0, 5, 0],
+            transition: 
+            { 
+                duration: 0.5,
+                repeat: Infinity
+            }
+        }
+    };
+
+    return  (
         <Stack direction={{ base: 'column', md: 'row' }}>
             <Flex p={8} flex={1} align="center">
-                <Stack spacing={6} w="full" maxW="xl">
-                    <Heading fontSize={{ base: '3xl', md: '4xl', lg: '5xl' }}>
-                        <Text as="span" position="relative">
-                            Kakusui
-                        </Text>
-                        <br />
-                        <Text color="orange.400" as="span">
-                            Innovation in translation
-                        </Text>
-                    </Heading>
-                    <Text fontSize={{ base: 'md', lg: 'lg' }} color="gray.500">
-                        Kakusui looks to innovate in language translation using AI, LLMs, and new machine translation technologies.
-                    </Text>
-                    <Stack direction={{ base: 'column', md: 'row' }} spacing={4}>
-                        <Button rounded="full" bg="orange.400" color="white" as="a" href="#products" _hover={{ bg: 'orange.500' }}>
-                            See Products
-                        </Button>
-                        <Button as="a" href="https://github.com/Kakusui" leftIcon={<IconBrandGithub />} rounded="full">
-                            Github
-                        </Button>
+                <motion.div
+                    initial="hidden"
+                    animate="visible"
+                    variants={containerVariants}
+                >
+                    <Stack spacing={6} w="full" maxW="xl">
+                        <motion.div variants={textVariants}>
+                            <Heading fontSize={{ base: '3xl', md: '4xl', lg: '5xl' }}>
+                                <Text as="span" position="relative">
+                                    Kakusui
+                                </Text>
+                                <br />
+                                <Text color="orange.400" as="span">
+                                    Innovation in translation
+                                </Text>
+                            </Heading>
+                        </motion.div>
+                        <motion.div variants={textVariants}>
+                            <Text fontSize={{ base: 'md', lg: 'lg' }} color="gray.500">
+                                Kakusui looks to innovate in language translation using AI, LLMs, and new machine translation technologies.
+                            </Text>
+                        </motion.div>
+                        <motion.div variants={textVariants}>
+                            <Stack direction={{ base: 'column', md: 'row' }} spacing={4}>
+                                <motion.div whileHover="hover" variants={buttonVariants}>
+                                    <Button rounded="full" bg="orange.400" color="white" as="a" href="#products" _hover={{ bg: 'orange.500' }}>
+                                        See Products
+                                    </Button>
+                                </motion.div>
+                                <motion.div whileHover="hover" variants={githubButtonVariants}>
+                                    <Button as="a" href="https://github.com/Kakusui" leftIcon={<IconBrandGithub />} rounded="full">
+                                        Github
+                                    </Button>
+                                </motion.div>
+                            </Stack>
+                        </motion.div>
                     </Stack>
-                </Stack>
+                </motion.div>
             </Flex>
             <Flex flex={1}>
-                <Image boxSize={400} alt="Kakusui Logo" objectFit="cover" src={logo} borderRadius={"full"}/>
+                <motion.div whileHover="hover" variants={imageVariants}>
+                    <Image boxSize={400} alt="Kakusui Logo" objectFit="cover" src={logo} borderRadius={"full"}/>
+                </motion.div>
             </Flex>
         </Stack>
     );
