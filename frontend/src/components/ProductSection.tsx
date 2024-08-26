@@ -6,6 +6,8 @@
 
 // react
 import React from 'react';
+
+// motion
 import { motion } from 'framer-motion';
 
 // chakra-ui
@@ -102,9 +104,15 @@ const ProductSection: React.FC<ProductSectionProps> = ({ title, subtitle, descri
             variants={containerVariants}
         >
             <Stack direction={{ base: 'column', md: reverse ? 'row-reverse' : 'row' }} mt={14}>
-                <Flex flex={1}>
+                <Flex flex={1} justifyContent="center" alignItems="center">
                     <motion.div whileHover="hover" variants={imageVariants}>
-                        <Image boxSize={400} alt={imageAlt} objectFit="cover" src={imageUrl} borderRadius={"full"} />
+                        <Image 
+                            boxSize={{ base: "300px", md: "400px" }} 
+                            alt={imageAlt} 
+                            objectFit="cover" 
+                            src={imageUrl} 
+                            borderRadius={"full"} 
+                        />
                     </motion.div>
                 </Flex>
                 <Flex p={8} flex={1} align="center">
