@@ -5,11 +5,13 @@
 // maintain allman bracket style for consistency
 
 // react
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
+
+// motion
 import { motion } from 'framer-motion';
 
 // chakra-ui
-import { AbsoluteCenter, Box, Button, Divider, Flex, Heading, Image, Stack, Text } from "@chakra-ui/react";
+import { useDisclosure, AbsoluteCenter, Box, Button, Divider, Flex, Heading, Image, Modal, ModalBody, ModalCloseButton, ModalContent, ModalHeader, ModalOverlay, Stack, Text } from "@chakra-ui/react";
 
 // logos and images
 import logo from '../assets/images/kakusui_logo.webp';
@@ -26,12 +28,37 @@ import PageWrapper from "../components/PageWrapper";
 import HomeHeader from "../components/HomeHeader";
 import HomeFooter from "../components/HomeFooter";
 
+// animations
+import { textVariants, containerVariants, imageVariants, buttonVariants, githubButtonVariants } from '../animations/commonAnimations';
+
 function HomePage() 
 {
+    const { isOpen, onOpen, onClose } = useDisclosure();
+    const [isMobile, setIsMobile] = useState(false);
+
     useEffect(() => 
     {
         document.title = 'Kakusui | Home';
-    }, []);
+
+        const checkMobile = () => {
+            setIsMobile(window.innerWidth <= 768);
+        };
+
+        checkMobile();
+        window.addEventListener('resize', checkMobile);
+
+        const shouldShowModal = localStorage.getItem('hideModalPermanently') !== 'true';
+        if (isMobile && shouldShowModal) {
+            onOpen();
+        }
+
+        return () => window.removeEventListener('resize', checkMobile);
+    }, [onOpen, isMobile]);
+
+    const handleDoNotShowAgain = () => {
+        localStorage.setItem('hideModalPermanently', 'true');
+        onClose();
+    };
 
     return (
         <PageWrapper showBackground={true}>
@@ -93,6 +120,32 @@ function HomePage()
                 />
             </Box>
             <HomeFooter />
+
+            <Modal isOpen={isOpen} onClose={onClose} motionPreset="slideInBottom" isCentered>
+                <ModalOverlay />
+                <ModalContent
+                    borderRadius="md"
+                    bg="blue.900"
+                    color="white"
+                >
+                    <ModalHeader color="orange.400">Recommendation</ModalHeader>
+                    <ModalCloseButton />
+                    <ModalBody pb={6}>
+                        <Text>
+                            For the best experience, we recommend using kakusui.org on a computer. 
+                            The mobile version may have limited functionality.
+                        </Text>
+                    </ModalBody>
+                    <Flex justifyContent="flex-end" p={4}>
+                        <Button colorScheme="orange" mr={3} onClick={onClose}>
+                            Okay
+                        </Button>
+                        <Button variant="outline" colorScheme="orange" onClick={handleDoNotShowAgain}>
+                            Do not show again
+                        </Button>
+                    </Flex>
+                </ModalContent>
+            </Modal>
         </PageWrapper>
     );
 }
@@ -101,67 +154,8 @@ export default HomePage;
 
 function Kakusui() 
 {
-    const textVariants = 
-    {
-        hidden: { opacity: 0, y: 20 },
-        visible: 
-        { 
-            opacity: 1, 
-            y: 0,
-            transition: { duration: 0.5, ease: "easeOut" }
-        }
-    };
-
-    const containerVariants = 
-    {
-        hidden: { opacity: 0 },
-        visible: 
-        {
-            opacity: 1,
-            transition: 
-            {
-                staggerChildren: 0.2
-            }
-        }
-    };
-
-    const imageVariants = 
-    {
-        hover: 
-        { 
-            scale: 1.05,
-            transition: { duration: 0.3 }
-        }
-    };
-
-    const buttonVariants = 
-    {
-        hover: 
-        { 
-            scale: 1.05,
-            transition: 
-            { 
-                duration: 0.3,
-                yoyo: Infinity
-            }
-        }
-    };
-
-    const githubButtonVariants = 
-    {
-        hover: 
-        { 
-            x: [0, 5, 0],
-            transition: 
-            { 
-                duration: 0.5,
-                repeat: Infinity
-            }
-        }
-    };
-
     return  (
-        <Stack direction={{ base: 'column', md: 'row' }}>
+        <Stack direction={{ base: 'column', md: 'row' }} spacing={8}>
             <Flex p={8} flex={1} align="center">
                 <motion.div
                     initial="hidden"
@@ -202,9 +196,15 @@ function Kakusui()
                     </Stack>
                 </motion.div>
             </Flex>
-            <Flex flex={1}>
+            <Flex flex={1} justifyContent="center" alignItems="center">
                 <motion.div whileHover="hover" variants={imageVariants}>
-                    <Image boxSize={400} alt="Kakusui Logo" objectFit="cover" src={logo} borderRadius={"full"}/>
+                    <Image 
+                        boxSize={{ base: "300px", md: "400px" }} 
+                        alt="Kakusui Logo" 
+                        objectFit="cover" 
+                        src={logo} 
+                        borderRadius={"full"}
+                    />
                 </motion.div>
             </Flex>
         </Stack>
