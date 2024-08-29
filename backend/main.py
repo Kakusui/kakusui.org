@@ -44,7 +44,7 @@ from passlib.context import CryptContext
 from fastapi.security import OAuth2PasswordBearer, HTTPBasic
 
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import DeclarativeMeta, Session
+from sqlalchemy.orm import DeclarativeMeta
 
 
 from apscheduler.schedulers.background import BackgroundScheduler
@@ -103,6 +103,7 @@ ENVIRONMENT = os.environ.get("ENVIRONMENT", "development")
 
 V1_KAIRYOU_ROOT_KEY = os.environ.get("V1_KAIRYOU_ROOT_KEY")
 V1_EASYTL_ROOT_KEY = os.environ.get("V1_EASYTL_ROOT_KEY")
+V1_EASYTL_PUBLIC_API_KEY = os.environ.get("V1_EASYTL_PUBLIC_API_KEY")
 V1_ELUCIDATE_ROOT_KEY = os.environ.get("V1_ELUCIDATE_ROOT_KEY")
 
 DATABASE_URL: str = "sqlite:///./database/blog.db"
@@ -116,7 +117,7 @@ security = HTTPBasic()
 if(not os.path.exists(BACKUP_LOGS_DIR)):
     os.makedirs(BACKUP_LOGS_DIR, exist_ok=True)
 
-if(not any([ADMIN_USER, ADMIN_PASS_HASH, TOTP_SECRET, ACCESS_TOKEN_SECRET, REFRESH_TOKEN_SECRET, ENCRYPTION_KEY, V1_KAIRYOU_ROOT_KEY, V1_EASYTL_ROOT_KEY, V1_ELUCIDATE_ROOT_KEY])):
+if(not any([ADMIN_USER, ADMIN_PASS_HASH, TOTP_SECRET, ACCESS_TOKEN_SECRET, REFRESH_TOKEN_SECRET, ENCRYPTION_KEY, V1_KAIRYOU_ROOT_KEY, V1_EASYTL_ROOT_KEY, V1_ELUCIDATE_ROOT_KEY, V1_EASYTL_PUBLIC_API_KEY])):
     get_env_variables()
     ADMIN_USER = os.environ.get("ADMIN_USER")
     ADMIN_PASS_HASH = os.environ.get("ADMIN_PASS_HASH")
@@ -126,6 +127,7 @@ if(not any([ADMIN_USER, ADMIN_PASS_HASH, TOTP_SECRET, ACCESS_TOKEN_SECRET, REFRE
     ENCRYPTION_KEY = os.environ.get("ENCRYPTION_KEY")
     V1_KAIRYOU_ROOT_KEY = os.environ.get("V1_KAIRYOU_ROOT_KEY")
     V1_EASYTL_ROOT_KEY = os.environ.get("V1_EASYTL_ROOT_KEY")
+    V1_EASYTL_PUBLIC_API_KEY = os.environ.get("V1_EASYTL_PUBLIC_API_KEY")
     V1_ELUCIDATE_ROOT_KEY = os.environ.get("V1_ELUCIDATE_ROOT_KEY")
 
 assert ADMIN_USER, "ADMIN_USER environment variable not set"
@@ -137,7 +139,7 @@ assert ENCRYPTION_KEY, "ENCRYPTION_KEY environment variable not set"
 assert V1_KAIRYOU_ROOT_KEY, "V1_KAIRYOU_ROOT_KEY environment variable not set"
 assert V1_EASYTL_ROOT_KEY, "V1_EASYTL_ROOT_KEY environment variable not set"
 assert V1_ELUCIDATE_ROOT_KEY, "V1_ELUCIDATE_ROOT_KEY environment variable not set"
-
+assert V1_EASYTL_PUBLIC_API_KEY, "V1_EASYTL_PUBLIC_API_KEY environment variable not set"
 ##-----------------------------------------start-of-pydantic-models----------------------------------------------------------------------------------------------------------------------------------------------------------
 
 class KairyouRequest(BaseModel):
@@ -634,7 +636,7 @@ async def easytl(request_data:EasyTLRequest, request:Request):
         "claude-3-opus-20240229"
     ]
 
-    if(api_key != V1_EASYTL_ROOT_KEY):
+    if(api_key not in [V1_EASYTL_ROOT_KEY, V1_EASYTL_PUBLIC_API_KEY]):
         return JSONResponse(**ERRORS["invalid_api_key"])
     
     if(len(text_to_translate) > MAX_TEXT_LENGTH):

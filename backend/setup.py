@@ -94,9 +94,16 @@ def setup_local_environment() -> None:
                 f"ACCESS_TOKEN_SECRET={env_to_key_local['ACCESS_TOKEN_SECRET']}\n"
                 f"REFRESH_TOKEN_SECRET={env_to_key_local['REFRESH_TOKEN_SECRET']}\n"
                 f"ENCRYPTION_KEY={env_to_key_local['ENCRYPTION_KEY']}\n"
+                f"SMTP_SERVER={env_to_key_local['SMTP_SERVER']}\n"
+                f"SMTP_PORT={env_to_key_local['SMTP_PORT']}\n"
+                f"SMTP_USER={env_to_key_local['SMTP_USER']}\n"
+                f"SMTP_PASSWORD={env_to_key_local['SMTP_PASSWORD']}\n"
+                f"FROM_EMAIL={env_to_key_local['FROM_EMAIL']}\n"
+                f"TO_EMAIL={env_to_key_local['TO_EMAIL']}\n"
                 f"V1_KAIRYOU_ROOT_KEY=test\n"
                 f"V1_EASYTL_ROOT_KEY=test\n"
                 f"V1_ELUCIDATE_ROOT_KEY=test\n"
+                f"V1_EASYTL_PUBLIC_API_KEY=test\n"
             )
         else:
 
