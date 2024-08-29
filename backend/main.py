@@ -86,18 +86,22 @@ ENVIRONMENT = os.environ.get("ENVIRONMENT", "development")
 
 V1_KAIRYOU_ROOT_KEY = os.environ.get("V1_KAIRYOU_ROOT_KEY")
 V1_EASYTL_ROOT_KEY = os.environ.get("V1_EASYTL_ROOT_KEY")
+V1_EASYTL_PUBLIC_API_KEY = os.environ.get("V1_EASYTL_PUBLIC_API_KEY")
 V1_ELUCIDATE_ROOT_KEY = os.environ.get("V1_ELUCIDATE_ROOT_KEY")
+
 
 ## Turnstile verification endpoint won't be used if the secret key is not set
 ## but for the other endpoints, we need to make sure the root keys are set
-if(not any([V1_KAIRYOU_ROOT_KEY, V1_EASYTL_ROOT_KEY, V1_ELUCIDATE_ROOT_KEY])):
+if(not any([V1_KAIRYOU_ROOT_KEY, V1_EASYTL_ROOT_KEY, V1_EASYTL_PUBLIC_API_KEY, V1_ELUCIDATE_ROOT_KEY])):
     get_env_variables()
     V1_KAIRYOU_ROOT_KEY = os.environ.get("V1_KAIRYOU_ROOT_KEY")
     V1_EASYTL_ROOT_KEY = os.environ.get("V1_EASYTL_ROOT_KEY")
+    V1_EASYTL_PUBLIC_API_KEY = os.environ.get("V1_EASYTL_PUBLIC_API_KEY")
     V1_ELUCIDATE_ROOT_KEY = os.environ.get("V1_ELUCIDATE_ROOT_KEY")
 
 assert V1_KAIRYOU_ROOT_KEY, "V1_KAIRYOU_ROOT_KEY is not set in the environment variables"
 assert V1_EASYTL_ROOT_KEY, "V1_EASYTL_ROOT_KEY is not set in the environment variables"
+assert V1_EASYTL_PUBLIC_API_KEY, "V1_EASYTL_PUBLIC_API_KEY is not set in the environment variables"
 assert V1_ELUCIDATE_ROOT_KEY, "V1_ELUCIDATE_ROOT_KEY is not set in the environment variables"
 
 ##-----------------------------------------start-of-warmup_endpoints----------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -198,7 +202,7 @@ async def easytl(request_data:EasyTLRequest, request:Request):
         "claude-3-opus-20240229"
     ]
 
-    if(api_key != V1_EASYTL_ROOT_KEY):
+    if(api_key not in [V1_EASYTL_ROOT_KEY, V1_EASYTL_PUBLIC_API_KEY]):
         return JSONResponse(**ERRORS["invalid_api_key"])
     
     if(len(text_to_translate) > MAX_TEXT_LENGTH):
