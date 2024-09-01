@@ -22,7 +22,7 @@ from email.mime.base import MIMEBase
 from email import encoders
 
 ## third-party libraries
-from fastapi import FastAPI, HTTPException, Request
+from fastapi import FastAPI, HTTPException, Request, Header
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -67,6 +67,7 @@ class LoginModel(BaseModel):
 
 class SendVerificationEmailRequest(BaseModel):
     email:str
+    clientID:str
 
 class VerifyEmailCodeRequest(BaseModel):
     email:str
@@ -78,7 +79,6 @@ class RegisterForEmailAlert(BaseModel):
 class KairyouRequest(BaseModel):
     textToPreprocess:str
     replacementsJson:str
-
 
 class EasyTLRequest(BaseModel):
     textToTranslate:str
@@ -140,6 +140,10 @@ ENVIRONMENT = os.environ.get("ENVIRONMENT", "development")
 TOKEN_ALGORITHM = "HS256"
 TOKEN_EXPIRE_MINUTES = 1440
 VERIFICATION_EXPIRATION_MINUTES = 5
+MAX_REQUESTS = 5
+MAX_REQUESTS_PER_ID = 10
+MAX_REQUESTS_PER_EMAIL = 5
+RATE_LIMIT_WINDOW = 3600
 
 if(not os.path.exists("database") and ADMIN_USER == "admin@admin.com"):
     os.makedirs("database", exist_ok=True)
@@ -159,6 +163,7 @@ DATABASE_URL: str = "sqlite:///./database/kakusui.db"
 DATABASE_PATH: str = "database/kakusui.db"
 BACKUP_LOGS_DIR = 'database/logs'
 VERIFICATION_DATA_DIR = 'database/temp_verification'
+RATE_LIMIT_DATA_DIR = 'database/rate_limit'
 
 Base:DeclarativeMeta = declarative_base()
 
@@ -551,10 +556,81 @@ def start_scheduler():
         perform_backup_scheduled()
 
     scheduler = BackgroundScheduler()
+
     scheduler.add_job(perform_backup_scheduled, 'interval', hours=6)
+    scheduler.add_job(cleanup_expired_codes, 'interval', hours=1)
+
     scheduler.start()
 
     atexit.register(lambda: scheduler.shutdown())
+
+def cleanup_expired_codes() -> None:
+
+    if(not os.path.exists(VERIFICATION_DATA_DIR)):
+        return
+
+    current_time = datetime.now()
+
+    for filename in os.listdir(VERIFICATION_DATA_DIR):
+        file_path = os.path.join(VERIFICATION_DATA_DIR, filename)
+
+        try:
+            with open(file_path, 'r') as f:
+                data = json.load(f)
+            expiration_time = datetime.fromisoformat(data['expiration'])
+
+            if(current_time > expiration_time):
+                os.remove(file_path)
+                print(f"Removed expired verification code for {filename}")
+
+        except Exception as e:
+            print(f"Error processing {filename}: {str(e)}")
+
+##----------------------------------/----------------------------------##
+
+def rate_limit(email:str, id:str) -> None:
+
+    if(not os.path.exists(RATE_LIMIT_DATA_DIR)):
+        os.makedirs(RATE_LIMIT_DATA_DIR)
+
+    current_time = time.time()
+
+    email_limit_file = os.path.join(RATE_LIMIT_DATA_DIR, f"email_{email}.json")
+    email_data = load_rate_limit_data(email_limit_file)
+    check_and_update_rate_limit(email_data, MAX_REQUESTS_PER_EMAIL, "email")
+
+    id_limit_file = os.path.join(RATE_LIMIT_DATA_DIR, f"id_{id}.json")
+    id_data = load_rate_limit_data(id_limit_file)
+    check_and_update_rate_limit(id_data, MAX_REQUESTS_PER_ID, "ID")
+
+    save_rate_limit_data(email_limit_file, email_data)
+    save_rate_limit_data(id_limit_file, id_data)
+
+def load_rate_limit_data(file_path:str) -> dict:
+
+    try:
+        with open(file_path, 'r') as f:
+            return json.load(f)
+    except FileNotFoundError:
+        return {"requests": [], "blocked_until": None}
+
+def save_rate_limit_data(file_path:str, data:dict) -> None:
+    with open(file_path, 'w') as f:
+        json.dump(data, f)
+
+def check_and_update_rate_limit(data:dict, max_requests:int, limit_type:str) -> None:
+    current_time = time.time()
+
+    data['requests'] = [req for req in data['requests'] if current_time - req < RATE_LIMIT_WINDOW]
+
+    if(data['blocked_until'] and current_time < data['blocked_until']):
+        raise HTTPException(status_code=429, detail=f"Too many requests from this {limit_type}. Please try again later.")
+
+    if(len(data['requests']) >= max_requests):
+        data['blocked_until'] = current_time + RATE_LIMIT_WINDOW
+        raise HTTPException(status_code=429, detail=f"Too many requests from this {limit_type}. Please try again later.")
+
+    data['requests'].append(current_time)
 
 ##-----------------------------------------start-of-main----------------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -907,7 +983,7 @@ def send_verification_email(email:str, code:str) -> None:
     send_email(subject=subject, body=body, to_email=email, attachment_path=None, from_email=FROM_EMAIL, smtp_server=SMTP_SERVER, smtp_port=SMTP_PORT, smtp_user=SMTP_USER, smtp_password=SMTP_PASSWORD)
 
 @app.post("/send-verification-email")
-async def send_verification_email_endpoint(request_data:SendVerificationEmailRequest, request:Request):
+async def send_verification_email_endpoint(request_data: SendVerificationEmailRequest, request: Request):
     origin = request.headers.get('origin')
     allowed_domains = [
         "https://kakusui.org", 
@@ -917,11 +993,18 @@ async def send_verification_email_endpoint(request_data:SendVerificationEmailReq
 
     if(origin is not None and not any(origin.endswith(domain) for domain in allowed_domains)):
         raise HTTPException(status_code=403, detail="Forbidden")
-
+    
     email = request_data.email
+    client_id = request_data.clientID
 
     db: Session = SessionLocal()
     try:
+
+        try:
+            rate_limit(email, client_id)
+        except HTTPException as e:
+            return JSONResponse(status_code=e.status_code, content={"message": e.detail})
+
         existing_email = db.query(EmailAlertModel).filter(EmailAlertModel.email == email).first()
         if(existing_email):
             return JSONResponse(status_code=400, content={"message": "Email already registered for alerts."})
