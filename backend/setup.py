@@ -64,7 +64,7 @@ def download_spacy_model() -> None:
 def setup_local_environment() -> None:
 
     env_to_key_local = {
-        "ADMIN_USER": "admin",
+        "ADMIN_USER": "admin@admin.com",
         "ADMIN_PASS_HASH": "$2b$12$MlPMcgDvVCU.s10xcB2fneIjZ/ymgz5O52yH5pshAFF5.bwPq4SMq",
         "TOTP_SECRET": "JBSWY3DPEHPK3PXP",
         "ACCESS_TOKEN_SECRET": "secret",

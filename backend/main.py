@@ -12,7 +12,7 @@ import shutil
 import zipfile
 import smtplib
 
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
@@ -45,9 +45,48 @@ from fastapi.security import OAuth2PasswordBearer, HTTPBasic
 
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import DeclarativeMeta
+from sqlalchemy import Column, String, DateTime
+from sqlalchemy.dialects.postgresql import UUID as modelUUID
+from uuid import uuid4
+from sqlalchemy import Column, String, DateTime
 
+from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm import Session
+from sqlalchemy.engine import create_engine
+from sqlalchemy.inspection import inspect
+from sqlalchemy.engine import Engine, Inspector
 
 from apscheduler.schedulers.background import BackgroundScheduler
+
+##-----------------------------------------start-of-pydantic-models----------------------------------------------------------------------------------------------------------------------------------------------------------
+
+class LoginModel(BaseModel):
+    email:str
+
+class RegisterForEmailAlert(BaseModel):
+    email:str
+
+class KairyouRequest(BaseModel):
+    textToPreprocess:str
+    replacementsJson:str
+
+
+class EasyTLRequest(BaseModel):
+    textToTranslate:str
+    translationInstructions:str
+    llmType:str
+    userAPIKey:str
+    model:str
+
+class ElucidateRequest(BaseModel):
+    textToEvaluate:str
+    evaluationInstructions:str
+    llmType:str
+    userAPIKey:str
+    model:str
+
+class VerifyTurnstileRequest(BaseModel):
+    token:str
 
 ##-----------------------------------------start-of-utility-functions----------------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -92,10 +131,10 @@ ENVIRONMENT = os.environ.get("ENVIRONMENT", "development")
 TOKEN_ALGORITHM = "HS256"
 TOKEN_EXPIRE_MINUTES = 1440
 
-if(not os.path.exists("database") and ADMIN_USER == "admin"):
+if(not os.path.exists("database") and ADMIN_USER == "admin@admin.com"):
     os.makedirs("database", exist_ok=True)
 
-elif(not os.path.exists("database") and ADMIN_USER != "admin"):
+elif(not os.path.exists("database") and ADMIN_USER != "admin@admin.com"):
     raise NotImplementedError("Database volume not attached and running in production mode, please exit and attach the volume")
 
 TURNSTILE_SECRET_KEY = os.environ.get("TURNSTILE_SECRET_KEY")
@@ -106,8 +145,8 @@ V1_EASYTL_ROOT_KEY = os.environ.get("V1_EASYTL_ROOT_KEY")
 V1_EASYTL_PUBLIC_API_KEY = os.environ.get("V1_EASYTL_PUBLIC_API_KEY")
 V1_ELUCIDATE_ROOT_KEY = os.environ.get("V1_ELUCIDATE_ROOT_KEY")
 
-DATABASE_URL: str = "sqlite:///./database/blog.db"
-DATABASE_PATH: str = "database/blog.db"
+DATABASE_URL: str = "sqlite:///./database/kakusui.db"
+DATABASE_PATH: str = "database/kakusui.db"
 BACKUP_LOGS_DIR = 'database/logs'
 
 Base:DeclarativeMeta = declarative_base()
@@ -140,29 +179,27 @@ assert V1_KAIRYOU_ROOT_KEY, "V1_KAIRYOU_ROOT_KEY environment variable not set"
 assert V1_EASYTL_ROOT_KEY, "V1_EASYTL_ROOT_KEY environment variable not set"
 assert V1_ELUCIDATE_ROOT_KEY, "V1_ELUCIDATE_ROOT_KEY environment variable not set"
 assert V1_EASYTL_PUBLIC_API_KEY, "V1_EASYTL_PUBLIC_API_KEY environment variable not set"
-##-----------------------------------------start-of-pydantic-models----------------------------------------------------------------------------------------------------------------------------------------------------------
 
-class KairyouRequest(BaseModel):
-    textToPreprocess:str
-    replacementsJson:str
+##----------------------------------/----------------------------------##
 
+class EmailAlertModel(Base):
+    __tablename__ = "email_alerts"
+    id = Column(modelUUID(as_uuid=True), primary_key=True, index=True, default=uuid4)
+    email = Column(String, index=True)
+    created_at = Column(DateTime, default=datetime.now(timezone.utc))
 
-class EasyTLRequest(BaseModel):
-    textToTranslate:str
-    translationInstructions:str
-    llmType:str
-    userAPIKey:str
-    model:str
+##----------------------------------/----------------------------------##
 
-class ElucidateRequest(BaseModel):
-    textToEvaluate:str
-    evaluationInstructions:str
-    llmType:str
-    userAPIKey:str
-    model:str
+engine:Engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False})
+SessionLocal:sessionmaker = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
-class VerifyTurnstileRequest(BaseModel):
-    token:str
+def create_tables_if_not_exist(engine, base:DeclarativeMeta) -> None:
+    inspector:Inspector = inspect(engine)
+    for table_name in base.metadata.tables.keys():
+        if(not inspector.has_table(table_name)):
+            base.metadata.tables[table_name].create(engine)
+
+create_tables_if_not_exist(engine, Base)
 
 ##----------------------------------/----------------------------------##
 
@@ -409,10 +446,9 @@ def perform_backup() -> None:
 
     timestamp = datetime.now().strftime("%Y-%m-%d %H_%M_%S")
 
-    ## engine:Engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False})
-    ## SessionLocal:sessionmaker = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+    db:Session = SessionLocal()
 
-    ## db:Session = SessionLocal()
+    number_of_email_alerts = db.query(EmailAlertModel).count()
 
     export_path = f'exported_db_{timestamp}.db'
 
@@ -426,7 +462,7 @@ def perform_backup() -> None:
 
     send_email(
         subject=f'SQLite Database Backup ({timestamp})',
-        body='Please find the attached encrypted and compressed SQLite database backup. This email was sent automatically. Do not reply.',
+        body='Please find the attached encrypted and compressed SQLite database backup. This email was sent automatically. Do not reply.\n\nNumber of email alerts in the database: ' + str(number_of_email_alerts),
         to_email=TO_EMAIL,
         attachment_path=encrypted_path,
         from_email=FROM_EMAIL,
@@ -506,7 +542,6 @@ def start_scheduler():
     scheduler.start()
 
     atexit.register(lambda: scheduler.shutdown())
-
 
 ##-----------------------------------------start-of-main----------------------------------------------------------------------------------------------------------------------------------------------------------
 

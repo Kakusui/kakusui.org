@@ -1,9 +1,9 @@
 fastapi==0.110.3
 kairyou==1.6.5
 uvicorn==0.30.0
-easytl==0.4.7
+easytl==0.4.9
 httpx==0.25.1
-elucidate==0.0.1
+elucidate==0.0.2
 passlib==1.7.4
 pyotp==2.9.0
 bcrypt==3.1.7
