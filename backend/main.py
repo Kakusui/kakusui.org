@@ -11,6 +11,8 @@ import time
 import shutil
 import zipfile
 import smtplib
+import random
+import string
 
 from datetime import datetime, timedelta, timezone
 
@@ -62,6 +64,13 @@ from apscheduler.schedulers.background import BackgroundScheduler
 
 class LoginModel(BaseModel):
     email:str
+
+class SendVerificationEmailRequest(BaseModel):
+    email:str
+
+class VerifyEmailCodeRequest(BaseModel):
+    email:str
+    code:str
 
 class RegisterForEmailAlert(BaseModel):
     email:str
@@ -130,6 +139,7 @@ ENVIRONMENT = os.environ.get("ENVIRONMENT", "development")
 
 TOKEN_ALGORITHM = "HS256"
 TOKEN_EXPIRE_MINUTES = 1440
+VERIFICATION_EXPIRATION_MINUTES = 5
 
 if(not os.path.exists("database") and ADMIN_USER == "admin@admin.com"):
     os.makedirs("database", exist_ok=True)
@@ -148,6 +158,7 @@ V1_ELUCIDATE_ROOT_KEY = os.environ.get("V1_ELUCIDATE_ROOT_KEY")
 DATABASE_URL: str = "sqlite:///./database/kakusui.db"
 DATABASE_PATH: str = "database/kakusui.db"
 BACKUP_LOGS_DIR = 'database/logs'
+VERIFICATION_DATA_DIR = 'database/temp_verification'
 
 Base:DeclarativeMeta = declarative_base()
 
@@ -387,7 +398,7 @@ def decompress_file(file_path:str, decompressed_path:str) -> str:
 
 ##----------------------------------/----------------------------------##
 
-def send_email(subject:str, body:str, to_email:str, attachment_path:str, from_email:str, smtp_server:str, smtp_port:int, smtp_user:str, smtp_password:str) -> None:
+def send_email(subject:str, body:str, to_email:str, attachment_path:str | None, from_email:str, smtp_server:str, smtp_port:int, smtp_user:str, smtp_password:str) -> None:
 
     """
 
@@ -414,12 +425,14 @@ def send_email(subject:str, body:str, to_email:str, attachment_path:str, from_em
 
     msg.attach(MIMEText(body, 'plain'))
 
-    with open(attachment_path, 'rb') as f:
-        part = MIMEBase('application', 'octet-stream')
-        part.set_payload(f.read())
-        encoders.encode_base64(part)
-        part.add_header('Content-Disposition', f'attachment; filename={os.path.basename(attachment_path)}')
-        msg.attach(part)
+    if(attachment_path is not None):
+
+        with open(attachment_path, 'rb') as f:
+            part = MIMEBase('application', 'octet-stream')
+            part.set_payload(f.read())
+            encoders.encode_base64(part)
+            part.add_header('Content-Disposition', f'attachment; filename={os.path.basename(attachment_path)}')
+            msg.attach(part)
 
     try:
 
@@ -852,7 +865,127 @@ async def proxy_elucidate(request_data:ElucidateRequest, request:Request):
 
         return JSONResponse(status_code=response.status_code, content=response.json())
     
-##-----------------------------------------start-of-util_endpoints----------------------------------------------------------------------------------------------------------------------------------------------------------
+##-----------------------------------------start-of-email_auth_endpoints----------------------------------------------------------------------------------------------------------------------------------------------------------
+
+def generate_verification_code() -> str:
+    return ''.join(random.choices(string.digits, k=6))
+
+def save_verification_data(email:str, code:str) -> None:
+    expiration_time = datetime.now() + timedelta(minutes=VERIFICATION_EXPIRATION_MINUTES)
+    data = {
+        "code": code,
+        "expiration": expiration_time.isoformat()
+    }
+    
+    if(not os.path.exists(VERIFICATION_DATA_DIR)):
+        os.makedirs(VERIFICATION_DATA_DIR)
+    
+    with open(f"{VERIFICATION_DATA_DIR}/{email}.json", "w") as f:
+        json.dump(data, f)
+
+def get_verification_data(email:str) -> dict | None:
+    try:
+        with open(f"{VERIFICATION_DATA_DIR}/{email}.json", "r") as f:
+            data = json.load(f)
+        return data
+    except FileNotFoundError:
+        return None
+
+def remove_verification_data(email:str) -> None:
+    try:
+        os.remove(f"{VERIFICATION_DATA_DIR}/{email}.json")
+    except FileNotFoundError:
+        pass
+
+def send_verification_email(email:str, code:str) -> None:
+    
+    _, SMTP_SERVER, SMTP_PORT, SMTP_USER, SMTP_PASSWORD, FROM_EMAIL, _ = get_envs()
+
+    subject = "Email Verification Code for Kakusui.org"
+    body = f"Your verification code is {code}"
+
+    send_email(subject=subject, body=body, to_email=email, attachment_path=None, from_email=FROM_EMAIL, smtp_server=SMTP_SERVER, smtp_port=SMTP_PORT, smtp_user=SMTP_USER, smtp_password=SMTP_PASSWORD)
+
+@app.post("/send-verification-email")
+async def send_verification_email_endpoint(request_data:SendVerificationEmailRequest, request:Request):
+    origin = request.headers.get('origin')
+    allowed_domains = [
+        "https://kakusui.org", 
+        "http://localhost:5173",
+        ".kakusui-org.pages.dev"
+    ]
+
+    if(origin is not None and not any(origin.endswith(domain) for domain in allowed_domains)):
+        raise HTTPException(status_code=403, detail="Forbidden")
+
+    email = request_data.email
+
+    db: Session = SessionLocal()
+    try:
+        existing_email = db.query(EmailAlertModel).filter(EmailAlertModel.email == email).first()
+        if(existing_email):
+            return JSONResponse(status_code=400, content={"message": "Email already registered for alerts."})
+
+        verification_code = generate_verification_code()
+        save_verification_data(email, verification_code)
+        send_verification_email(email, verification_code)
+
+        return JSONResponse(status_code=200, content={"message": "Verification email sent successfully."})
+    
+    except Exception as e:
+        print(f"Error sending verification email: {str(e)}")
+        return JSONResponse(status_code=500, content={"message": "An error occurred while sending the verification email."})
+    
+    finally:
+        db.close()
+
+@app.post("/verify-email-code")
+async def verify_email_code_endpoint(request_data:VerifyEmailCodeRequest, request:Request):
+    origin = request.headers.get('origin')
+    allowed_domains = [
+        "https://kakusui.org", 
+        "http://localhost:5173",
+        ".kakusui-org.pages.dev"
+    ]
+
+    if(origin is not None and not any(origin.endswith(domain) for domain in allowed_domains)):
+        raise HTTPException(status_code=403, detail="Forbidden")
+
+    email = request_data.email
+    submitted_code = request_data.code
+
+    db: Session = SessionLocal()
+    try:
+        verification_data = get_verification_data(email)
+        if(not verification_data):
+            return JSONResponse(status_code=400, content={"message": "Verification code not found or expired."})
+
+        stored_code = verification_data["code"]
+        expiration_time = datetime.fromisoformat(verification_data["expiration"])
+
+        if(datetime.now() > expiration_time):
+            remove_verification_data(email)
+            return JSONResponse(status_code=400, content={"message": "Verification code has expired."})
+
+        if(submitted_code != stored_code):
+            return JSONResponse(status_code=400, content={"message": "Invalid verification code."})
+
+        new_email_alert = EmailAlertModel(email=email)
+        db.add(new_email_alert)
+        db.commit()
+        
+        remove_verification_data(email)
+        return JSONResponse(status_code=200, content={"message": "Email successfully verified and registered for alerts."})
+    
+    except Exception as e:
+        db.rollback()
+        print(f"Error verifying email code: {str(e)}")
+        return JSONResponse(status_code=500, content={"message": "An error occurred while verifying the email code."})
+    
+    finally:
+        db.close()
+
+##-----------------------------------------start-of-turnstile_endpoints----------------------------------------------------------------------------------------------------------------------------------------------------------
 
 @app.post("/verify-turnstile")
 async def verify_turnstile(request_data:VerifyTurnstileRequest, request:Request):

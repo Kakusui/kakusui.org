@@ -69,14 +69,18 @@ def setup_local_environment() -> None:
         "TOTP_SECRET": "JBSWY3DPEHPK3PXP",
         "ACCESS_TOKEN_SECRET": "secret",
         "REFRESH_TOKEN_SECRET": "secret",
-        "NODE_ENV": "development",
+        "ENVIRONMENT": "development",
         "ENCRYPTION_KEY": "password",
         "SMTP_SERVER": "none",
         "SMTP_PORT": 8000,
         "SMTP_USER": "none",
         "SMTP_PASSWORD": "none",
         "FROM_EMAIL": "none",
-        "TO_EMAIL": "none"
+        "TO_EMAIL": "none",
+        "V1_KAIRYOU_ROOT_KEY": "test",
+        "V1_EASYTL_ROOT_KEY": "test",
+        "V1_EASYTL_PUBLIC_API_KEY": "test",
+        "V1_ELUCIDATE_ROOT_KEY": "test"
     }
 
     try:
@@ -90,7 +94,7 @@ def setup_local_environment() -> None:
                 f"ADMIN_USER={env_to_key_local['ADMIN_USER']}\n"
                 f"ADMIN_PASS_HASH={env_to_key_local['ADMIN_PASS_HASH']}\n"
                 f"TOTP_SECRET={env_to_key_local['TOTP_SECRET']}\n"
-                "ENVIRONMENT=development\n"
+                f"ENVIRONMENT={env_to_key_local['ENVIRONMENT']}\n"
                 f"ACCESS_TOKEN_SECRET={env_to_key_local['ACCESS_TOKEN_SECRET']}\n"
                 f"REFRESH_TOKEN_SECRET={env_to_key_local['REFRESH_TOKEN_SECRET']}\n"
                 f"ENCRYPTION_KEY={env_to_key_local['ENCRYPTION_KEY']}\n"
@@ -100,10 +104,10 @@ def setup_local_environment() -> None:
                 f"SMTP_PASSWORD={env_to_key_local['SMTP_PASSWORD']}\n"
                 f"FROM_EMAIL={env_to_key_local['FROM_EMAIL']}\n"
                 f"TO_EMAIL={env_to_key_local['TO_EMAIL']}\n"
-                f"V1_KAIRYOU_ROOT_KEY=test\n"
-                f"V1_EASYTL_ROOT_KEY=test\n"
-                f"V1_ELUCIDATE_ROOT_KEY=test\n"
-                f"V1_EASYTL_PUBLIC_API_KEY=test\n"
+                f"V1_KAIRYOU_ROOT_KEY={env_to_key_local['V1_KAIRYOU_ROOT_KEY']}\n"
+                f"V1_EASYTL_ROOT_KEY={env_to_key_local['V1_EASYTL_ROOT_KEY']}\n"
+                f"V1_EASYTL_PUBLIC_API_KEY={env_to_key_local['V1_EASYTL_PUBLIC_API_KEY']}\n"
+                f"V1_ELUCIDATE_ROOT_KEY={env_to_key_local['V1_ELUCIDATE_ROOT_KEY']}\n"
             )
         else:
 
