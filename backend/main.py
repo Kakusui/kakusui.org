@@ -553,6 +553,7 @@ def start_scheduler():
         return
 
     if(should_run_initial):
+        cleanup_expired_codes()
         perform_backup_scheduled()
 
     scheduler = BackgroundScheduler()
@@ -582,6 +583,24 @@ def cleanup_expired_codes() -> None:
             if(current_time > expiration_time):
                 os.remove(file_path)
                 print(f"Removed expired verification code for {filename}")
+
+        except Exception as e:
+            print(f"Error processing {filename}: {str(e)}")
+
+    if(not os.path.exists(RATE_LIMIT_DATA_DIR)):
+        return
+
+    for filename in os.listdir(RATE_LIMIT_DATA_DIR):
+        file_path = os.path.join(RATE_LIMIT_DATA_DIR, filename)
+
+        try:
+            with open(file_path, 'r') as f:
+                data = json.load(f)
+            blocked_until = data.get('blocked_until')
+
+            if(blocked_until and current_time.timestamp() > blocked_until):
+                os.remove(file_path)
+                print(f"Removed expired rate limit file for {filename}")
 
         except Exception as e:
             print(f"Error processing {filename}: {str(e)}")
