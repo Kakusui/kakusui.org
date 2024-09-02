@@ -13,6 +13,7 @@ import {
     Flex,
     Image,
     Divider,
+    Link,
 } from '@chakra-ui/react';
 
 // logos and images
@@ -40,7 +41,9 @@ const HomeHeader: React.FC = () =>
                     justify="flex-start"
                     align="center"
                 >
-                    <Image src={logo} boxSize='30px' alt='Kakusui Logo' mr={4}/>
+                    <Link href="/">
+                        <Image src={logo} boxSize='30px' alt='Kakusui Logo' mr={4}/>
+                    </Link>
                     <DesktopNav />
                 </Flex>
             </Flex>

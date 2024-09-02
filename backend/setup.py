@@ -80,7 +80,8 @@ def setup_local_environment() -> None:
         "V1_KAIRYOU_ROOT_KEY": "test",
         "V1_EASYTL_ROOT_KEY": "test",
         "V1_EASYTL_PUBLIC_API_KEY": "test",
-        "V1_ELUCIDATE_ROOT_KEY": "test"
+        "V1_ELUCIDATE_ROOT_KEY": "test",
+        "TURNSTILE_SECRET_KEY": "test"
     }
 
     try:

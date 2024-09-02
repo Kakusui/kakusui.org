@@ -5,7 +5,7 @@
 // maintain allman bracket style for consistency
 
 // chakra-ui
-import { Flex, IconButton, Image, Text } from '@chakra-ui/react';
+import { Flex, IconButton, Image, Text, Link } from '@chakra-ui/react';
 
 // icons
 import { IconBrandGithub } from '@tabler/icons-react';
@@ -37,10 +37,14 @@ const FooterContent = ({ color = "gray.300" }) =>
                     _hover={{ bg: 'whiteAlpha.200' }}
                 />
                 <Text textAlign="center">© 2024 Kakusui LLC. All rights reserved</Text>
-                <Image src={logo} boxSize='30px' alt='Kakusui Logo' />
+                <Link href="/">
+                    <Image src={logo} boxSize='30px' alt='Kakusui Logo' />
+                </Link>
             </Flex>
             <Flex display={{ base: 'none', md: 'flex' }} width="100%" justify="space-between" align="center">
-                <Image src={logo} boxSize='30px' alt='Kakusui Logo' />
+                <Link href="/">
+                    <Image src={logo} boxSize='30px' alt='Kakusui Logo' />
+                </Link>
                 <Text textAlign="center" flex="1">© 2024 Kakusui LLC. All rights reserved</Text>
                 <IconButton 
                     as='a' 

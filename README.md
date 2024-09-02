@@ -91,7 +91,7 @@ For production, the backend is hosted on fly.io via a dockerfile.
 
 #### To test the dockerfile locally
 1. docker build -t kakusui-org -f build.dockerfile .
-2. docker run -p 8000:8000 kakusui-org
+2. docker run -p 5000:5000 kakusui-org
 
 #### To deploy to fly.io
 1. Make sure you have the fly cli installed and are logged in.

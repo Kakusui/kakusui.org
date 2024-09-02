@@ -113,6 +113,9 @@ def get_env_variables() -> None:
 
     """
 
+    if(not os.path.exists(".env")):
+        return
+
     with open(".env") as f:
         for line in f:
             key, value = line.strip().split("=")
@@ -134,6 +137,7 @@ ADMIN_PASS_HASH = os.environ.get("ADMIN_PASS_HASH")
 TOTP_SECRET = os.environ.get("TOTP_SECRET")
 ACCESS_TOKEN_SECRET = os.environ.get("ACCESS_TOKEN_SECRET")
 REFRESH_TOKEN_SECRET = os.environ.get("REFRESH_TOKEN_SECRET")
+TURNSTILE_SECRET_KEY = os.environ.get("TURNSTILE_SECRET_KEY")
 
 ENVIRONMENT = os.environ.get("ENVIRONMENT", "development")
 
@@ -150,9 +154,6 @@ if(not os.path.exists("database") and ADMIN_USER == "admin@admin.com"):
 
 elif(not os.path.exists("database") and ADMIN_USER != "admin@admin.com"):
     raise NotImplementedError("Database volume not attached and running in production mode, please exit and attach the volume")
-
-TURNSTILE_SECRET_KEY = os.environ.get("TURNSTILE_SECRET_KEY")
-ENVIRONMENT = os.environ.get("ENVIRONMENT", "development")
 
 V1_KAIRYOU_ROOT_KEY = os.environ.get("V1_KAIRYOU_ROOT_KEY")
 V1_EASYTL_ROOT_KEY = os.environ.get("V1_EASYTL_ROOT_KEY")
@@ -172,29 +173,20 @@ security = HTTPBasic()
 if(not os.path.exists(BACKUP_LOGS_DIR)):
     os.makedirs(BACKUP_LOGS_DIR, exist_ok=True)
 
-if(not any([ADMIN_USER, ADMIN_PASS_HASH, TOTP_SECRET, ACCESS_TOKEN_SECRET, REFRESH_TOKEN_SECRET, ENCRYPTION_KEY, V1_KAIRYOU_ROOT_KEY, V1_EASYTL_ROOT_KEY, V1_ELUCIDATE_ROOT_KEY, V1_EASYTL_PUBLIC_API_KEY])):
-    get_env_variables()
-    ADMIN_USER = os.environ.get("ADMIN_USER")
-    ADMIN_PASS_HASH = os.environ.get("ADMIN_PASS_HASH")
-    TOTP_SECRET = os.environ.get("TOTP_SECRET")
-    ACCESS_TOKEN_SECRET = os.environ.get("ACCESS_TOKEN_SECRET")
-    REFRESH_TOKEN_SECRET = os.environ.get("REFRESH_TOKEN_SECRET")
-    ENCRYPTION_KEY = os.environ.get("ENCRYPTION_KEY")
-    V1_KAIRYOU_ROOT_KEY = os.environ.get("V1_KAIRYOU_ROOT_KEY")
-    V1_EASYTL_ROOT_KEY = os.environ.get("V1_EASYTL_ROOT_KEY")
-    V1_EASYTL_PUBLIC_API_KEY = os.environ.get("V1_EASYTL_PUBLIC_API_KEY")
-    V1_ELUCIDATE_ROOT_KEY = os.environ.get("V1_ELUCIDATE_ROOT_KEY")
+envs = [TURNSTILE_SECRET_KEY, 
+        ENCRYPTION_KEY, 
+        ADMIN_USER, 
+        ADMIN_PASS_HASH, 
+        TOTP_SECRET, 
+        ACCESS_TOKEN_SECRET, 
+        REFRESH_TOKEN_SECRET, 
+        V1_KAIRYOU_ROOT_KEY, 
+        V1_EASYTL_ROOT_KEY, 
+        V1_EASYTL_PUBLIC_API_KEY, 
+        V1_ELUCIDATE_ROOT_KEY]
 
-assert ADMIN_USER, "ADMIN_USER environment variable not set"
-assert ADMIN_PASS_HASH, "ADMIN_PASS_HASH environment variable not set"
-assert TOTP_SECRET, "TOTP_SECRET environment variable not set"
-assert ACCESS_TOKEN_SECRET, "ACCESS_TOKEN_SECRET environment variable not set"
-assert REFRESH_TOKEN_SECRET, "REFRESH_TOKEN_SECRET environment variable not set"
-assert ENCRYPTION_KEY, "ENCRYPTION_KEY environment variable not set"
-assert V1_KAIRYOU_ROOT_KEY, "V1_KAIRYOU_ROOT_KEY environment variable not set"
-assert V1_EASYTL_ROOT_KEY, "V1_EASYTL_ROOT_KEY environment variable not set"
-assert V1_ELUCIDATE_ROOT_KEY, "V1_ELUCIDATE_ROOT_KEY environment variable not set"
-assert V1_EASYTL_PUBLIC_API_KEY, "V1_EASYTL_PUBLIC_API_KEY environment variable not set"
+for env in envs:
+    assert env, f"{env} environment variable not set"
 
 ##----------------------------------/----------------------------------##
 
