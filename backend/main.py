@@ -19,10 +19,12 @@ from datetime import datetime, timedelta, timezone
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from email.mime.base import MIMEBase
-from email import encoders
+from email import encoders 
+
+from werkzeug.utils import secure_filename
 
 ## third-party libraries
-from fastapi import FastAPI, HTTPException, Request, Header
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -59,6 +61,14 @@ from sqlalchemy.inspection import inspect
 from sqlalchemy.engine import Engine, Inspector
 
 from apscheduler.schedulers.background import BackgroundScheduler
+
+from werkzeug.utils import secure_filename
+
+##-----------------------------------------start-of-security----------------------------------------------------------------------------------------------------------------------------------------------------------
+
+def get_secure_path(base_dir: str, filename: str) -> str:
+    secure_name = secure_filename(filename)
+    return os.path.join(base_dir, secure_name)
 
 ##-----------------------------------------start-of-pydantic-models----------------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -604,28 +614,35 @@ def rate_limit(email:str, id:str) -> None:
     if(not os.path.exists(RATE_LIMIT_DATA_DIR)):
         os.makedirs(RATE_LIMIT_DATA_DIR)
 
-    current_time = time.time()
-
-    email_limit_file = os.path.join(RATE_LIMIT_DATA_DIR, f"email_{email}.json")
-    email_data = load_rate_limit_data(email_limit_file)
+    email_data = load_rate_limit_data(email, is_email=True)
     check_and_update_rate_limit(email_data, MAX_REQUESTS_PER_EMAIL, "email")
 
-    id_limit_file = os.path.join(RATE_LIMIT_DATA_DIR, f"id_{id}.json")
-    id_data = load_rate_limit_data(id_limit_file)
+    id_data = load_rate_limit_data(id, is_email=False)
     check_and_update_rate_limit(id_data, MAX_REQUESTS_PER_ID, "ID")
 
-    save_rate_limit_data(email_limit_file, email_data)
-    save_rate_limit_data(id_limit_file, id_data)
+    save_rate_limit_data(email, is_email=True, data=email_data)
+    save_rate_limit_data(id, is_email=False, data=id_data)
 
-def load_rate_limit_data(file_path:str) -> dict:
+def load_rate_limit_data(email_or_id:str, is_email:bool) -> dict:
+    directory = RATE_LIMIT_DATA_DIR
+    prefix = "email_" if is_email else "id_"
+    filename = f"{prefix}{email_or_id}.json"
+    file_path = get_secure_path(directory, filename)
 
     try:
         with open(file_path, 'r') as f:
             return json.load(f)
+        
     except FileNotFoundError:
         return {"requests": [], "blocked_until": None}
 
-def save_rate_limit_data(file_path:str, data:dict) -> None:
+def save_rate_limit_data(email_or_id:str, is_email:bool, data:dict) -> None:
+
+    directory = RATE_LIMIT_DATA_DIR
+    prefix = "email_" if is_email else "id_"
+    filename = f"{prefix}{email_or_id}.json"
+    file_path = get_secure_path(directory, filename)
+
     with open(file_path, 'w') as f:
         json.dump(data, f)
 
@@ -966,13 +983,16 @@ def save_verification_data(email:str, code:str) -> None:
     
     if(not os.path.exists(VERIFICATION_DATA_DIR)):
         os.makedirs(VERIFICATION_DATA_DIR)
-    
-    with open(f"{VERIFICATION_DATA_DIR}/{email}.json", "w") as f:
+
+    secure_email = secure_filename(email)
+
+    with open(f"{VERIFICATION_DATA_DIR}/{secure_email}.json", "w") as f:
         json.dump(data, f)
 
 def get_verification_data(email:str) -> dict | None:
     try:
-        with open(f"{VERIFICATION_DATA_DIR}/{email}.json", "r") as f:
+        secure_email = secure_filename(email)
+        with open(f"{VERIFICATION_DATA_DIR}/{secure_email}.json", "r") as f:
             data = json.load(f)
         return data
     except FileNotFoundError:
@@ -980,7 +1000,8 @@ def get_verification_data(email:str) -> dict | None:
 
 def remove_verification_data(email:str) -> None:
     try:
-        os.remove(f"{VERIFICATION_DATA_DIR}/{email}.json")
+        secure_email = secure_filename(email)
+        os.remove(f"{VERIFICATION_DATA_DIR}/{secure_email}.json")
     except FileNotFoundError:
         pass
 

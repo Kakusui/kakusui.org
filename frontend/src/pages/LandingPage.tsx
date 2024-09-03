@@ -59,10 +59,11 @@ function LandingPage()
 
     const handleEmailSubmit = async () =>
     {
-        if (!email)
+        if (!email || !email.includes('@'))
         {
             toast({
-                title: "Email is required",
+                title: "Invalid email",
+                description: "Please enter a valid email address",
                 status: "error",
                 duration: 3000,
                 isClosable: true,
