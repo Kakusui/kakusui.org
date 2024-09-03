@@ -18,7 +18,7 @@ import {
 const ForbiddenPage = () => {
   return (
     <Flex
-      bg="gray.800"
+      bg="#14192b"
       minH="87vh"
       align="center"
       justify="center"
@@ -37,7 +37,7 @@ const ForbiddenPage = () => {
           </Text>
           <Button
             as="a"
-            href="/"
+            href="/home"
             bg="orange.400"
             color="white"
             py={2}
