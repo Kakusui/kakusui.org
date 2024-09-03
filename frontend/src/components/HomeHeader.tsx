@@ -5,7 +5,7 @@
 // maintain allman bracket style for consistency
 
 // react
-import React from 'react';
+import React, { useState } from 'react';
 
 // chakra-ui
 import {
@@ -21,9 +21,23 @@ import logo from '../assets/images/kakusui_logo.webp';
 
 // components
 import { DesktopNav } from './NavItems';
+import Login from './Login';
 
 const HomeHeader: React.FC = () => 
 {
+    const [_, setIsLoggedIn] = useState(false);
+
+    const handleLogin = () =>
+    {
+        setIsLoggedIn(true);
+    };
+
+    const handleLogout = () =>
+    {
+        setIsLoggedIn(false);
+        localStorage.removeItem('token');
+    };
+
     return (
         <Box position="absolute" top={0} left={0} right={0} zIndex={1} mb={4}>
             <Flex
@@ -38,13 +52,16 @@ const HomeHeader: React.FC = () =>
                 <Flex
                     width="100%"
                     maxWidth="container.xl"
-                    justify="flex-start"
+                    justify="space-between"
                     align="center"
                 >
-                    <Link href="/">
-                        <Image src={logo} boxSize='30px' alt='Kakusui Logo' mr={4}/>
-                    </Link>
-                    <DesktopNav />
+                    <Flex align="center">
+                        <Link href="/">
+                            <Image src={logo} boxSize='30px' alt='Kakusui Logo' mr={4}/>
+                        </Link>
+                        <DesktopNav />
+                    </Flex>
+                    <Login onLogin={handleLogin} onLogout={handleLogout} />
                 </Flex>
             </Flex>
             <Divider borderColor="rgba(255, 255, 255, 0.1)" />

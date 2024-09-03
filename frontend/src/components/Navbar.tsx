@@ -4,6 +4,9 @@
 
 // maintain allman bracket style for consistency
 
+// react
+import { useState } from 'react';
+
 // chakra-ui
 import {
     Box,
@@ -22,6 +25,7 @@ import logo from '../assets/images/kakusui_logo.webp';
 
 // components
 import { DesktopNav, MobileNav } from './NavItems';
+import Login from './Login';
 
 interface NavbarProps 
 {
@@ -30,11 +34,23 @@ interface NavbarProps
 
 export default function Navbar({ isHomePage }: NavbarProps) 
 {
-    const {isOpen, onToggle} = useDisclosure();
+    const { isOpen, onToggle } = useDisclosure();
+    const [_, setIsLoggedIn] = useState(false);
 
     const bgColor = isHomePage ? 'transparent' : '#14192b';
     const borderColor = isHomePage ? 'transparent' : 'rgba(255, 255, 255, 0.1)';
     const boxShadow = isHomePage ? 'none' : '0 1px 2px 0 rgba(0, 0, 0, 0.05)';
+
+    const handleLogin = () =>
+    {
+        setIsLoggedIn(true);
+    };
+
+    const handleLogout = () =>
+    {
+        setIsLoggedIn(false);
+        localStorage.removeItem('token');
+    };
 
     return (
         <Box>
@@ -80,6 +96,7 @@ export default function Navbar({ isHomePage }: NavbarProps)
                             <DesktopNav/>
                         </Flex>
                     </Flex>
+                    <Login onLogin={handleLogin} onLogout={handleLogout} />
                 </Flex>
             </Flex>
 
