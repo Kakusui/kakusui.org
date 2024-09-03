@@ -21,21 +21,21 @@ function App()
 {
     const location = useLocation();
     const isLandingPage = location.pathname === '/';
-    const isHomePage = location.pathname === '/home';
+    const isFullScreenPage = location.pathname === '/home' || location.pathname === '/admin';
 
     return (
         <ChakraProvider theme={theme}>
-            {!isLandingPage && !isHomePage && <Navbar isHomePage={isHomePage} />}
-            {isLandingPage ? (
+            {!isLandingPage && !isFullScreenPage && <Navbar isHomePage={false} />}
+            {isLandingPage || isFullScreenPage ? (
                 <Router />
             ) : (
-                <PageWrapper showBackground={isHomePage}>
-                    <Box maxWidth={isHomePage ? "100%" : "container.xl"} margin="0 auto">
+                <PageWrapper showBackground={false}>
+                    <Box maxWidth="container.xl" margin="0 auto">
                         <Router />
                     </Box>
                 </PageWrapper>
             )}
-            {!isLandingPage && !isHomePage && <Footer />}
+            {!isLandingPage && !isFullScreenPage && <Footer />}
         </ChakraProvider>
     );
 }

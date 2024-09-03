@@ -31,6 +31,8 @@ import NotFoundPage from './pages/error_pages/404.tsx';
 import ForbiddenPage from './pages/error_pages/403.tsx';
 import InternalErrorPage from './pages/error_pages/500.tsx';
 
+import AdminPanel from './pages/AdminPanel.tsx';
+
 function Router() 
 {
     return (
@@ -53,6 +55,7 @@ function Router()
             <Route path="/403" element={<ForbiddenPage />} />
             <Route path="/500" element={<InternalErrorPage />} />
             <Route path="*" element={<NotFoundPage />} />
+            <Route path="/admin" element={<AdminPanel />} />
         </Routes>
     );
 }
