@@ -7,11 +7,20 @@ FROM python:3.11.8-slim
 WORKDIR /app
 
 ## Copy backend files
-COPY backend/main.py backend/requirements.txt ./backend/
+COPY backend/main.py backend/requirements.txt ./
+
+## Test COPY
+##COPY backend/main.py backend/requirements.txt backend/.env ./
 
 ## Install required Python packages
-RUN pip install --no-cache-dir -r backend/requirements.txt && \
+RUN pip install --no-cache-dir -r requirements.txt && \
     python -m spacy download ja_core_news_lg
+
+## Install required packages (linux) including GPG
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends gnupg2 && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
 
 ## Copy entrypoint script and make it executable
 COPY entrypoint.sh .

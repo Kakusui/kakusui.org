@@ -17,6 +17,10 @@ swap_size_mb = 3072
   min_machines_running = 0
   processes = ['app']
 
+[[mounts]]
+  source = "kakusui_database"
+  destination = "/app/database"
+
 [[vm]]
   memory = '1gb'
   cpu_kind = 'shared'

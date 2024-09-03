@@ -63,14 +63,53 @@ def download_spacy_model() -> None:
 ##-------------------start-of-setup_local_environment()---------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 def setup_local_environment() -> None:
 
+    env_to_key_local = {
+        "ADMIN_USER": "admin@admin.com",
+        "ADMIN_PASS_HASH": "$2b$12$MlPMcgDvVCU.s10xcB2fneIjZ/ymgz5O52yH5pshAFF5.bwPq4SMq",
+        "TOTP_SECRET": "JBSWY3DPEHPK3PXP",
+        "ACCESS_TOKEN_SECRET": "secret",
+        "REFRESH_TOKEN_SECRET": "secret",
+        "ENVIRONMENT": "development",
+        "ENCRYPTION_KEY": "password",
+        "SMTP_SERVER": "none",
+        "SMTP_PORT": 8000,
+        "SMTP_USER": "none",
+        "SMTP_PASSWORD": "none",
+        "FROM_EMAIL": "none",
+        "TO_EMAIL": "none",
+        "V1_KAIRYOU_ROOT_KEY": "test",
+        "V1_EASYTL_ROOT_KEY": "test",
+        "V1_EASYTL_PUBLIC_API_KEY": "test",
+        "V1_ELUCIDATE_ROOT_KEY": "test",
+        "TURNSTILE_SECRET_KEY": "test"
+    }
+
     try:
 
         if(len(sys.argv) > 1 and sys.argv[1] == 'local'):
 
             print("Setting up local environment...")
 
-            to_write_frontend = 'NODE_ENV=development\n'
-            to_write_backend = 'V1_KAIRYOU_ROOT_KEY=test\nV1_EASYTL_ROOT_KEY=test\nV1_EASYTL_PUBLIC_API_KEY=test\nV1_ELUCIDATE_ROOT_KEY=test'
+            to_write_frontend = f"NODE_ENV={env_to_key_local['NODE_ENV']}\n"
+            to_write_backend = (
+                f"ADMIN_USER={env_to_key_local['ADMIN_USER']}\n"
+                f"ADMIN_PASS_HASH={env_to_key_local['ADMIN_PASS_HASH']}\n"
+                f"TOTP_SECRET={env_to_key_local['TOTP_SECRET']}\n"
+                f"ENVIRONMENT={env_to_key_local['ENVIRONMENT']}\n"
+                f"ACCESS_TOKEN_SECRET={env_to_key_local['ACCESS_TOKEN_SECRET']}\n"
+                f"REFRESH_TOKEN_SECRET={env_to_key_local['REFRESH_TOKEN_SECRET']}\n"
+                f"ENCRYPTION_KEY={env_to_key_local['ENCRYPTION_KEY']}\n"
+                f"SMTP_SERVER={env_to_key_local['SMTP_SERVER']}\n"
+                f"SMTP_PORT={env_to_key_local['SMTP_PORT']}\n"
+                f"SMTP_USER={env_to_key_local['SMTP_USER']}\n"
+                f"SMTP_PASSWORD={env_to_key_local['SMTP_PASSWORD']}\n"
+                f"FROM_EMAIL={env_to_key_local['FROM_EMAIL']}\n"
+                f"TO_EMAIL={env_to_key_local['TO_EMAIL']}\n"
+                f"V1_KAIRYOU_ROOT_KEY={env_to_key_local['V1_KAIRYOU_ROOT_KEY']}\n"
+                f"V1_EASYTL_ROOT_KEY={env_to_key_local['V1_EASYTL_ROOT_KEY']}\n"
+                f"V1_EASYTL_PUBLIC_API_KEY={env_to_key_local['V1_EASYTL_PUBLIC_API_KEY']}\n"
+                f"V1_ELUCIDATE_ROOT_KEY={env_to_key_local['V1_ELUCIDATE_ROOT_KEY']}\n"
+            )
         else:
 
             print("Setting up production environment...")
@@ -83,10 +122,8 @@ def setup_local_environment() -> None:
         with open(FRONTEND_ENV, 'w') as f:
             f.write(to_write_frontend)
 
-        if(to_write_backend != ''):
-
-            with open(BACKEND_ENV, 'w') as f:
-                f.write(to_write_backend)
+        with open(BACKEND_ENV, 'w') as f:
+            f.write(to_write_backend)
 
         print("Environment setup successfully")
 

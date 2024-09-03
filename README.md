@@ -39,11 +39,27 @@ kairyou==1.6.5
 
 uvicorn==0.30.0
 
-easytl==0.4.7
+easytl==0.4.9
 
 httpx==0.25.1
 
-elucidate==0.0.1-beta-2
+elucidate==0.0.2
+
+passlib==1.7.4
+
+pyotp==2.9.0
+
+bcrypt==3.1.7
+
+sqlalchemy==2.0.31
+
+python-gnupg==0.5.2
+
+apscheduler==3.10.4
+
+pyjwt==2.8.0
+
+python-multipart==0.0.9
 
 --------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -75,7 +91,7 @@ For production, the backend is hosted on fly.io via a dockerfile.
 
 #### To test the dockerfile locally
 1. docker build -t kakusui-org -f build.dockerfile .
-2. docker run -p 8000:8000 kakusui-org
+2. docker run -p 5000:5000 kakusui-org
 
 #### To deploy to fly.io
 1. Make sure you have the fly cli installed and are logged in.

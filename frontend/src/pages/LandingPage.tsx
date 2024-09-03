@@ -5,11 +5,11 @@
 // maintain allman bracket style for consistency
 
 // react
-import { useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Link as RouterLink } from 'react-router-dom';
 
 // chakra-ui
-import { Box, Button, Flex, Heading, Text } from "@chakra-ui/react";
+import { Box, Button, Flex, Heading, Text, Input, useToast, Modal, ModalOverlay, ModalContent, ModalHeader, ModalFooter, ModalBody, ModalCloseButton } from "@chakra-ui/react";
 
 // icons
 import { IconBrandGithub } from '@tabler/icons-react';
@@ -17,12 +17,165 @@ import { IconBrandGithub } from '@tabler/icons-react';
 // images
 import landingPageBg from '../assets/images/landing_page.webp';
 
-function LandingPage() 
+// util
+import { getURL } from '../utils';
+
+function LandingPage()
 {
-    useEffect(() => 
+    const [email, setEmail] = useState('');
+    const [verificationCode, setVerificationCode] = useState('');
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [isVerificationStep, setIsVerificationStep] = useState(false);
+    const [clientId, setClientId] = useState('');
+    const toast = useToast();
+
+    useEffect(() =>
     {
         document.title = 'Welcome to Kakusui';
+        
+        let storedClientId = localStorage.getItem('kakusui_client_id');
+        if (!storedClientId)
+        {
+            storedClientId = generateClientId();
+            localStorage.setItem('kakusui_client_id', storedClientId);
+        }
+        setClientId(storedClientId);
     }, []);
+
+    const generateClientId = () =>
+    {
+        return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) 
+        {
+            var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
+            return v.toString(16);
+        });
+    };
+
+    const handleSubscribeClick = () =>
+    {
+        setIsModalOpen(true);
+        setIsVerificationStep(false);
+    };
+
+    const handleEmailSubmit = async () =>
+    {
+        if (!email || !email.includes('@'))
+        {
+            toast({
+                title: "Invalid email",
+                description: "Please enter a valid email address",
+                status: "error",
+                duration: 3000,
+                isClosable: true,
+            });
+            return;
+        }
+
+        setIsVerificationStep(true); // Move to the next step immediately
+
+        try
+        {
+            const response = await fetch(getURL('/send-verification-email'), {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ email, clientID: clientId }),
+            });
+
+            const data = await response.json();
+
+            if (response.ok)
+            {
+                toast({
+                    title: "Verification Email Sent",
+                    description: "A verification code has been sent to your email.",
+                    status: "success",
+                    duration: 5000,
+                    isClosable: true,
+                });
+            }
+            else
+            {
+                toast({
+                    title: "Error",
+                    description: data.message || "An error occurred while sending the verification email",
+                    status: "error",
+                    duration: 5000,
+                    isClosable: true,
+                });
+            }
+        }
+        catch (error)
+        {
+            toast({
+                title: "Error",
+                description: "An error occurred while sending the verification email",
+                status: "error",
+                duration: 5000,
+                isClosable: true,
+            });
+        }
+    };
+
+    const handleVerificationSubmit = async () =>
+    {
+        if (!verificationCode)
+        {
+            toast({
+                title: "Verification code is required",
+                status: "error",
+                duration: 3000,
+                isClosable: true,
+            });
+            return;
+        }
+
+        try
+        {
+            const response = await fetch(getURL('/verify-email-code'), {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ email, code: verificationCode }),
+            });
+
+            const data = await response.json();
+
+            if (response.ok)
+            {
+                toast({
+                    title: "Success",
+                    description: "Your email has been verified and registered for alerts.",
+                    status: "success",
+                    duration: 5000,
+                    isClosable: true,
+                });
+                setIsModalOpen(false);
+            }
+            else
+            {
+                toast({
+                    title: "Error",
+                    description: data.message || "An error occurred during verification",
+                    status: "error",
+                    duration: 5000,
+                    isClosable: true,
+                });
+            }
+        }
+        catch (error)
+        {
+            toast({
+                title: "Error",
+                description: "An error occurred while verifying your email",
+                status: "error",
+                duration: 5000,
+                isClosable: true,
+            });
+        }
+    };
 
     return (
         <Box
@@ -65,7 +218,7 @@ function LandingPage()
                     <Text fontSize="lg" mb={6}>
                         Innovating in language translation using AI, LLMs, and new machine translation technologies.
                     </Text>
-                    <Flex direction={{ base: 'column', sm: 'row' }} gap={4}>
+                    <Flex direction={{ base: 'column', sm: 'row' }} gap={4} mb={4}>
                         <Button
                             as={RouterLink}
                             to="/home"
@@ -82,11 +235,14 @@ function LandingPage()
                             leftIcon={<IconBrandGithub />}
                             variant="outline"
                             size="lg"
-                            _hover={{ bg: 'whiteAlpha.200' }}
+                            _hover={{ bg: "whiteAlpha.200" }}
                         >
                             GitHub
                         </Button>
                     </Flex>
+                    <Button onClick={handleSubscribeClick} colorScheme="blue" size="sm">
+                        Subscribe to updates
+                    </Button>
                 </Flex>
                 <Text
                     position="absolute"
@@ -100,6 +256,63 @@ function LandingPage()
                     © Copyright 2024 Kakusui LLC
                 </Text>
             </Flex>
+
+            <Modal 
+                isOpen={isModalOpen} 
+                onClose={() => setIsModalOpen(false)}
+                isCentered
+                motionPreset="slideInBottom"
+            >
+                <ModalOverlay bg="blackAlpha.300" backdropFilter="blur(10px)" />
+                <ModalContent
+                    bg="rgba(20, 25, 43, 0.95)"
+                    color="white"
+                    borderRadius="xl"
+                    boxShadow="xl"
+                >
+                    <ModalHeader color="orange.400">{isVerificationStep ? "Verify Your Email" : "Subscribe"}</ModalHeader>
+                    <ModalCloseButton />
+                    <ModalBody>
+                        {isVerificationStep ? (
+                            <>
+                                <Text mb={4}>A verification code has been sent to {email}. It may take a few minutes to arrive, check your spam folder if it doesn't appear in your inbox. Please enter the code below:</Text>
+                                <Input
+                                    placeholder="Enter verification code"
+                                    value={verificationCode}
+                                    onChange={(e) => setVerificationCode(e.target.value)}
+                                    bg="whiteAlpha.200"
+                                    border="none"
+                                    _focus={{ bg: "whiteAlpha.300" }}
+                                />
+                            </>
+                        ) : (
+                            <>
+                                <Text mb={4}>Enter your email to subscribe:</Text>
+                                <Input
+                                    placeholder="Enter your email"
+                                    value={email}
+                                    onChange={(e) => setEmail(e.target.value)}
+                                    bg="whiteAlpha.200"
+                                    border="none"
+                                    _focus={{ bg: "whiteAlpha.300" }}
+                                />
+                            </>
+                        )}
+                    </ModalBody>
+                    <ModalFooter>
+                        {isVerificationStep ? (
+                            <Button colorScheme="orange" mr={3} onClick={handleVerificationSubmit}>
+                                Verify
+                            </Button>
+                        ) : (
+                            <Button colorScheme="orange" mr={3} onClick={handleEmailSubmit}>
+                                Submit
+                            </Button>
+                        )}
+                        <Button variant="ghost" onClick={() => setIsModalOpen(false)}>Cancel</Button>
+                    </ModalFooter>
+                </ModalContent>
+            </Modal>
         </Box>
     );
 }

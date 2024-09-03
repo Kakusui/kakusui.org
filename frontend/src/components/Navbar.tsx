@@ -12,6 +12,7 @@ import {
     IconButton,
     Image,
     useDisclosure,
+    Link,
 } from '@chakra-ui/react';
 
 import { CloseIcon, HamburgerIcon } from '@chakra-ui/icons';
@@ -72,7 +73,9 @@ export default function Navbar({ isHomePage }: NavbarProps)
                         />
                     </Flex>
                     <Flex flex={{base: 1}} justify={{base: 'center', md: 'start'}} align="center">
-                        <Image src={logo} boxSize='30px' alt='Kakusui Logo'/>
+                        <Link href="/">
+                            <Image src={logo} boxSize='30px' alt='Kakusui Logo'/>
+                        </Link>
                         <Flex display={{base: 'none', md: 'flex'}} ml={10}>
                             <DesktopNav/>
                         </Flex>
