@@ -36,7 +36,7 @@ def download_spacy_model() -> None:
 
     try:
         ## Check if spacy is installed
-        import spacy
+        import spacy # type: ignore
 
         try:
             spacy.load("ja_core_news_lg")
@@ -57,7 +57,7 @@ def download_spacy_model() -> None:
         sys.exit(1)
 
     except ImportError:
-        print("Error: spacy library not found")
+        print("Error: spacy library not found.")
         sys.exit(1)
 
 ##-------------------start-of-setup_local_environment()---------------------------------------------------------------------------------------------------------------------------------------------------------------------------
