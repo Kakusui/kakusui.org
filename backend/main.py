@@ -3,65 +3,50 @@
 ## license that can be found in the LICENSE file.
 
 ## built-in libraries
-import json
-import os
-import threading
-import typing
-import time
-import shutil
-import zipfile
-import smtplib
-import random
-import string
-
-from datetime import datetime, timedelta, timezone
-
-from email.mime.text import MIMEText
-from email.mime.multipart import MIMEMultipart
-from email.mime.base import MIMEBase
-from email import encoders 
-
-from werkzeug.utils import secure_filename
-
-## third-party libraries
-from fastapi import FastAPI, HTTPException, Request
-from fastapi.responses import JSONResponse
-from fastapi.middleware.cors import CORSMiddleware
-
-from pydantic import BaseModel
-
-from kairyou import Kairyou
-from kairyou.exceptions import InvalidReplacementJsonKeys, InvalidReplacementJsonName, SpacyModelNotFound
-
-from easytl import EasyTL
-
-from elucidate import Elucidate, __version__ as ELUCIDATE_VERSION
-
-import httpx
-
-from gnupg import GPG
+from uuid import uuid4
 
 import atexit
+import json
+import os
+import random
 import shelve
+import shutil
+import smtplib
+import string
+import threading
+import time
+import typing
+import zipfile
 
-from passlib.context import CryptContext
-from fastapi.security import OAuth2PasswordBearer, HTTPBasic
+from datetime import datetime, timedelta, timezone
+from email import encoders
+from email.mime.base import MIMEBase
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
 
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import DeclarativeMeta
-from sqlalchemy import Column, String, DateTime
-from sqlalchemy.dialects.postgresql import UUID as modelUUID
-from uuid import uuid4
-from sqlalchemy import Column, String, DateTime
-
-from sqlalchemy.orm import sessionmaker
-from sqlalchemy.orm import Session
-from sqlalchemy.engine import create_engine
-from sqlalchemy.inspection import inspect
-from sqlalchemy.engine import Engine, Inspector
+## third-party libraries
+import httpx
+import jwt
 
 from apscheduler.schedulers.background import BackgroundScheduler
-
+from easytl import EasyTL
+from elucidate import Elucidate, __version__ as ELUCIDATE_VERSION
+from fastapi import Cookie, Depends, FastAPI, HTTPException, Request, status
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
+from fastapi.security import HTTPBasic, HTTPBasicCredentials, OAuth2PasswordBearer
+from gnupg import GPG
+from jwt import PyJWTError
+from kairyou import Kairyou
+from kairyou.exceptions import (InvalidReplacementJsonKeys, InvalidReplacementJsonName, SpacyModelNotFound)
+from passlib.context import CryptContext
+from pydantic import BaseModel
+from sqlalchemy import Column, DateTime, String, create_engine
+from sqlalchemy.dialects.postgresql import UUID as modelUUID
+from sqlalchemy.engine import Engine, Inspector
+from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.inspection import inspect
+from sqlalchemy.orm import DeclarativeMeta, Session, close_all_sessions, sessionmaker
 from werkzeug.utils import secure_filename
 
 ##-----------------------------------------start-of-security----------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -73,6 +58,15 @@ def get_secure_path(base_dir: str, filename: str) -> str:
 ##-----------------------------------------start-of-pydantic-models----------------------------------------------------------------------------------------------------------------------------------------------------------
 
 class LoginModel(BaseModel):
+    email:str
+    verification_code:str
+
+class LoginToken(BaseModel):
+    access_token:str
+    token_type:str
+    refresh_token:str
+
+class TokenData(BaseModel):
     email:str
 
 class SendVerificationEmailRequest(BaseModel):
@@ -152,7 +146,7 @@ TURNSTILE_SECRET_KEY = os.environ.get("TURNSTILE_SECRET_KEY")
 ENVIRONMENT = os.environ.get("ENVIRONMENT", "development")
 
 TOKEN_ALGORITHM = "HS256"
-TOKEN_EXPIRE_MINUTES = 1440
+TOKEN_EXPIRE_MINUTES = 43200 ## 30 days
 VERIFICATION_EXPIRATION_MINUTES = 5
 MAX_REQUESTS = 5
 MAX_REQUESTS_PER_ID = 10
@@ -221,7 +215,7 @@ create_tables_if_not_exist(engine, Base)
 
 ##----------------------------------/----------------------------------##
 
-def get_envs() -> typing.Tuple[str, str, int, str, str, str, str]:
+def get_smtp_envs() -> typing.Tuple[str, str, int, str, str, str, str]:
 
     """
     
@@ -462,7 +456,7 @@ def perform_backup() -> None:
 
     """
 
-    ENCRYPTION_KEY, SMTP_SERVER, SMTP_PORT, SMTP_USER, SMTP_PASSWORD, FROM_EMAIL, TO_EMAIL = get_envs()
+    ENCRYPTION_KEY, SMTP_SERVER, SMTP_PORT, SMTP_USER, SMTP_PASSWORD, FROM_EMAIL, TO_EMAIL = get_smtp_envs()
 
     timestamp = datetime.now().strftime("%Y-%m-%d %H_%M_%S")
 
@@ -659,6 +653,191 @@ def check_and_update_rate_limit(data:dict, max_requests:int, limit_type:str) -> 
         raise HTTPException(status_code=429, detail=f"Too many requests from this {limit_type}. Please try again later.")
 
     data['requests'].append(current_time)
+
+##-----------------------------------------start-of-auth----------------------------------------------------------------------------------------------------------------------------------------------------------
+
+def create_access_token(data:dict, expires_delta:typing.Optional[timedelta] = None) -> str:
+
+    """
+    
+    Create an access token with the given data and expiration time
+
+    Args:
+    data (dict): The data to encode into the token
+    expires_delta (timedelta): The time until the token expires
+
+    Returns:
+    encoded_jwt (str): The encoded JWT token
+
+    """
+
+    to_encode = data.copy()
+
+    if(expires_delta):
+        expire = datetime.now(timezone.utc) + expires_delta
+    else:
+        expire = datetime.now(timezone.utc) + timedelta(minutes=15)
+
+    to_encode.update({"exp": expire})
+    encoded_jwt = jwt.encode(to_encode, ACCESS_TOKEN_SECRET, algorithm=TOKEN_ALGORITHM) # type: ignore
+    return encoded_jwt
+
+def create_refresh_token(data:dict, expires_delta:typing.Optional[timedelta] = None) -> str:
+
+    """
+
+    Create a refresh token with the given data and expiration time
+
+    Args:
+    data (dict): The data to encode into the token
+    expires_delta (timedelta): The time until the token expires
+
+    Returns:
+    encoded_jwt (str): The encoded JWT token
+
+    """
+
+    to_encode = data.copy()
+
+    if(expires_delta):
+        expire = datetime.now(timezone.utc) + expires_delta
+    else:
+        expire = datetime.now(timezone.utc) + timedelta(days=1)
+
+    to_encode.update({"exp": expire})
+    encoded_jwt = jwt.encode(to_encode, REFRESH_TOKEN_SECRET, algorithm=TOKEN_ALGORITHM) # type: ignore
+    return encoded_jwt
+
+def verify_token(token:str) -> TokenData:
+    
+    """
+
+    Verify the given token and return the data
+
+    Args:    
+    token (str): The token to verify
+
+    Returns:
+    TokenData: The data from the token
+
+    """
+
+    try:
+        payload = jwt.decode(token, ACCESS_TOKEN_SECRET, algorithms=[TOKEN_ALGORITHM]) # type: ignore
+        email:str = payload.get("sub")
+
+        if(email is None):
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token")
+        
+        return TokenData(email=email)
+    
+    except jwt.ExpiredSignatureError:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Token expired")
+    
+    except PyJWTError:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token")
+
+
+def verify_credentials(credentials:HTTPBasicCredentials) -> None:
+
+    """
+    
+    Verify the given credentials
+
+    Args:
+    credentials (HTTPBasicCredentials): The credentials to verify
+
+    """
+
+    if(not(credentials.username == ADMIN_USER and pwd_context.verify(credentials.password, ADMIN_PASS_HASH))):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Unauthorized",
+            headers={"WWW-Authenticate": "Basic"},
+        )
+    
+def get_current_user(token:str = Depends(oauth2_scheme)):
+
+    """
+
+    Get the current user from the given token
+
+    Args:
+    token (str): The token to get the user from
+
+    Returns:
+    str: The email of the user
+
+    """
+
+    try:
+        token_data = verify_token(token)
+        return token_data.email
+    except HTTPException as e:
+        raise e
+
+def get_current_active_user(current_user:str = Depends(get_current_user)):
+
+    """
+
+    Get the current active user
+
+    Args:
+    current_user (str): The current user
+
+    Returns:
+    str: The username of the user
+
+    """
+
+    if(current_user != ADMIN_USER):
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Unauthorized")
+    return current_user
+
+##-----------------------------------------start-of-database----------------------------------------------------------------------------------------------------------------------------------------------------------
+
+def replace_sqlite_db(extracted_db_path:str, current_db_path:str) -> None:
+
+    """
+
+    Replace the current SQLite database with the extracted SQLite database.
+
+    Args:
+    extracted_db_path (str): The path to the extracted SQLite database
+
+    current_db_path (str): The path to the current SQLite database
+    
+    """
+
+    global engine, SessionLocal
+
+    close_all_sessions()
+    
+    engine.dispose()
+    
+    os.replace(extracted_db_path, current_db_path)
+
+    engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False})
+    SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+
+def get_db() -> typing.Generator[Session, None, None]:
+    
+    """
+
+    Get the database session.
+
+    Returns:
+    typing.Generator[Session, None, None]: The database session
+
+    """
+
+    db:Session = SessionLocal()
+    
+    try:
+        yield db
+    
+    finally:
+        db.close()
 
 ##-----------------------------------------start-of-main----------------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -969,6 +1148,76 @@ async def proxy_elucidate(request_data:ElucidateRequest, request:Request):
 
         return JSONResponse(status_code=response.status_code, content=response.json())
     
+##-----------------------------------------start-of-login_endpoints----------------------------------------------------------------------------------------------------------------------------------------------------------
+
+@app.post("/login", response_model=LoginToken)
+def login(data:LoginModel) -> typing.Dict[str, str]:
+    
+    """
+    
+    Login endpoint for the API
+
+    Args:
+    data (LoginModel): The data required to login
+
+    Returns:
+    typing.Dict[str, str]: The access token and token type
+
+    """
+
+    credentials = HTTPBasicCredentials(username=data.email, password=data.verification_code)
+    verify_credentials(credentials)
+
+    access_token_expires = timedelta(minutes=TOKEN_EXPIRE_MINUTES)
+    access_token = create_access_token(
+        data={"sub": data.email}, expires_delta=access_token_expires
+    )
+    refresh_token_expires = timedelta(minutes=TOKEN_EXPIRE_MINUTES)
+    refresh_token = create_refresh_token(
+        data={"sub": data.email}, expires_delta=refresh_token_expires
+    )
+
+    return {"access_token": access_token, "token_type": "bearer", "refresh_token": refresh_token}
+
+@app.post("/refresh", response_model=LoginToken)
+def refresh_token(refresh_token: str = Cookie(None)) -> JSONResponse:
+    
+    """
+
+    Refresh the access token using the refresh token
+
+    Args:
+    refresh_token (str): The refresh token
+
+    Returns:
+    typing.Dict[str, str]: The access token and token type
+
+    """
+
+    if(refresh_token is None):
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="No refresh token provided")
+
+    token_data = verify_token(refresh_token)
+    access_token_expires = timedelta(minutes=TOKEN_EXPIRE_MINUTES)
+    access_token = create_access_token(
+        data={"sub": token_data.email}, expires_delta=access_token_expires
+    )
+    refresh_token_expires = timedelta(minutes=TOKEN_EXPIRE_MINUTES)
+    new_refresh_token = create_refresh_token(
+        data={"sub": token_data.email}, expires_delta=refresh_token_expires
+    )
+
+    response = JSONResponse(content={"access_token": access_token, "token_type": "bearer"})
+    response.set_cookie(
+        key="refresh_token",
+        value=new_refresh_token,
+        httponly=True,
+        secure=True,
+        samesite="strict",
+        max_age=TOKEN_EXPIRE_MINUTES
+    )
+    return response
+    
 ##-----------------------------------------start-of-email_auth_endpoints----------------------------------------------------------------------------------------------------------------------------------------------------------
 
 def generate_verification_code() -> str:
@@ -1006,8 +1255,7 @@ def remove_verification_data(email:str) -> None:
         pass
 
 def send_verification_email(email:str, code:str) -> None:
-    
-    _, SMTP_SERVER, SMTP_PORT, SMTP_USER, SMTP_PASSWORD, FROM_EMAIL, _ = get_envs()
+    _, SMTP_SERVER, SMTP_PORT, SMTP_USER, SMTP_PASSWORD, FROM_EMAIL, _ = get_smtp_envs()
 
     subject = "Email Verification Code for Kakusui.org"
     body = f"Your verification code is {code}"
