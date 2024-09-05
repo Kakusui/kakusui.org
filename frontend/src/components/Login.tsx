@@ -13,9 +13,6 @@ import { Box, Button, Input, Modal, ModalOverlay, ModalContent, ModalHeader, Mod
 // util
 import { getURL } from '../utils';
 
-// jwt-decode
-import { jwtDecode } from 'jwt-decode';
-
 // motion
 import { motion } from 'framer-motion';
 
@@ -31,27 +28,12 @@ interface LoginProps
 const Login: React.FC<LoginProps> = ({ onLogin, onLogout }) => 
 {
     const { isOpen, onOpen, onClose } = useDisclosure();
-    const [username, setUsername] = useState('');
-    const [password, setPassword] = useState('');
-    const [totp, setTotp] = useState('');
+    const [email, setEmail] = useState('');
+    const [loginCode, setLoginCode] = useState('');
     const [error, setError] = useState('');
-    const [step, setStep] = useState(1);
+    const [isLoginStep, setIsLoginStep] = useState(false);
     const [isLoggedIn, setIsLoggedIn] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
-
-    const isTokenExpired = (token: string) => 
-    {
-        try 
-        {
-            const decoded = jwtDecode(token);
-            const currentTime = Date.now() / 1000;
-            return decoded.exp ? decoded.exp < currentTime : true;
-        } 
-        catch (error) 
-        {
-            return true;
-        }
-    };
 
     useEffect(() => 
     {
@@ -61,7 +43,7 @@ const Login: React.FC<LoginProps> = ({ onLogin, onLogout }) =>
             try 
             {
                 const token = localStorage.getItem('token');
-                if (token && !isTokenExpired(token)) 
+                if (token) 
                 {
                     const response = await fetch(getURL('/verify-token'), 
                     {
@@ -74,8 +56,16 @@ const Login: React.FC<LoginProps> = ({ onLogin, onLogout }) =>
 
                     if (response.ok) 
                     {
-                        setIsLoggedIn(true);
-                        onLogin();
+                        const data = await response.json();
+                        if (data.valid) 
+                        {
+                            setIsLoggedIn(true);
+                            onLogin();
+                        } 
+                        else 
+                        {
+                            throw new Error('Token verification failed');
+                        }
                     } 
                     else 
                     {
@@ -84,7 +74,7 @@ const Login: React.FC<LoginProps> = ({ onLogin, onLogout }) =>
                 } 
                 else 
                 {
-                    throw new Error('No token or expired token');
+                    throw new Error('No token found');
                 }
             } 
             catch (error) 
@@ -102,24 +92,51 @@ const Login: React.FC<LoginProps> = ({ onLogin, onLogout }) =>
         checkLoginStatus();
     }, [onLogin, onLogout]);
 
-    const handleNext = () => 
-    {
-        setStep(2);
-    };
-
-    const handleBack = () => 
-    {
-        setStep(1);
-    };
-
     const handleClose = () => 
     {
-        setUsername('');
-        setPassword('');
-        setTotp('');
+        setEmail('');
+        setLoginCode('');
         setError('');
-        setStep(1);
+        setIsLoginStep(false);
         onClose();
+    };
+
+    const handleEmailSubmit = async () => 
+    {
+        if (!email || !email.includes('@')) 
+        {
+            setError('Please enter a valid email address');
+            return;
+        }
+
+        setIsLoginStep(true); // Move to the next step immediately
+
+        try 
+        {
+            const response = await fetch(getURL('/send-verification-email'), 
+            {
+                method: 'POST',
+                headers: 
+                {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ email, clientID: 'web-client' })
+            });
+
+            if (response.ok) 
+            {
+                setError(''); // Clear any previous errors
+            } 
+            else 
+            {
+                const errorData = await response.json();
+                setError(errorData.message || 'Failed to send login code');
+            }
+        } 
+        catch (error) 
+        {
+            setError('An error occurred. Please try again.');
+        }
     };
 
     const handleLogin = async () => 
@@ -133,7 +150,7 @@ const Login: React.FC<LoginProps> = ({ onLogin, onLogout }) =>
                 {
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify({ username, password, totp })
+                body: JSON.stringify({ email, verification_code: loginCode })
             });
 
             if (response.ok) 
@@ -149,13 +166,13 @@ const Login: React.FC<LoginProps> = ({ onLogin, onLogout }) =>
                 } 
                 else 
                 {
-                    setError('Invalid credentials or TOTP code');
+                    setError('Invalid credentials');
                 }
             } 
             else
             {
                 const errorData = await response.json();
-                setError(`Error: ${errorData.detail || 'Invalid credentials or TOTP code'}`);
+                setError(errorData.message || 'Invalid credentials');
             }
         } 
         catch (error) 
@@ -164,26 +181,26 @@ const Login: React.FC<LoginProps> = ({ onLogin, onLogout }) =>
         }
     };
 
-    const handleKeyPress = (event: React.KeyboardEvent) => 
-    {
-        if (event.key === 'Enter') 
-        {
-            if (step === 1) 
-            {
-                handleNext();
-            } 
-            else 
-            {
-                handleLogin();
-            }
-        }
-    };
-
     const handleLogout = () => 
     {
         localStorage.removeItem('token');
         setIsLoggedIn(false);
         onLogout();
+    };
+
+    const handleKeyPress = (event: React.KeyboardEvent) => 
+    {
+        if (event.key === 'Enter') 
+        {
+            if (isLoginStep) 
+            {
+                handleLogin();
+            } 
+            else 
+            {
+                handleEmailSubmit();
+            }
+        }
     };
 
     return (
@@ -209,29 +226,18 @@ const Login: React.FC<LoginProps> = ({ onLogin, onLogout }) =>
                     borderRadius="xl"
                     boxShadow="xl"
                 >
-                    <ModalHeader color="orange.400">Login</ModalHeader>
-                    <ModalCloseButton color="orange.400" />
+                    <ModalHeader color="orange.400">{isLoginStep ? "Check Your Email" : "Login"}</ModalHeader>
+                    <ModalCloseButton />
                     <ModalBody>
                         <Flex direction="column" gap={4}>
-                            {step === 1 ? (
+                            {isLoginStep ? (
                                 <>
+                                    <Text>A login code has been sent to {email}. Please enter the code below:</Text>
                                     <Input
-                                        placeholder="Username"
-                                        value={username}
-                                        onChange={(e) => setUsername(e.target.value)}
+                                        placeholder="Enter login code"
+                                        value={loginCode}
+                                        onChange={(e) => setLoginCode(e.target.value)}
                                         onKeyPress={handleKeyPress}
-                                        autoComplete="username"
-                                        bg="whiteAlpha.200"
-                                        border="none"
-                                        _focus={{ bg: "whiteAlpha.300" }}
-                                    />
-                                    <Input
-                                        placeholder="Password"
-                                        type="password"
-                                        value={password}
-                                        onChange={(e) => setPassword(e.target.value)}
-                                        onKeyPress={handleKeyPress}
-                                        autoComplete="current-password"
                                         bg="whiteAlpha.200"
                                         border="none"
                                         _focus={{ bg: "whiteAlpha.300" }}
@@ -239,19 +245,11 @@ const Login: React.FC<LoginProps> = ({ onLogin, onLogout }) =>
                                 </>
                             ) : (
                                 <>
-                                    <Text color="orange.400">Enter your TOTP code</Text>
                                     <Input
-                                        placeholder="Enter 6-digit code"
-                                        value={totp}
-                                        onChange={(e) => setTotp(e.target.value)}
+                                        placeholder="Enter your email"
+                                        value={email}
+                                        onChange={(e) => setEmail(e.target.value)}
                                         onKeyPress={handleKeyPress}
-                                        autoComplete="off"
-                                        inputMode="numeric"
-                                        pattern="\d{6}"
-                                        maxLength={6}
-                                        name="totp"
-                                        aria-label="Time-based One-time Password"
-                                        type="text"
                                         bg="whiteAlpha.200"
                                         border="none"
                                         _focus={{ bg: "whiteAlpha.300" }}
@@ -267,8 +265,8 @@ const Login: React.FC<LoginProps> = ({ onLogin, onLogout }) =>
                     </ModalBody>
                     <ModalFooter>
                         <Flex width="100%" justify="space-between">
-                            {step === 2 && (
-                                <Button variant="ghost" onClick={handleBack} _hover={{ bg: "whiteAlpha.200" }}>
+                            {isLoginStep && (
+                                <Button variant="ghost" onClick={() => setIsLoginStep(false)} _hover={{ bg: "whiteAlpha.200" }}>
                                     Back
                                 </Button>
                             )}
@@ -276,13 +274,13 @@ const Login: React.FC<LoginProps> = ({ onLogin, onLogout }) =>
                                 <Button variant="ghost" mr={3} onClick={handleClose} _hover={{ bg: "whiteAlpha.200" }}>
                                     Cancel
                                 </Button>
-                                {step === 1 ? (
-                                    <Button colorScheme="orange" onClick={handleNext}>
-                                        Next
+                                {isLoginStep ? (
+                                    <Button colorScheme="orange" onClick={handleLogin}>
+                                        Login
                                     </Button>
                                 ) : (
-                                    <Button colorScheme="orange" onClick={handleLogin}>
-                                        Verify TOTP
+                                    <Button colorScheme="orange" onClick={handleEmailSubmit}>
+                                        Send Code
                                     </Button>
                                 )}
                             </Box>

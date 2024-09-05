@@ -153,10 +153,10 @@ MAX_REQUESTS_PER_ID = 10
 MAX_REQUESTS_PER_EMAIL = 5
 RATE_LIMIT_WINDOW = 3600
 
-if(not os.path.exists("database") and ADMIN_USER == "admin@admin.com"):
+if(not os.path.exists("database") and ACCESS_TOKEN_SECRET == "secret"):
     os.makedirs("database", exist_ok=True)
 
-elif(not os.path.exists("database") and ADMIN_USER != "admin@admin.com"):
+elif(not os.path.exists("database") and ACCESS_TOKEN_SECRET != "secret"):
     raise NotImplementedError("Database volume not attached and running in production mode, please exit and attach the volume")
 
 V1_KAIRYOU_ROOT_KEY = os.environ.get("V1_KAIRYOU_ROOT_KEY")
@@ -708,8 +708,38 @@ def create_refresh_token(data:dict, expires_delta:typing.Optional[timedelta] = N
     encoded_jwt = jwt.encode(to_encode, REFRESH_TOKEN_SECRET, algorithm=TOKEN_ALGORITHM) # type: ignore
     return encoded_jwt
 
-def verify_token(token:str) -> TokenData:
+def verify_verification_code(email: str, verification_code: str) -> bool:
+
+    """
+
+    Verify the given verification code for the given email
+
+    Args:
+    email (str): The email to verify
+    verification_code (str): The verification code to verify
+
+    Returns:
+
+    bool: True if the verification code is valid, False otherwise
+
+    """
+
+    verification_data = get_verification_data(email)
+    if(not verification_data):
+        return False
     
+    stored_code = verification_data["code"]
+    expiration_time = datetime.fromisoformat(verification_data["expiration"])
+    
+    if(datetime.now() > expiration_time):
+        return False
+    
+    remove_verification_data(email)
+    
+    return verification_code == stored_code
+
+def func_verify_token(token:str) -> TokenData:
+
     """
 
     Verify the given token and return the data
@@ -730,31 +760,12 @@ def verify_token(token:str) -> TokenData:
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token")
         
         return TokenData(email=email)
-    
+        
     except jwt.ExpiredSignatureError:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Token expired")
     
     except PyJWTError:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token")
-
-
-def verify_credentials(credentials:HTTPBasicCredentials) -> None:
-
-    """
-    
-    Verify the given credentials
-
-    Args:
-    credentials (HTTPBasicCredentials): The credentials to verify
-
-    """
-
-    if(not(credentials.username == ADMIN_USER and pwd_context.verify(credentials.password, ADMIN_PASS_HASH))):
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Unauthorized",
-            headers={"WWW-Authenticate": "Basic"},
-        )
     
 def get_current_user(token:str = Depends(oauth2_scheme)):
 
@@ -771,7 +782,7 @@ def get_current_user(token:str = Depends(oauth2_scheme)):
     """
 
     try:
-        token_data = verify_token(token)
+        token_data = func_verify_token(token)
         return token_data.email
     except HTTPException as e:
         raise e
@@ -1165,8 +1176,12 @@ def login(data:LoginModel) -> typing.Dict[str, str]:
 
     """
 
-    credentials = HTTPBasicCredentials(username=data.email, password=data.verification_code)
-    verify_credentials(credentials)
+    if(not verify_verification_code(data.email, data.verification_code)):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid email or verification code",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
 
     access_token_expires = timedelta(minutes=TOKEN_EXPIRE_MINUTES)
     access_token = create_access_token(
@@ -1197,7 +1212,7 @@ def refresh_token(refresh_token: str = Cookie(None)) -> JSONResponse:
     if(refresh_token is None):
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="No refresh token provided")
 
-    token_data = verify_token(refresh_token)
+    token_data = func_verify_token(refresh_token)
     access_token_expires = timedelta(minutes=TOKEN_EXPIRE_MINUTES)
     access_token = create_access_token(
         data={"sub": token_data.email}, expires_delta=access_token_expires
@@ -1347,6 +1362,22 @@ async def verify_email_code_endpoint(request_data:VerifyEmailCodeRequest, reques
     
     finally:
         db.close()
+
+@app.post("/verify-token")
+async def verify_token_endpoint(request: Request):
+    auth_header = request.headers.get("Authorization")
+    
+    if(not auth_header or not auth_header.startswith("Bearer ")):
+        raise HTTPException(status_code=401, detail="Invalid or missing token")
+    
+    token = auth_header.split(" ")[1]
+
+    try:
+        token_data = func_verify_token(token)
+        return {"valid": True, "email": token_data.email}
+    
+    except HTTPException as e:
+        return {"valid": False, "detail": str(e.detail)}
 
 ##-----------------------------------------start-of-turnstile_endpoints----------------------------------------------------------------------------------------------------------------------------------------------------------
 
