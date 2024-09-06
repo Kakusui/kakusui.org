@@ -5,7 +5,8 @@
 // maintain allman bracket style for consistency
 
 // react
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { jwtDecode } from "jwt-decode";
 
 // chakra-ui
 import {
@@ -16,6 +17,7 @@ import {
     Image,
     useDisclosure,
     Link,
+    Text,
 } from '@chakra-ui/react';
 
 import { CloseIcon, HamburgerIcon } from '@chakra-ui/icons';
@@ -35,20 +37,58 @@ interface NavbarProps
 export default function Navbar({ isHomePage }: NavbarProps) 
 {
     const { isOpen, onToggle } = useDisclosure();
-    const [_, setIsLoggedIn] = useState(false);
+    const [isLoggedIn, setIsLoggedIn] = useState(false);
+    const [userEmail, setUserEmail] = useState<string | null>(null);
 
     const bgColor = isHomePage ? 'transparent' : '#14192b';
     const borderColor = isHomePage ? 'transparent' : 'rgba(255, 255, 255, 0.1)';
     const boxShadow = isHomePage ? 'none' : '0 1px 2px 0 rgba(0, 0, 0, 0.05)';
 
+    useEffect(() => 
+    {
+        const token = localStorage.getItem('token');
+        if (token) 
+        {
+            setIsLoggedIn(true);
+            try 
+            {
+                const decoded = jwtDecode(token);
+                setUserEmail(decoded.sub as string);
+            } 
+            catch (error) 
+            {
+                console.error("Error decoding token:", error);
+            }
+        } 
+        else 
+        {
+            setIsLoggedIn(false);
+            setUserEmail(null);
+        }
+    }, []);
+
     const handleLogin = () =>
     {
         setIsLoggedIn(true);
+        const token = localStorage.getItem('token');
+        if (token) 
+        {
+            try 
+            {
+                const decoded = jwtDecode(token);
+                setUserEmail(decoded.sub as string);
+            } 
+            catch (error) 
+            {
+                console.error("Error decoding token:", error);
+            }
+        }
     };
 
     const handleLogout = () =>
     {
         setIsLoggedIn(false);
+        setUserEmail(null);
         localStorage.removeItem('token');
     };
 
@@ -95,7 +135,12 @@ export default function Navbar({ isHomePage }: NavbarProps)
                             <DesktopNav/>
                         </Flex>
                     </Flex>
-                    <Login onLogin={handleLogin} onLogout={handleLogout} />
+                    <Flex align="center">
+                        {isLoggedIn && userEmail && (
+                            <Text mr={4} fontSize="sm">{userEmail}</Text>
+                        )}
+                        <Login onLogin={handleLogin} onLogout={handleLogout} />
+                    </Flex>
                 </Flex>
             </Flex>
 

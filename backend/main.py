@@ -1417,12 +1417,13 @@ async def send_verification_email_endpoint(request_data: SendVerificationEmailRe
 
     db: Session = SessionLocal()
     try:
-        try:
-            rate_limit(email, client_id)
-        except HTTPException as e:
-            return JSONResponse(status_code=e.status_code, content={"message": e.detail})
-
         existing_user = db.query(User).filter(User.email == email).first()
+        
+        if(not existing_user):
+            try:
+                rate_limit(email, client_id)
+            except HTTPException as e:
+                return JSONResponse(status_code=e.status_code, content={"message": e.detail})
         
         verification_code = generate_verification_code()
         save_verification_data(email, verification_code)
@@ -1440,7 +1441,6 @@ async def send_verification_email_endpoint(request_data: SendVerificationEmailRe
     finally:
         db.close()
 
-@app.post("/verify-email-code")
 async def verify_email_code_endpoint(request_data:VerifyEmailCodeRequest, request:Request):
 
     origin = request.headers.get('origin')
@@ -1465,6 +1465,10 @@ async def verify_email_code_endpoint(request_data:VerifyEmailCodeRequest, reques
 
         if(submitted_code != stored_code):
             return JSONResponse(status_code=400, content={"message": "Invalid verification code."})
+
+        existing_email_alert = db.query(EmailAlertModel).filter(EmailAlertModel.email == email).first()
+        if(existing_email_alert):
+            return JSONResponse(status_code=400, content={"message": "Email already registered for alerts."})
 
         new_email_alert = EmailAlertModel(email=email)
         db.add(new_email_alert)
@@ -1506,7 +1510,7 @@ async def verify_token_endpoint(request: Request):
 
 @app.post("/verify-turnstile")
 async def verify_turnstile(request_data:VerifyTurnstileRequest, request:Request):
-    
+
     origin = request.headers.get('origin')
 
     check_internal_request(origin)

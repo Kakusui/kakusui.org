@@ -5,7 +5,8 @@
 // maintain allman bracket style for consistency
 
 // react
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { jwtDecode } from "jwt-decode";
 
 // chakra-ui
 import {
@@ -14,6 +15,7 @@ import {
     Image,
     Divider,
     Link,
+    Text,
 } from '@chakra-ui/react';
 
 // logos and images
@@ -25,16 +27,54 @@ import Login from './Login';
 
 const HomeHeader: React.FC = () => 
 {
-    const [_, setIsLoggedIn] = useState(false);
+    const [isLoggedIn, setIsLoggedIn] = useState(false);
+    const [userEmail, setUserEmail] = useState<string | null>(null);
+
+    useEffect(() => 
+    {
+        const token = localStorage.getItem('token');
+        if (token) 
+        {
+            setIsLoggedIn(true);
+            try 
+            {
+                const decoded = jwtDecode(token);
+                setUserEmail(decoded.sub as string);
+            } 
+            catch (error) 
+            {
+                console.error("Error decoding token:", error);
+            }
+        } 
+        else 
+        {
+            setIsLoggedIn(false);
+            setUserEmail(null);
+        }
+    }, []);
 
     const handleLogin = () =>
     {
         setIsLoggedIn(true);
+        const token = localStorage.getItem('token');
+        if (token) 
+        {
+            try 
+            {
+                const decoded = jwtDecode(token);
+                setUserEmail(decoded.sub as string);
+            } 
+            catch (error) 
+            {
+                console.error("Error decoding token:", error);
+            }
+        }
     };
 
     const handleLogout = () =>
     {
         setIsLoggedIn(false);
+        setUserEmail(null);
         localStorage.removeItem('token');
     };
 
@@ -61,7 +101,12 @@ const HomeHeader: React.FC = () =>
                         </Link>
                         <DesktopNav />
                     </Flex>
-                    <Login onLogin={handleLogin} onLogout={handleLogout} />
+                    <Flex align="center">
+                        {isLoggedIn && userEmail && (
+                            <Text mr={4} fontSize="sm">{userEmail}</Text>
+                        )}
+                        <Login onLogin={handleLogin} onLogout={handleLogout} />
+                    </Flex>
                 </Flex>
             </Flex>
             <Divider borderColor="rgba(255, 255, 255, 0.1)" />
