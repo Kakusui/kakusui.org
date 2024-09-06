@@ -73,22 +73,21 @@ export default function Navbar({ isHomePage }: NavbarProps)
                     align="center"
                     justify="space-between"
                 >
-                    <Flex
-                        flex={{base: 1, md: 'auto'}}
-                        ml={{base: -2}}
-                        display={{base: 'flex', md: 'none'}}
-                    >
-                        <IconButton
-                            onClick={onToggle}
-                            icon={
-                                isOpen ? <CloseIcon w={3} h={3}/> : <HamburgerIcon w={5} h={5}/>
-                            }
-                            variant={'ghost'}
-                            aria-label={'Toggle Navigation'}
-                            color="white"
-                        />
-                    </Flex>
-                    <Flex flex={{base: 1}} justify={{base: 'center', md: 'start'}} align="center">
+                    <Flex align="center">
+                        <Flex
+                            display={{base: 'flex', md: 'none'}}
+                            mr={2}
+                        >
+                            <IconButton
+                                onClick={onToggle}
+                                icon={
+                                    isOpen ? <CloseIcon w={3} h={3}/> : <HamburgerIcon w={5} h={5}/>
+                                }
+                                variant={'ghost'}
+                                aria-label={'Toggle Navigation'}
+                                color="white"
+                            />
+                        </Flex>
                         <Link href="/">
                             <Image src={logo} boxSize='30px' alt='Kakusui Logo'/>
                         </Link>

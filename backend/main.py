@@ -34,14 +34,14 @@ from elucidate import Elucidate, __version__ as ELUCIDATE_VERSION
 from fastapi import Cookie, Depends, FastAPI, HTTPException, Request, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
-from fastapi.security import HTTPBasic, HTTPBasicCredentials, OAuth2PasswordBearer
+from fastapi.security import HTTPBasic, OAuth2PasswordBearer
 from gnupg import GPG
 from jwt import PyJWTError
 from kairyou import Kairyou
 from kairyou.exceptions import (InvalidReplacementJsonKeys, InvalidReplacementJsonName, SpacyModelNotFound)
 from passlib.context import CryptContext
 from pydantic import BaseModel
-from sqlalchemy import Column, DateTime, String, create_engine
+from sqlalchemy import Column, DateTime, String, create_engine, Integer
 from sqlalchemy.dialects.postgresql import UUID as modelUUID
 from sqlalchemy.engine import Engine, Inspector
 from sqlalchemy.ext.declarative import declarative_base
@@ -200,7 +200,42 @@ class EmailAlertModel(Base):
     email = Column(String, index=True)
     created_at = Column(DateTime, default=datetime.now(timezone.utc))
 
+class User(Base):
+    __tablename__ = "users"
+    id = Column(modelUUID(as_uuid=True), primary_key=True, index=True, default=uuid4)
+    email = Column(String, unique=True, index=True)
+    credits = Column(Integer, default=0)
+
 ##----------------------------------/----------------------------------##
+
+##-----------------------------------------start-of-migrations----------------------------------------------------------------------------------------------------------------------------------------------------------
+
+def migrate_database(engine:Engine) -> None:
+
+    """
+
+    Performs database migrations if needed.
+    
+    """
+
+    inspector = inspect(engine)
+
+    inspector.clear_cache()
+
+    ## Migration 1 (2024-09-05) (Addition of users table)
+    try:
+        if(not inspector.has_table('users')):
+            print("users table not found. Attempting to create it.")
+            User.__table__.create(engine)
+            print("Created users table")
+        else:
+            print("users table already exists")
+
+        inspector.clear_cache()
+        
+    except Exception as e:
+        print(f"Error during migration: {str(e)}")
+        pass
 
 engine:Engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False})
 SessionLocal:sessionmaker = sessionmaker(autocommit=False, autoflush=False, bind=engine)
@@ -212,6 +247,8 @@ def create_tables_if_not_exist(engine, base:DeclarativeMeta) -> None:
             base.metadata.tables[table_name].create(engine)
 
 create_tables_if_not_exist(engine, Base)
+
+migrate_database(engine)
 
 ##----------------------------------/----------------------------------##
 
@@ -463,6 +500,7 @@ def perform_backup() -> None:
     db:Session = SessionLocal()
 
     number_of_email_alerts = db.query(EmailAlertModel).count()
+    number_of_users = db.query(User).count()
 
     export_path = f'exported_db_{timestamp}.db'
 
@@ -473,10 +511,14 @@ def perform_backup() -> None:
 
     encrypted_path = encrypt_file(compressed_path, ENCRYPTION_KEY)
     os.remove(compressed_path)
-
     send_email(
         subject=f'SQLite Database Backup ({timestamp})',
-        body='Please find the attached encrypted and compressed SQLite database backup. This email was sent automatically. Do not reply.\n\nNumber of email alerts in the database: ' + str(number_of_email_alerts),
+        body=(
+            'Please find the attached encrypted and compressed SQLite database backup. '
+            'This email was sent automatically. Do not reply.\n\n'
+            f'Number of email alerts in the database: {number_of_email_alerts}\n'
+            f'Number of users in the database: {number_of_users}'
+        ),
         to_email=TO_EMAIL,
         attachment_path=encrypted_path,
         from_email=FROM_EMAIL,
@@ -656,6 +698,26 @@ def check_and_update_rate_limit(data:dict, max_requests:int, limit_type:str) -> 
 
 ##-----------------------------------------start-of-auth----------------------------------------------------------------------------------------------------------------------------------------------------------
 
+def check_internal_request(origin:str | None) -> None:
+
+    """
+
+    Check if the request is from an internal source
+
+    Args:
+    origin (str): The origin of the request
+
+    """
+
+    allowed_domains = [
+        "https://kakusui.org", 
+        "http://localhost:5173",
+        ".kakusui-org.pages.dev"
+    ]
+
+    if(origin is None or (origin is not None and not any(origin.endswith(domain) for domain in allowed_domains))):
+        raise HTTPException(status_code=403, detail="Forbidden")
+    
 def create_access_token(data:dict, expires_delta:typing.Optional[timedelta] = None) -> str:
 
     """
@@ -830,6 +892,8 @@ def replace_sqlite_db(extracted_db_path:str, current_db_path:str) -> None:
 
     engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False})
     SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+
+    migrate_database(engine)
 
 def get_db() -> typing.Generator[Session, None, None]:
     
@@ -1097,14 +1161,7 @@ async def elucidate(request_data:ElucidateRequest, request:Request):
 async def proxy_kairyou(request_data:KairyouRequest, request:Request):
     origin = request.headers.get('origin')
 
-    allowed_domains = [
-        "https://kakusui.org", 
-        "http://localhost:5173",
-        ".kakusui-org.pages.dev"
-    ]
-
-    if(origin is not None and not any(origin.endswith(domain) for domain in allowed_domains)):
-        raise HTTPException(status_code=403, detail="Forbidden")
+    check_internal_request(origin)
 
     async with httpx.AsyncClient(timeout=None) as client:
         headers = {
@@ -1119,14 +1176,7 @@ async def proxy_kairyou(request_data:KairyouRequest, request:Request):
 async def proxy_easytl(request_data:EasyTLRequest, request:Request):
     origin = request.headers.get('origin')
 
-    allowed_domains = [
-        "https://kakusui.org", 
-        "http://localhost:5173",
-        ".kakusui-org.pages.dev"
-    ]
-
-    if(origin is not None and not any(origin.endswith(domain) for domain in allowed_domains)):
-        raise HTTPException(status_code=403, detail="Forbidden")
+    check_internal_request(origin)
 
     async with httpx.AsyncClient(timeout=None) as client:
         headers = {
@@ -1141,14 +1191,7 @@ async def proxy_easytl(request_data:EasyTLRequest, request:Request):
 async def proxy_elucidate(request_data:ElucidateRequest, request:Request):
     origin = request.headers.get('origin')
 
-    allowed_domains = [
-        "https://kakusui.org", 
-        "http://localhost:5173",
-        ".kakusui-org.pages.dev"
-    ]
-
-    if(origin is not None and not any(origin.endswith(domain) for domain in allowed_domains)):
-        raise HTTPException(status_code=403, detail="Forbidden")
+    check_internal_request(origin)
 
     async with httpx.AsyncClient(timeout=None) as client:
         headers = {
@@ -1161,8 +1204,27 @@ async def proxy_elucidate(request_data:ElucidateRequest, request:Request):
     
 ##-----------------------------------------start-of-login_endpoints----------------------------------------------------------------------------------------------------------------------------------------------------------
 
+@app.post('/check-email-registration')
+async def check_email_registration(data:RegisterForEmailAlert, request:Request):
+    origin = request.headers.get('origin')
+
+    check_internal_request(origin)
+
+    db:Session = SessionLocal()
+
+    try:
+        existing_user = db.query(User).filter(User.email == data.email).first()
+        
+        if(existing_user):
+            return JSONResponse(status_code=200, content={"registered":True})
+        else:
+            return JSONResponse(status_code=200, content={"registered":False})
+
+    finally:
+        db.close()
+
 @app.post("/login", response_model=LoginToken)
-def login(data:LoginModel) -> typing.Dict[str, str]:
+def login(data:LoginModel, request:Request) -> typing.Dict[str, str]:
     
     """
     
@@ -1176,26 +1238,89 @@ def login(data:LoginModel) -> typing.Dict[str, str]:
 
     """
 
-    if(not verify_verification_code(data.email, data.verification_code)):
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid email or verification code",
-            headers={"WWW-Authenticate": "Bearer"},
+    origin = request.headers.get('origin')
+
+    check_internal_request(origin)
+
+    db: Session = SessionLocal()
+
+    try:
+        existing_user = db.query(User).filter(User.email == data.email).first()
+        if(not existing_user):
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="User not found",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
+
+        if(not verify_verification_code(data.email, data.verification_code)):
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid email or verification code",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
+
+        access_token_expires = timedelta(minutes=TOKEN_EXPIRE_MINUTES)
+        access_token = create_access_token(
+            data={"sub": data.email}, expires_delta=access_token_expires
+        )
+        refresh_token_expires = timedelta(minutes=TOKEN_EXPIRE_MINUTES)
+        refresh_token = create_refresh_token(
+            data={"sub": data.email}, expires_delta=refresh_token_expires
         )
 
-    access_token_expires = timedelta(minutes=TOKEN_EXPIRE_MINUTES)
-    access_token = create_access_token(
-        data={"sub": data.email}, expires_delta=access_token_expires
-    )
-    refresh_token_expires = timedelta(minutes=TOKEN_EXPIRE_MINUTES)
-    refresh_token = create_refresh_token(
-        data={"sub": data.email}, expires_delta=refresh_token_expires
-    )
+        return {"access_token": access_token, "token_type": "bearer", "refresh_token": refresh_token}
 
-    return {"access_token": access_token, "token_type": "bearer", "refresh_token": refresh_token}
+    finally:
+        db.close()
+
+@app.post("/signup")
+async def signup(data:LoginModel, request:Request) -> JSONResponse:
+
+    origin = request.headers.get('origin')
+
+    check_internal_request(origin)
+
+    db: Session = SessionLocal()
+    try:
+        existing_user = db.query(User).filter(User.email == data.email).first()
+
+        if(existing_user):
+            return JSONResponse(status_code=400, content={"message": "Email already registered."})
+
+        if(not verify_verification_code(data.email, data.verification_code)):
+            return JSONResponse(status_code=401, content={"message": "Invalid email or verification code"})
+
+        new_user = User(email=data.email)
+        db.add(new_user)
+        db.commit()
+
+        access_token_expires = timedelta(minutes=TOKEN_EXPIRE_MINUTES)
+        access_token = create_access_token(
+            data={"sub": data.email}, expires_delta=access_token_expires
+        )
+        refresh_token_expires = timedelta(minutes=TOKEN_EXPIRE_MINUTES)
+        refresh_token = create_refresh_token(
+            data={"sub": data.email}, expires_delta=refresh_token_expires
+        )
+
+        return JSONResponse(status_code=200, content={
+            "message": "User successfully registered.",
+            "access_token": access_token,
+            "token_type": "bearer",
+            "refresh_token": refresh_token
+        })
+
+    except Exception as e:
+        db.rollback()
+        print(f"Error during signup: {str(e)}")
+        return JSONResponse(status_code=500, content={"message": "An error occurred during signup."})
+
+    finally:
+        db.close()
 
 @app.post("/refresh", response_model=LoginToken)
-def refresh_token(refresh_token: str = Cookie(None)) -> JSONResponse:
+def refresh_token(request:Request, refresh_token: str = Cookie(None)) -> JSONResponse:
     
     """
 
@@ -1208,6 +1333,10 @@ def refresh_token(refresh_token: str = Cookie(None)) -> JSONResponse:
     typing.Dict[str, str]: The access token and token type
 
     """
+
+    origin = request.headers.get('origin')
+
+    check_internal_request(origin)
 
     if(refresh_token is None):
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="No refresh token provided")
@@ -1280,35 +1409,29 @@ def send_verification_email(email:str, code:str) -> None:
 @app.post("/send-verification-email")
 async def send_verification_email_endpoint(request_data: SendVerificationEmailRequest, request: Request):
     origin = request.headers.get('origin')
-    allowed_domains = [
-        "https://kakusui.org", 
-        "http://localhost:5173",
-        ".kakusui-org.pages.dev"
-    ]
 
-    if(origin is not None and not any(origin.endswith(domain) for domain in allowed_domains)):
-        raise HTTPException(status_code=403, detail="Forbidden")
+    check_internal_request(origin)
     
     email = request_data.email
     client_id = request_data.clientID
 
     db: Session = SessionLocal()
     try:
-
         try:
             rate_limit(email, client_id)
         except HTTPException as e:
             return JSONResponse(status_code=e.status_code, content={"message": e.detail})
 
-        existing_email = db.query(EmailAlertModel).filter(EmailAlertModel.email == email).first()
-        if(existing_email):
-            return JSONResponse(status_code=400, content={"message": "Email already registered for alerts."})
-
+        existing_user = db.query(User).filter(User.email == email).first()
+        
         verification_code = generate_verification_code()
         save_verification_data(email, verification_code)
         send_verification_email(email, verification_code)
 
-        return JSONResponse(status_code=200, content={"message": "Verification email sent successfully."})
+        if(existing_user):
+            return JSONResponse(status_code=200, content={"message": "Verification email sent successfully for login."})
+        else:
+            return JSONResponse(status_code=200, content={"message": "Verification email sent successfully for signup."})
     
     except Exception as e:
         print(f"Error sending verification email: {str(e)}")
@@ -1319,15 +1442,10 @@ async def send_verification_email_endpoint(request_data: SendVerificationEmailRe
 
 @app.post("/verify-email-code")
 async def verify_email_code_endpoint(request_data:VerifyEmailCodeRequest, request:Request):
-    origin = request.headers.get('origin')
-    allowed_domains = [
-        "https://kakusui.org", 
-        "http://localhost:5173",
-        ".kakusui-org.pages.dev"
-    ]
 
-    if(origin is not None and not any(origin.endswith(domain) for domain in allowed_domains)):
-        raise HTTPException(status_code=403, detail="Forbidden")
+    origin = request.headers.get('origin')
+
+    check_internal_request(origin)
 
     email = request_data.email
     submitted_code = request_data.code
@@ -1365,6 +1483,11 @@ async def verify_email_code_endpoint(request_data:VerifyEmailCodeRequest, reques
 
 @app.post("/verify-token")
 async def verify_token_endpoint(request: Request):
+
+    origin = request.headers.get('origin')
+
+    check_internal_request(origin)
+
     auth_header = request.headers.get("Authorization")
     
     if(not auth_header or not auth_header.startswith("Bearer ")):
@@ -1383,9 +1506,10 @@ async def verify_token_endpoint(request: Request):
 
 @app.post("/verify-turnstile")
 async def verify_turnstile(request_data:VerifyTurnstileRequest, request:Request):
+    
     origin = request.headers.get('origin')
-    if(origin != "https://kakusui.org"):
-        raise HTTPException(status_code=403, detail="Forbidden")
+
+    check_internal_request(origin)
 
     try:
         url = "https://challenges.cloudflare.com/turnstile/v0/siteverify"

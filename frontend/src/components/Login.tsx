@@ -8,7 +8,7 @@
 import { useState, useEffect } from 'react';
 
 // chakra-ui
-import { Box, Button, Input, Modal, ModalOverlay, ModalContent, ModalHeader, ModalFooter, ModalBody, ModalCloseButton, Text, useDisclosure, Spinner, Flex } from "@chakra-ui/react";
+import { Box, Button, Input, Modal, ModalOverlay, ModalContent, ModalHeader, ModalFooter, ModalBody, ModalCloseButton, Text, useDisclosure, Spinner, Flex, useToast } from "@chakra-ui/react";
 
 // util
 import { getURL } from '../utils';
@@ -30,10 +30,11 @@ const Login: React.FC<LoginProps> = ({ onLogin, onLogout }) =>
     const { isOpen, onOpen, onClose } = useDisclosure();
     const [email, setEmail] = useState('');
     const [loginCode, setLoginCode] = useState('');
-    const [error, setError] = useState('');
     const [isLoginStep, setIsLoginStep] = useState(false);
     const [isLoggedIn, setIsLoggedIn] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
+    const [isSignUp, setIsSignUp] = useState(false);
+    const toast = useToast();
 
     useEffect(() => 
     {
@@ -92,58 +93,107 @@ const Login: React.FC<LoginProps> = ({ onLogin, onLogout }) =>
         checkLoginStatus();
     }, [onLogin, onLogout]);
 
+    const handleLogout = () => 
+    {
+        localStorage.removeItem('token');
+        document.cookie = 'refresh_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; secure; HttpOnly';
+        setIsLoggedIn(false);
+        onLogout();
+    };
+
     const handleClose = () => 
     {
         setEmail('');
         setLoginCode('');
-        setError('');
         setIsLoginStep(false);
         onClose();
     };
 
+    const showToast = (title: string, description: string, status: "error" | "info" | "warning" | "success") => 
+    {
+        toast({
+            title,
+            description,
+            status,
+            duration: 5000,
+            isClosable: true,
+        });
+    };
+
     const handleEmailSubmit = async () => 
     {
-        if (!email || !email.includes('@')) 
+        if(!email || !email.includes('@')) 
         {
-            setError('Please enter a valid email address');
+            showToast("Invalid Email", "Please enter a valid email address", "error");
             return;
         }
 
-        setIsLoginStep(true); // Move to the next step immediately
+        setIsLoginStep(true);
 
         try 
         {
-            const response = await fetch(getURL('/send-verification-email'), 
+            const checkUserResponse = await fetch(getURL('/check-email-registration'), 
             {
                 method: 'POST',
                 headers: 
                 {
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify({ email, clientID: 'web-client' })
+                body: JSON.stringify({ email })
             });
 
-            if (response.ok) 
+            if(checkUserResponse.ok) 
             {
-                setError(''); // Clear any previous errors
+                const userData = await checkUserResponse.json();
+                if(!userData.registered && !isSignUp)
+                {
+                    showToast("Not Registered", "This email is not registered. Please sign up first.", "error");
+                    setIsLoginStep(false);
+                    return;
+                }
+                if(userData.registered && isSignUp)
+                {
+                    showToast("Already Registered", "This email is already registered. Please log in instead.", "error");
+                    setIsLoginStep(false);
+                    return;
+                }
+
+                const response = await fetch(getURL('/send-verification-email'), 
+                {
+                    method: 'POST',
+                    headers: 
+                    {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ email, clientID: 'web-client' })
+                });
+
+                if(!response.ok) 
+                {
+                    const errorData = await response.json();
+                    showToast("Error", errorData.message || 'Failed to send login code', "error");
+                    setIsLoginStep(false);
+                }
             } 
             else 
             {
-                const errorData = await response.json();
-                setError(errorData.message || 'Failed to send login code');
+                showToast("Error", "Failed to check user registration", "error");
+                setIsLoginStep(false);
             }
         } 
         catch (error) 
         {
-            setError('An error occurred. Please try again.');
+            showToast("Error", "An error occurred. Please try again.", "error");
+            setIsLoginStep(false);
         }
     };
 
-    const handleLogin = async () => 
+    const handleSubmit = async () => 
     {
         try 
         {
-            const response = await fetch(getURL('/login'), 
+            const endpoint = isSignUp ? '/signup' : '/login';
+            const response = await fetch(getURL(endpoint), 
             {
                 method: 'POST',
                 headers: 
@@ -166,26 +216,27 @@ const Login: React.FC<LoginProps> = ({ onLogin, onLogout }) =>
                 } 
                 else 
                 {
-                    setError('Invalid credentials');
+                    showToast("Error", "Invalid credentials", "error");
                 }
             } 
             else
             {
                 const errorData = await response.json();
-                setError(errorData.message || 'Invalid credentials');
+                showToast("Error", errorData.message || 'Invalid credentials', "error");
             }
         } 
         catch (error) 
         {
-            setError('An error occurred. Please try again.');
+            showToast("Error", "An error occurred. Please try again.", "error");
         }
     };
 
-    const handleLogout = () => 
+    const toggleSignUp = () => 
     {
-        localStorage.removeItem('token');
-        setIsLoggedIn(false);
-        onLogout();
+        setIsSignUp(!isSignUp);
+        setIsLoginStep(false);
+        setEmail('');
+        setLoginCode('');
     };
 
     const handleKeyPress = (event: React.KeyboardEvent) => 
@@ -194,7 +245,7 @@ const Login: React.FC<LoginProps> = ({ onLogin, onLogout }) =>
         {
             if (isLoginStep) 
             {
-                handleLogin();
+                handleSubmit();
             } 
             else 
             {
@@ -226,15 +277,15 @@ const Login: React.FC<LoginProps> = ({ onLogin, onLogout }) =>
                     borderRadius="xl"
                     boxShadow="xl"
                 >
-                    <ModalHeader color="orange.400">{isLoginStep ? "Check Your Email" : "Login"}</ModalHeader>
+                    <ModalHeader color="orange.400">{isSignUp ? "Sign Up" : "Login"}</ModalHeader>
                     <ModalCloseButton />
                     <ModalBody>
                         <Flex direction="column" gap={4}>
                             {isLoginStep ? (
                                 <>
-                                    <Text>A login code has been sent to {email}. Please enter the code below:</Text>
+                                    <Text>A {isSignUp ? "signup" : "login"} code has been sent to {email}. Please enter the code below:</Text>
                                     <Input
-                                        placeholder="Enter login code"
+                                        placeholder="Enter code"
                                         value={loginCode}
                                         onChange={(e) => setLoginCode(e.target.value)}
                                         onKeyPress={handleKeyPress}
@@ -256,34 +307,38 @@ const Login: React.FC<LoginProps> = ({ onLogin, onLogout }) =>
                                     />
                                 </>
                             )}
-                            {error && (
-                                <Text color="red.500" mt={2}>
-                                    {error}
-                                </Text>
-                            )}
                         </Flex>
                     </ModalBody>
                     <ModalFooter>
-                        <Flex width="100%" justify="space-between">
-                            {isLoginStep && (
-                                <Button variant="ghost" onClick={() => setIsLoginStep(false)} _hover={{ bg: "whiteAlpha.200" }}>
-                                    Back
+                        <Flex width="100%" justify="space-between" direction="column" align="center">
+                            <Flex width="100%" justify="space-between" mb={4}>
+                                <Box>
+                                    <Button variant="ghost" mr={3} onClick={handleClose} _hover={{ bg: "whiteAlpha.200" }}>
+                                        Close
+                                    </Button>
+                                    {isLoginStep && (
+                                        <Button variant="ghost" onClick={() => setIsLoginStep(false)} _hover={{ bg: "whiteAlpha.200" }}>
+                                            Back
+                                        </Button>
+                                    )}
+                                </Box>
+                                <Box>
+                                    {isLoginStep ? (
+                                        <Button colorScheme="orange" onClick={handleSubmit}>
+                                            {isSignUp ? "Sign Up" : "Login"}
+                                        </Button>
+                                    ) : (
+                                        <Button colorScheme="orange" onClick={handleEmailSubmit}>
+                                            Send Code
+                                        </Button>
+                                    )}
+                                </Box>
+                            </Flex>
+                            {!isLoginStep && (
+                                <Button variant="link" color="orange.400" onClick={toggleSignUp}>
+                                    {isSignUp ? "Already have an account? Login" : "Don't have an account? Sign Up"}
                                 </Button>
                             )}
-                            <Box>
-                                <Button variant="ghost" mr={3} onClick={handleClose} _hover={{ bg: "whiteAlpha.200" }}>
-                                    Cancel
-                                </Button>
-                                {isLoginStep ? (
-                                    <Button colorScheme="orange" onClick={handleLogin}>
-                                        Login
-                                    </Button>
-                                ) : (
-                                    <Button colorScheme="orange" onClick={handleEmailSubmit}>
-                                        Send Code
-                                    </Button>
-                                )}
-                            </Box>
                         </Flex>
                     </ModalFooter>
                 </ModalContent>
