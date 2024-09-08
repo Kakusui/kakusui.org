@@ -5,11 +5,14 @@
 - [**Prerequisites**](#prerequisites)
 - [**Python Requirements**](#python-requirements)
 - [**Node Requirements**](#node-requirements)
-- [**To build locally**](#to-build-locally)
+- [**To build locally (Manual)**](#to-build-locally-manual)
+  - [**Raw Docker Method**](#raw-docker-method)
+    - [**Backend**](#backend)
+    - [**Frontend**](#frontend)
+  - [**Docker Compose Method**](#docker-compose-method)
 - [**For Production**](#for-production)
-  - [Frontend](#frontend)
-  - [Backend](#backend)
-    - [To test the dockerfile locally](#to-test-the-dockerfile-locally)
+  - [**Frontend**](#frontend-1)
+  - [**Backend**](#backend-1)
     - [To deploy to fly.io](#to-deploy-to-flyio)
 - [**Contributing**](#contributing)
 - [**License**](#license)
@@ -17,7 +20,9 @@
 --------------------------------------------------------------------------------------------------------------------------------------------------
 
 ## **Preface**<a name="preface"></a>
-This is the repository for the website of Kakusui LLC (kakusui.org). All code is open-source and available for anyone to use. Below is a brief overview of the project, how to build it locally, information regarding production, licensing, and contributing. 
+This is the repository for the website of Kakusui LLC (kakusui.org). All code is open-source and available for anyone to use. Below is a brief overview of the project, how to build it locally, information regarding production, licensing, and contributing.
+
+If you need to report a security vulnerability, please see the [SECURITY.md](SECURITY.md) file.
 
 --------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -61,6 +66,8 @@ pyjwt==2.8.0
 
 python-multipart==0.0.9
 
+werkzeug==3.0.4
+
 --------------------------------------------------------------------------------------------------------------------------------------------------
 
 ## **Node Requirements**<a name="node-requirements"></a>
@@ -68,7 +75,11 @@ See `frontend/package.json` for a list of node requirements.
 
 --------------------------------------------------------------------------------------------------------------------------------------------------
 
-## **To build locally**<a name="build-locally"></a>
+## **To build locally (Manual)**<a name="build-locally"></a>
+
+> [!TIP] 
+> This may not work on linux, if you are using linux, we reccomend using the docker method below.
+ 
 1. Clone the repo, make sure you are using the correct branch (currently `production`)
 2. Navigate to the `backend` directory. `cd backend`. Inside is the python backend.
 3. Run the setup script with the local argument. This will install all requirements and setup the local env `python setup.py local`.
@@ -77,21 +88,39 @@ See `frontend/package.json` for a list of node requirements.
 6. First install all required packages, these are in `package.json`. Do `npm i`. Then run the dev server with `npm run dev`
 7. Website will be on localhost:5173 (frontend) and localhost:5000 (backend)
 
---------------------------------------------------------------------------------------------------------------------------------------------------
+
+### **Raw Docker Method**<a name="docker-method"></a>
+1. Clone the repo, make sure you are using the correct branch (currently `production`)
+
+#### **Backend**<a name="backend"></a>
+
+1. `cd backend`
+2. `docker build -t kakusui-org-backend -f Dockerfile.dev .`
+3. `docker run -p 5000:5000 kakusui-org-backend`
+
+#### **Frontend**<a name="frontend"></a>
+
+1. `cd frontend`
+2. `docker build -t kakusui-org-frontend -f Dockerfile .`
+3. `docker run -p 5173:5173 kakusui-org-frontend`
+
+### **Docker Compose Method**<a name="docker-compose-method"></a>
+
+> [!TIP]
+> We are using docker compose v2 so `docker compose up --build` is the command we use, adjust as needed if you are using an older version of docker compose.
+
+Run `docker compose up --build` from the root directory.
+
 
 ## **For Production**<a name="for-production"></a>
 
-### Frontend
+### **Frontend**<a name="frontend-1"></a>
 
 Frontend is hosted on cloudflare pages. To deploy, push to the `production` branch. Development branch is for development only, intermediate builds deploy every commit.
 
-### Backend
+### **Backend**<a name="backend-1"></a>
 
 For production, the backend is hosted on fly.io via a dockerfile.
-
-#### To test the dockerfile locally
-1. docker build -t kakusui-org -f build.dockerfile .
-2. docker run -p 5000:5000 kakusui-org
 
 #### To deploy to fly.io
 1. Make sure you have the fly cli installed and are logged in.

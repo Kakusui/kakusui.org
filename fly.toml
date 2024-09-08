@@ -7,7 +7,7 @@ primary_region = 'iad'
 swap_size_mb = 3072
 
 [build]
-  dockerfile = 'build.dockerfile'
+  dockerfile = 'Dockerfile.prod'
 
 [http_service]
   internal_port = 8000
