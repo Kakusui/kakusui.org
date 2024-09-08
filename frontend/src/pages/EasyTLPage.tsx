@@ -87,6 +87,28 @@ Additional instructions:
   const [modelOptions, setModelOptions] = useState<string[]>([]);
   const [isAdvancedSettingsVisible, setAdvancedSettingsVisible] = useState(false);
   const toast = useToast();
+  const [isAdmin, setIsAdmin] = useState(false);
+
+  useEffect(() => {
+    const checkAdminStatus = async () => {
+
+      try 
+      {
+        const response = await fetch(getURL("/check-admin-user"), 
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+        });
+        const result = await response.json();
+        setIsAdmin(result.is_admin);
+      } 
+      catch (error) 
+      {
+        console.error("Error checking admin status:", error);
+      }
+    };
+    checkAdminStatus();
+  }, []);
 
   useEffect(() => 
   {
@@ -244,11 +266,16 @@ Additional instructions:
         translationInstructions = translationInstructions.replace("{{#if additional_instructions}}\nAdditional instructions:\n{{additional_instructions}}\n{{/if}}", '');
       }
 
+      if (!isAdmin && !data.userAPIKey) 
+      {
+        throw new Error("API Key is required.");
+      }
+
       const response = await fetch(getURL("/proxy/easytl"), 
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...data, translationInstructions }),
+        body: JSON.stringify({ ...data, translationInstructions, isAdmin }),
       });
 
       const result = await response.json();
@@ -343,7 +370,7 @@ Additional instructions:
               <FormLabel>API Key</FormLabel>
               <InputGroup>
                 <Input
-                  {...register("userAPIKey", { required: true })}
+                  {...register("userAPIKey", { required: !isAdmin })}
                   type={showApiKey ? "text" : "password"}
                   placeholder="Enter API key"
                 />

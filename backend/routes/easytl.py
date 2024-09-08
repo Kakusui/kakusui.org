@@ -16,6 +16,7 @@ from routes.models import EasyTLRequest
 from constants import V1_EASYTL_ROOT_KEY, V1_EASYTL_PUBLIC_API_KEY
 
 from auth.util import check_internal_request
+from auth.func import check_admin_user
 
 from util import get_url
 
@@ -29,7 +30,12 @@ async def easytl(request_data:EasyTLRequest, request:Request):
     user_api_key = request_data.userAPIKey
     model = request_data.model
 
-    api_key = request.headers.get("X-API-Key")
+    try:
+        check_admin_user()
+        api_key = V1_EASYTL_ROOT_KEY
+
+    except:
+        api_key = request.headers.get("X-API-Key")
 
     MAX_TEXT_LENGTH = 100000
     MAX_INSTRUCTIONS_LENGTH = 5000

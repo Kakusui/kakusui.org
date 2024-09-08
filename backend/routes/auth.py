@@ -17,7 +17,7 @@ from db.common import get_db
 
 from routes.models import LoginModel, LoginToken, RegisterForEmailAlert, SendVerificationEmailRequest
 
-from auth.func import verify_verification_code, create_access_token, create_refresh_token, func_verify_token, generate_verification_code, save_verification_data, send_verification_email
+from auth.func import verify_verification_code, create_access_token, create_refresh_token, func_verify_token, generate_verification_code, save_verification_data, send_verification_email, check_admin_user
 from auth.util import check_internal_request
 
 from rate_limit.func import rate_limit
@@ -242,3 +242,16 @@ async def verify_token_endpoint(request: Request):
     
     except HTTPException as e:
         return {"valid": False, "detail": str(e.detail)}
+    
+@router.post("/check-admin-user")
+async def check_admin_user_endpoint(request:Request):
+
+    origin = request.headers.get('origin')
+
+    check_internal_request(origin)
+
+    try:
+        check_admin_user()
+        return JSONResponse(status_code=status.HTTP_200_OK, content={"result":True})
+    except:
+        return JSONResponse(status_code=status.HTTP_200_OK, content={"result":False})
