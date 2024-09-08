@@ -81,7 +81,8 @@ def setup_local_environment() -> None:
         "V1_EASYTL_ROOT_KEY": "test",
         "V1_EASYTL_PUBLIC_API_KEY": "test",
         "V1_ELUCIDATE_ROOT_KEY": "test",
-        "TURNSTILE_SECRET_KEY": "test"
+        "TURNSTILE_SECRET_KEY": "test",
+        "NODE_ENV": "development"
     }
 
     try:
@@ -109,6 +110,7 @@ def setup_local_environment() -> None:
                 f"V1_EASYTL_ROOT_KEY={env_to_key_local['V1_EASYTL_ROOT_KEY']}\n"
                 f"V1_EASYTL_PUBLIC_API_KEY={env_to_key_local['V1_EASYTL_PUBLIC_API_KEY']}\n"
                 f"V1_ELUCIDATE_ROOT_KEY={env_to_key_local['V1_ELUCIDATE_ROOT_KEY']}\n"
+                f"TURNSTILE_SECRET_KEY={env_to_key_local['TURNSTILE_SECRET_KEY']}\n"
             )
         else:
 
@@ -137,6 +139,6 @@ def main():
     install_dependencies()
     download_spacy_model()
     setup_local_environment()
-
+    
 if(__name__ == "__main__"):
     main()
