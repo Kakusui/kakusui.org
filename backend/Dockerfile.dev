@@ -22,15 +22,15 @@ RUN apt-get update && \
 ## Copy the rest of the application code
 COPY . .
 
-## Remove unnecessary files (keep .env)
-RUN rm -rf __pycache__ Dockerfile.prod Dockerfile.dev entrypoint_prod.sh
+## Convert line endings and make entrypoint script executable
+RUN sed -i 's/\r$//' entrypoint_dev.sh && \
+    chmod +x entrypoint_dev.sh
 
-## Make entrypoint script executable
-RUN chmod +x entrypoint_dev.sh
+## Remove unnecessary files (keep .env)
+RUN rm -rf __pycache__ Dockerfile.prod entrypoint_prod.sh setup.py requirements.txt Dockerfile.dev
 
 ENV PYTHONPATH=/app
 
 EXPOSE 5000
 
-## Start the app
 CMD ["./entrypoint_dev.sh"]

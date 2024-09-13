@@ -13,7 +13,7 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt && \
     python -m spacy download ja_core_news_lg
 
-## Install required packages (linux) including GPG
+## Install required packages (linux) including GPG and bash
 RUN apt-get update && \
     apt-get install -y --no-install-recommends gnupg2 && \
     apt-get clean && \
@@ -22,15 +22,15 @@ RUN apt-get update && \
 ## Copy the rest of the application code
 COPY . .
 
-## Remove unnecessary files
-RUN rm -rf __pycache__ .env Dockerfile.prod Dockerfile.dev entrypoint_dev.sh
+## Convert line endings and make entrypoint script executable
+RUN sed -i 's/\r$//' entrypoint_prod.sh && \
+    chmod +x entrypoint_prod.sh
 
-## Make entrypoint script executable
-RUN chmod +x entrypoint_prod.sh
+## Remove unnecessary files (keep .env)
+RUN rm -rf __pycache__ Dockerfile.prod entrypoint_dev.sh setup.py requirements.txt Dockerfile.dev
 
 ENV PYTHONPATH=/app
 
 EXPOSE 8000
 
-## Start the app
 CMD ["./entrypoint_prod.sh"]
