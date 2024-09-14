@@ -26,15 +26,20 @@ router = APIRouter()
 logger = logging.getLogger(__name__)
 
 @router.post("/v1/easytl")
-async def easytl(request_data:EasyTLRequest, request:Request, current_user:str = Depends(get_current_user)):
-    logger.info(f"Received request data: {request_data}")
-    
+async def easytl(request_data:EasyTLRequest, request:Request):
+
     text_to_translate = request_data.textToTranslate
     translation_instructions = request_data.translationInstructions
     llm_type = request_data.llmType.lower()
     user_api_key = request_data.userAPIKey
     model = request_data.model
-    is_admin = request_data.isAdmin
+
+    try:
+
+        current_user = get_current_user(request.headers.get("Authorization").split(" ")[1]) # type: ignore
+
+    except:
+        current_user = ""
 
     api_key = request.headers.get("X-API-Key")
 
@@ -60,7 +65,10 @@ async def easytl(request_data:EasyTLRequest, request:Request, current_user:str =
         "claude-3-opus-20240229"
     ]
 
-    if(api_key not in [V1_EASYTL_ROOT_KEY, V1_EASYTL_PUBLIC_API_KEY]):
+
+    is_admin = current_user == ADMIN_USER
+
+    if(api_key not in [V1_EASYTL_ROOT_KEY, V1_EASYTL_PUBLIC_API_KEY] and not is_admin):
         return JSONResponse(**ERRORS["invalid_api_key"])
     
     if(len(text_to_translate) > MAX_TEXT_LENGTH):
@@ -73,7 +81,7 @@ async def easytl(request_data:EasyTLRequest, request:Request, current_user:str =
         return JSONResponse(**ERRORS["invalid_llm_type"])
     
     try:
-        if(is_admin and current_user == ADMIN_USER):
+        if(is_admin):
             admin_api_key = get_admin_api_key(llm_type)
             EasyTL.set_credentials(api_type=llm_type, credentials=admin_api_key) # type: ignore
         else:
@@ -112,6 +120,7 @@ async def proxy_easytl(request_data:EasyTLRequest, request:Request):
         headers = {
             "Content-Type": "application/json",
             "X-API-Key": V1_EASYTL_ROOT_KEY,
+            "Authorization": request.headers.get("Authorization")
         }
         response = await client.post(f"{get_url()}/v1/easytl", json=request_data.model_dump(), headers=headers)
 

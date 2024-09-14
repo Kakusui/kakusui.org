@@ -87,7 +87,6 @@ Additional instructions:
   const [modelOptions, setModelOptions] = useState<string[]>([]);
   const [isAdvancedSettingsVisible, setAdvancedSettingsVisible] = useState(false);
   const toast = useToast();
-  const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => 
   {
@@ -226,11 +225,7 @@ Additional instructions:
         throw new Error("Turnstile verification failed. Please try again.");
       }
 
-      if (!isAdmin) 
-      {
-        localStorage.setItem(`${data.llmType}-apiKey`, data.userAPIKey);
-      }
-
+      localStorage.setItem(`${data.llmType}-apiKey`, data.userAPIKey);
       localStorage.setItem('tone', data.tone);
       localStorage.setItem('language', data.language);
       localStorage.setItem('additional_instructions', data.additional_instructions);
@@ -252,10 +247,9 @@ Additional instructions:
       const requestBody = {
         textToTranslate: data.textToTranslate,
         translationInstructions,
-        llmType: data.llmType,
+        llmType: data.llmType.toLowerCase(),
         userAPIKey: data.userAPIKey,
-        model: data.model,
-        isAdmin
+        model: data.model
       };
 
       const response = await fetch(getURL("/proxy/easytl"), 
@@ -264,7 +258,7 @@ Additional instructions:
         headers: 
         { 
           "Content-Type": "application/json",
-          "Authorization": `Bearer ${localStorage.getItem('access_token')}`
+          "Authorization": `Bearer ${localStorage.getItem('token')}`
         },
         body: JSON.stringify(requestBody),
       });
@@ -309,33 +303,6 @@ Additional instructions:
   const memoizedTurnstile = useMemo(() =>
     <Turnstile siteKey="0x4AAAAAAAbu-SlGyNF03684" onVerify={setTurnstileToken} resetKey={resetTurnstile} />
   , [resetTurnstile]);
-
-  useEffect(() => 
-  {
-    const checkAdminStatus = async () => 
-    {
-      try 
-      {
-        const response = await fetch(getURL("/check-admin"), 
-        {
-          method: 'POST',
-          headers: 
-          {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${localStorage.getItem('access_token')}`
-          },
-        });
-        const result = await response.json();
-        setIsAdmin(result.result);
-      } 
-      catch (error) 
-      {
-        console.error("Error checking admin status:", error);
-      }
-    };
-
-    checkAdminStatus();
-  }, []);
 
   return (
     <>
@@ -389,26 +356,24 @@ Additional instructions:
               </Select>
             </FormControl>
 
-            {!isAdmin && (
-              <FormControl isInvalid={!!errors.userAPIKey} flex={1}>
-                <FormLabel>API Key</FormLabel>
-                <InputGroup>
-                  <Input
-                    {...register("userAPIKey", { required: !isAdmin })}
-                    type={showApiKey ? "text" : "password"}
-                    placeholder="Enter API key"
+            <FormControl isInvalid={!!errors.userAPIKey} flex={1}>
+              <FormLabel>API Key</FormLabel>
+              <InputGroup>
+                <Input
+                  {...register("userAPIKey", { required: true })}
+                  type={showApiKey ? "text" : "password"}
+                  placeholder="Enter API key"
+                />
+                <InputRightElement>
+                  <IconButton
+                    aria-label={showApiKey ? "Hide API key" : "Show API key"}
+                    icon={showApiKey ? <ViewOffIcon /> : <ViewIcon />}
+                    onClick={handleToggleShowApiKey}
+                    variant="ghost"
                   />
-                  <InputRightElement>
-                    <IconButton
-                      aria-label={showApiKey ? "Hide API key" : "Show API key"}
-                      icon={showApiKey ? <ViewOffIcon /> : <ViewIcon />}
-                      onClick={handleToggleShowApiKey}
-                      variant="ghost"
-                    />
-                  </InputRightElement>
-                </InputGroup>
-              </FormControl>
-            )}
+                </InputRightElement>
+              </InputGroup>
+            </FormControl>
           </HStack>
 
           <Box width="100%">

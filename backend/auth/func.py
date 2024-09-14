@@ -28,7 +28,7 @@ from email_util.common import send_email, get_smtp_envs
 
 from constants import ACCESS_TOKEN_SECRET, REFRESH_TOKEN_SECRET, TOKEN_ALGORITHM, ADMIN_USER, VERIFICATION_DATA_DIR, VERIFICATION_EXPIRATION_MINUTES, OPENAI_API_KEY, ANTHROPIC_API_KEY, GEMINI_API_KEY
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/login")
 
 
 def create_access_token(data:dict, 
@@ -141,8 +141,8 @@ def func_verify_token(token:str) -> TokenData:
         
     except jwt.ExpiredSignatureError:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Token expired")
-    
-    except PyJWTError:
+
+    except PyJWTError as e:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token")
     
 def get_current_user(token:str = Depends(oauth2_scheme)):
