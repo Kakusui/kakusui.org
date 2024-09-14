@@ -7,6 +7,7 @@
 // react
 import { useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
+import { jwtDecode } from "jwt-decode";
 
 // chakra-ui
 import {
@@ -87,6 +88,33 @@ Additional instructions:
   const [modelOptions, setModelOptions] = useState<string[]>([]);
   const [isAdvancedSettingsVisible, setAdvancedSettingsVisible] = useState(false);
   const toast = useToast();
+  const [isPrivilegedUser, setIsPrivilegedUser] = useState(false);
+
+  useEffect(() => 
+  {
+    const checkPrivilegedUser = () => 
+    {
+      const token = localStorage.getItem('token');
+      if (token) 
+      {
+        try 
+        {
+          const decodedToken = jwtDecode(token);
+          setIsPrivilegedUser(decodedToken.sub === 'kbilyeu@kakusui.org');
+        } 
+        catch (error) 
+        {
+          setIsPrivilegedUser(false);
+        }
+      } 
+      else 
+      {
+        setIsPrivilegedUser(false);
+      }
+    };
+
+    checkPrivilegedUser();
+  }, []);
 
   useEffect(() => 
   {
@@ -248,7 +276,7 @@ Additional instructions:
         textToTranslate: data.textToTranslate,
         translationInstructions,
         llmType: data.llmType.toLowerCase(),
-        userAPIKey: data.userAPIKey,
+        userAPIKey: isPrivilegedUser ? "" : data.userAPIKey,
         model: data.model
       };
 
@@ -356,24 +384,26 @@ Additional instructions:
               </Select>
             </FormControl>
 
-            <FormControl isInvalid={!!errors.userAPIKey} flex={1}>
-              <FormLabel>API Key</FormLabel>
-              <InputGroup>
-                <Input
-                  {...register("userAPIKey", { required: true })}
-                  type={showApiKey ? "text" : "password"}
-                  placeholder="Enter API key"
-                />
-                <InputRightElement>
-                  <IconButton
-                    aria-label={showApiKey ? "Hide API key" : "Show API key"}
-                    icon={showApiKey ? <ViewOffIcon /> : <ViewIcon />}
-                    onClick={handleToggleShowApiKey}
-                    variant="ghost"
+            {!isPrivilegedUser && (
+              <FormControl isInvalid={!!errors.userAPIKey} flex={1}>
+                <FormLabel>API Key</FormLabel>
+                <InputGroup>
+                  <Input
+                    {...register("userAPIKey", { required: !isPrivilegedUser })}
+                    type={showApiKey ? "text" : "password"}
+                    placeholder="Enter API key"
                   />
-                </InputRightElement>
-              </InputGroup>
-            </FormControl>
+                  <InputRightElement>
+                    <IconButton
+                      aria-label={showApiKey ? "Hide API key" : "Show API key"}
+                      icon={showApiKey ? <ViewOffIcon /> : <ViewIcon />}
+                      onClick={handleToggleShowApiKey}
+                      variant="ghost"
+                    />
+                  </InputRightElement>
+                </InputGroup>
+              </FormControl>
+            )}
           </HStack>
 
           <Box width="100%">
