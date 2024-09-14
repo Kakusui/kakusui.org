@@ -6,7 +6,7 @@
 from datetime import timedelta
 
 ## third-party imports
-from fastapi import APIRouter, HTTPException, Request, status, Cookie
+from fastapi import APIRouter, HTTPException, Request, status, Cookie, Depends
 from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
 
@@ -17,12 +17,12 @@ from db.common import get_db
 
 from routes.models import LoginModel, LoginToken, RegisterForEmailAlert, SendVerificationEmailRequest
 
-from auth.func import verify_verification_code, create_access_token, create_refresh_token, func_verify_token, generate_verification_code, save_verification_data, send_verification_email
+from auth.func import verify_verification_code, create_access_token, create_refresh_token, func_verify_token, generate_verification_code, save_verification_data, send_verification_email, get_current_user
 from auth.util import check_internal_request
 
 from rate_limit.func import rate_limit
 
-from constants import TOKEN_EXPIRE_MINUTES
+from constants import TOKEN_EXPIRE_MINUTES, ADMIN_USER
 
 import typing
 
@@ -105,7 +105,7 @@ async def signup(data:LoginModel, request:Request) -> JSONResponse:
 
     check_internal_request(origin)
 
-    db:Session = get_db(SessionLocal) # type: ignore
+    db:Session = next(get_db(SessionLocal))
     try:
         existing_user = db.query(User).filter(User.email == data.email).first()
 
@@ -242,3 +242,13 @@ async def verify_token_endpoint(request: Request):
     
     except HTTPException as e:
         return {"valid": False, "detail": str(e.detail)}
+
+@router.post("/check-admin")
+async def check_admin(request: Request, current_user:str = Depends(get_current_user)):
+    origin = request.headers.get('origin')
+
+    check_internal_request(origin)
+
+    is_admin = current_user == ADMIN_USER
+
+    return JSONResponse(status_code=status.HTTP_200_OK, content={"result": is_admin})

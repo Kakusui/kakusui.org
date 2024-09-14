@@ -38,6 +38,7 @@ class EasyTLRequest(BaseModel):
     llmType:str
     userAPIKey:str
     model:str
+    isAdmin:bool
 
 class ElucidateRequest(BaseModel):
     textToEvaluate:str

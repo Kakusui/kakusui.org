@@ -3,8 +3,9 @@
 ## license that can be found in the LICENSE file.
 
 ## third-party imports
-from fastapi import APIRouter, Request, status
+from fastapi import APIRouter, Request, status, Depends, HTTPException
 from fastapi.responses import JSONResponse
+import logging
 
 from easytl import EasyTL
 
@@ -13,21 +14,27 @@ import httpx
 ## custom imports
 from routes.models import EasyTLRequest
 
-from constants import V1_EASYTL_ROOT_KEY, V1_EASYTL_PUBLIC_API_KEY
+from constants import V1_EASYTL_ROOT_KEY, V1_EASYTL_PUBLIC_API_KEY, ADMIN_USER
 
 from auth.util import check_internal_request
+from auth.func import get_current_user, get_admin_api_key
 
 from util import get_url
 
 router = APIRouter()
 
+logger = logging.getLogger(__name__)
+
 @router.post("/v1/easytl")
-async def easytl(request_data:EasyTLRequest, request:Request):
+async def easytl(request_data:EasyTLRequest, request:Request, current_user:str = Depends(get_current_user)):
+    logger.info(f"Received request data: {request_data}")
+    
     text_to_translate = request_data.textToTranslate
     translation_instructions = request_data.translationInstructions
     llm_type = request_data.llmType.lower()
     user_api_key = request_data.userAPIKey
     model = request_data.model
+    is_admin = request_data.isAdmin
 
     api_key = request.headers.get("X-API-Key")
 
@@ -66,14 +73,18 @@ async def easytl(request_data:EasyTLRequest, request:Request):
         return JSONResponse(**ERRORS["invalid_llm_type"])
     
     try:
-        EasyTL.set_credentials(api_type=llm_type, credentials=user_api_key) # type: ignore
+        if(is_admin and current_user == ADMIN_USER):
+            admin_api_key = get_admin_api_key(llm_type)
+            EasyTL.set_credentials(api_type=llm_type, credentials=admin_api_key) # type: ignore
+        else:
+            EasyTL.set_credentials(api_type=llm_type, credentials=user_api_key) # type: ignore
+        
         EasyTL.test_credentials(api_type=llm_type) # type: ignore
 
     except:
         return JSONResponse(**ERRORS["invalid_user_api_key"])
 
     try:
-
         if(model in unsophisticated_models_whitelist):
             text_to_translate = f"{translation_instructions}\n{text_to_translate}"
             translation_instructions = "Your instructions are in the other text."
@@ -100,7 +111,7 @@ async def proxy_easytl(request_data:EasyTLRequest, request:Request):
     async with httpx.AsyncClient(timeout=None) as client:
         headers = {
             "Content-Type": "application/json",
-            "X-API-Key": V1_EASYTL_ROOT_KEY
+            "X-API-Key": V1_EASYTL_ROOT_KEY,
         }
         response = await client.post(f"{get_url()}/v1/easytl", json=request_data.model_dump(), headers=headers)
 

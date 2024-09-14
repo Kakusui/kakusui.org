@@ -56,7 +56,7 @@ type ResponseValues =
   translatedText: string;
 };
 
-function EasyTLPage() 
+function EasyTLPage()  
 {
   useEffect(() => {
     document.title = 'Kakusui | EasyTL';
@@ -87,6 +87,7 @@ Additional instructions:
   const [modelOptions, setModelOptions] = useState<string[]>([]);
   const [isAdvancedSettingsVisible, setAdvancedSettingsVisible] = useState(false);
   const toast = useToast();
+  const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => 
   {
@@ -225,7 +226,11 @@ Additional instructions:
         throw new Error("Turnstile verification failed. Please try again.");
       }
 
-      localStorage.setItem(`${data.llmType}-apiKey`, data.userAPIKey);
+      if (!isAdmin) 
+      {
+        localStorage.setItem(`${data.llmType}-apiKey`, data.userAPIKey);
+      }
+
       localStorage.setItem('tone', data.tone);
       localStorage.setItem('language', data.language);
       localStorage.setItem('additional_instructions', data.additional_instructions);
@@ -244,16 +249,34 @@ Additional instructions:
         translationInstructions = translationInstructions.replace("{{#if additional_instructions}}\nAdditional instructions:\n{{additional_instructions}}\n{{/if}}", '');
       }
 
+      const requestBody = {
+        textToTranslate: data.textToTranslate,
+        translationInstructions,
+        llmType: data.llmType,
+        userAPIKey: data.userAPIKey,
+        model: data.model,
+        isAdmin
+      };
+
       const response = await fetch(getURL("/proxy/easytl"), 
       {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...data, translationInstructions }),
+        headers: 
+        { 
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${localStorage.getItem('access_token')}`
+        },
+        body: JSON.stringify(requestBody),
       });
 
-      const result = await response.json();
-      if(!response.ok) throw new Error(result.message || "An unknown error occurred");
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error(`Error response: ${response.status} ${response.statusText}`);
+        console.error(`Error details: ${errorText}`);
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
 
+      const result = await response.json();
       setResponse(result);
     } 
     catch (error) 
@@ -286,6 +309,33 @@ Additional instructions:
   const memoizedTurnstile = useMemo(() =>
     <Turnstile siteKey="0x4AAAAAAAbu-SlGyNF03684" onVerify={setTurnstileToken} resetKey={resetTurnstile} />
   , [resetTurnstile]);
+
+  useEffect(() => 
+  {
+    const checkAdminStatus = async () => 
+    {
+      try 
+      {
+        const response = await fetch(getURL("/check-admin"), 
+        {
+          method: 'POST',
+          headers: 
+          {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${localStorage.getItem('access_token')}`
+          },
+        });
+        const result = await response.json();
+        setIsAdmin(result.result);
+      } 
+      catch (error) 
+      {
+        console.error("Error checking admin status:", error);
+      }
+    };
+
+    checkAdminStatus();
+  }, []);
 
   return (
     <>
@@ -339,24 +389,26 @@ Additional instructions:
               </Select>
             </FormControl>
 
-            <FormControl isInvalid={!!errors.userAPIKey} flex={1}>
-              <FormLabel>API Key</FormLabel>
-              <InputGroup>
-                <Input
-                  {...register("userAPIKey", { required: true })}
-                  type={showApiKey ? "text" : "password"}
-                  placeholder="Enter API key"
-                />
-                <InputRightElement>
-                  <IconButton
-                    aria-label={showApiKey ? "Hide API key" : "Show API key"}
-                    icon={showApiKey ? <ViewOffIcon /> : <ViewIcon />}
-                    onClick={handleToggleShowApiKey}
-                    variant="ghost"
+            {!isAdmin && (
+              <FormControl isInvalid={!!errors.userAPIKey} flex={1}>
+                <FormLabel>API Key</FormLabel>
+                <InputGroup>
+                  <Input
+                    {...register("userAPIKey", { required: !isAdmin })}
+                    type={showApiKey ? "text" : "password"}
+                    placeholder="Enter API key"
                   />
-                </InputRightElement>
-              </InputGroup>
-            </FormControl>
+                  <InputRightElement>
+                    <IconButton
+                      aria-label={showApiKey ? "Hide API key" : "Show API key"}
+                      icon={showApiKey ? <ViewOffIcon /> : <ViewIcon />}
+                      onClick={handleToggleShowApiKey}
+                      variant="ghost"
+                    />
+                  </InputRightElement>
+                </InputGroup>
+              </FormControl>
+            )}
           </HStack>
 
           <Box width="100%">

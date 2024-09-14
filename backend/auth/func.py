@@ -26,7 +26,7 @@ from auth.util import get_secure_filename
 
 from email_util.common import send_email, get_smtp_envs
 
-from constants import ACCESS_TOKEN_SECRET, REFRESH_TOKEN_SECRET, TOKEN_ALGORITHM, ADMIN_USER, VERIFICATION_DATA_DIR, VERIFICATION_EXPIRATION_MINUTES
+from constants import ACCESS_TOKEN_SECRET, REFRESH_TOKEN_SECRET, TOKEN_ALGORITHM, ADMIN_USER, VERIFICATION_DATA_DIR, VERIFICATION_EXPIRATION_MINUTES, OPENAI_API_KEY, ANTHROPIC_API_KEY, GEMINI_API_KEY
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
 
@@ -225,3 +225,13 @@ def send_verification_email(email:str, code:str) -> None:
     body = f"Your verification code is {code}"
 
     send_email(subject=subject, body=body, to_email=email, attachment_path=None, from_email=FROM_EMAIL, smtp_server=SMTP_SERVER, smtp_port=SMTP_PORT, smtp_user=SMTP_USER, smtp_password=SMTP_PASSWORD)
+
+def get_admin_api_key(llm_type:str) -> str | None: 
+    if(llm_type == "openai"):
+        return OPENAI_API_KEY
+    elif(llm_type == "anthropic"):
+        return ANTHROPIC_API_KEY
+    elif(llm_type == "gemini"):
+        return GEMINI_API_KEY
+    else:
+        return None

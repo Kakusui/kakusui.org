@@ -46,6 +46,10 @@ V1_EASYTL_ROOT_KEY = os.environ.get("V1_EASYTL_ROOT_KEY")
 V1_EASYTL_PUBLIC_API_KEY = os.environ.get("V1_EASYTL_PUBLIC_API_KEY")
 V1_ELUCIDATE_ROOT_KEY = os.environ.get("V1_ELUCIDATE_ROOT_KEY")
 
+OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY")
+ANTHROPIC_API_KEY = os.environ.get("ANTHROPIC_API_KEY")
+GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY")
+
 DATABASE_URL: str = "sqlite:///./database/kakusui.db"
 DATABASE_PATH: str = "database/kakusui.db"
 BACKUP_LOGS_DIR = 'database/logs'
@@ -76,4 +80,5 @@ __all__ = ["TURNSTILE_SECRET_KEY",
            "DATABASE_PATH", 
            "BACKUP_LOGS_DIR", 
            "VERIFICATION_DATA_DIR", 
-           "RATE_LIMIT_DATA_DIR"]
+           "RATE_LIMIT_DATA_DIR",
+           "OPENAI_API_KEY"]
