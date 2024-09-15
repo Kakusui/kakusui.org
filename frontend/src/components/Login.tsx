@@ -5,7 +5,7 @@
 // maintain allman bracket style for consistency
 
 // react
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 
 // chakra-ui
 import { Box, Button, Input, Modal, ModalOverlay, ModalContent, ModalHeader, ModalFooter, ModalBody, ModalCloseButton, Text, useDisclosure, Spinner, Flex, useToast } from "@chakra-ui/react";
@@ -19,87 +19,18 @@ import { motion } from 'framer-motion';
 // animations
 import { buttonVariants } from '../animations/commonAnimations';
 
-interface LoginProps 
-{
-    onLogin: () => void;
-    onLogout: () => void;
-}
+// auth
+import { useAuth } from '../AuthContext';
 
-const Login: React.FC<LoginProps> = ({ onLogin, onLogout }) => 
+const Login: React.FC = () => 
 {
     const { isOpen, onOpen, onClose } = useDisclosure();
     const [email, setEmail] = useState('');
     const [loginCode, setLoginCode] = useState('');
     const [isLoginStep, setIsLoginStep] = useState(false);
-    const [isLoggedIn, setIsLoggedIn] = useState(false);
-    const [isLoading, setIsLoading] = useState(true);
     const [isSignUp, setIsSignUp] = useState(false);
     const toast = useToast();
-
-    useEffect(() => 
-    {
-        const checkLoginStatus = async () => 
-        {
-            setIsLoading(true);
-            try 
-            {
-                const token = localStorage.getItem('token');
-                if (token) 
-                {
-                    const response = await fetch(getURL('/verify-token'), 
-                    {
-                        method: 'POST',
-                        headers: 
-                        {
-                            'Authorization': `Bearer ${token}`
-                        }
-                    });
-
-                    if (response.ok) 
-                    {
-                        const data = await response.json();
-                        if (data.valid) 
-                        {
-                            setIsLoggedIn(true);
-                            onLogin();
-                        } 
-                        else 
-                        {
-                            throw new Error('Token verification failed');
-                        }
-                    } 
-                    else 
-                    {
-                        throw new Error('Token verification failed');
-                    }
-                } 
-                else 
-                {
-                    throw new Error('No token found');
-                }
-            } 
-            catch (error) 
-            {
-                setIsLoggedIn(false);
-                onLogout();
-                localStorage.removeItem('token');
-            } 
-            finally 
-            {
-                setIsLoading(false);
-            }
-        };
-
-        checkLoginStatus();
-    }, [onLogin, onLogout]);
-
-    const handleLogout = () => 
-    {
-        localStorage.removeItem('token');
-        document.cookie = 'refresh_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; secure; HttpOnly';
-        setIsLoggedIn(false);
-        onLogout();
-    };
+    const { isLoggedIn, login, logout, isLoading } = useAuth();
 
     const handleClose = () => 
     {
@@ -208,10 +139,7 @@ const Login: React.FC<LoginProps> = ({ onLogin, onLogout }) =>
                 const data = await response.json();
                 if (data.access_token) 
                 {
-                    localStorage.setItem('token', data.access_token);
-                    document.cookie = `refresh_token=${data.refresh_token}; path=/; secure; HttpOnly`;
-                    setIsLoggedIn(true);
-                    onLogin();
+                    login(data.access_token);
                     handleClose();
                 } 
                 else 
@@ -258,15 +186,20 @@ const Login: React.FC<LoginProps> = ({ onLogin, onLogout }) =>
         <>
             <motion.div whileHover="hover" variants={buttonVariants}>
                 <Button 
-                    onClick={isLoggedIn ? handleLogout : onOpen} 
+                    onClick={isLoggedIn ? logout : onOpen} 
                     rounded="full"
                     bg="orange.400"
                     color="white"
                     _hover={{ bg: 'orange.500' }}
                     minWidth="70px" 
                     height="40px"    
+                    disabled={isLoading}
                 >
-                    {isLoading ? <Spinner size="sm" /> : (isLoggedIn ? 'Logout' : 'Login')}
+                    {isLoading ? (
+                        <Spinner size="sm" color="white" />
+                    ) : (
+                        isLoggedIn ? 'Logout' : 'Login'
+                    )}
                 </Button>
             </motion.div>
             <Modal isOpen={isOpen} onClose={handleClose} isCentered motionPreset="slideInBottom">

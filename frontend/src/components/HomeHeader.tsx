@@ -5,8 +5,7 @@
 // maintain allman bracket style for consistency
 
 // react
-import React, { useState, useEffect } from 'react';
-import { jwtDecode } from "jwt-decode";
+import React from 'react';
 
 // chakra-ui
 import {
@@ -25,58 +24,11 @@ import logo from '../assets/images/kakusui_logo.webp';
 import { DesktopNav } from './NavItems';
 import Login from './Login';
 
+import { useAuth } from '../AuthContext';
+
 const HomeHeader: React.FC = () => 
 {
-    const [isLoggedIn, setIsLoggedIn] = useState(false);
-    const [userEmail, setUserEmail] = useState<string | null>(null);
-
-    useEffect(() => 
-    {
-        const token = localStorage.getItem('token');
-        if (token) 
-        {
-            setIsLoggedIn(true);
-            try 
-            {
-                const decoded = jwtDecode(token);
-                setUserEmail(decoded.sub as string);
-            } 
-            catch (error) 
-            {
-                console.error("Error decoding token:", error);
-            }
-        } 
-        else 
-        {
-            setIsLoggedIn(false);
-            setUserEmail(null);
-        }
-    }, []);
-
-    const handleLogin = () =>
-    {
-        setIsLoggedIn(true);
-        const token = localStorage.getItem('token');
-        if (token) 
-        {
-            try 
-            {
-                const decoded = jwtDecode(token);
-                setUserEmail(decoded.sub as string);
-            } 
-            catch (error) 
-            {
-                console.error("Error decoding token:", error);
-            }
-        }
-    };
-
-    const handleLogout = () =>
-    {
-        setIsLoggedIn(false);
-        setUserEmail(null);
-        localStorage.removeItem('token');
-    };
+    const { isLoggedIn, userEmail, isLoading } = useAuth();
 
     return (
         <Box position="absolute" top={0} left={0} right={0} zIndex={1} mb={4}>
@@ -102,10 +54,10 @@ const HomeHeader: React.FC = () =>
                         <DesktopNav />
                     </Flex>
                     <Flex align="center">
-                        {isLoggedIn && userEmail && (
+                        {!isLoading && isLoggedIn && userEmail && (
                             <Text mr={4} fontSize="sm">{userEmail}</Text>
                         )}
-                        <Login onLogin={handleLogin} onLogout={handleLogout} />
+                        <Login />
                     </Flex>
                 </Flex>
             </Flex>

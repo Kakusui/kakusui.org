@@ -16,6 +16,7 @@ import Footer from "./components/Footer.tsx";
 import PageWrapper from "./components/PageWrapper.tsx";
 import theme from "./theme.ts";
 import Router from "./Router.tsx";
+import { AuthProvider } from './AuthContext';
 
 function App() 
 {
@@ -25,17 +26,19 @@ function App()
 
     return (
         <ChakraProvider theme={theme}>
-            {!isLandingPage && !isFullScreenPage && <Navbar isHomePage={false} />}
-            {isLandingPage || isFullScreenPage ? (
-                <Router />
-            ) : (
-                <PageWrapper showBackground={false}>
-                    <Box maxWidth="container.xl" margin="0 auto">
-                        <Router />
-                    </Box>
-                </PageWrapper>
-            )}
-            {!isLandingPage && !isFullScreenPage && <Footer />}
+            <AuthProvider>
+                {!isLandingPage && !isFullScreenPage && <Navbar isHomePage={false} />}
+                {isLandingPage || isFullScreenPage ? (
+                    <Router />
+                ) : (
+                    <PageWrapper showBackground={false}>
+                        <Box maxWidth="container.xl" margin="0 auto">
+                            <Router />
+                        </Box>
+                    </PageWrapper>
+                )}
+                {!isLandingPage && !isFullScreenPage && <Footer />}
+            </AuthProvider>
         </ChakraProvider>
     );
 }
