@@ -59,8 +59,6 @@ const Login: React.FC = () =>
             return;
         }
 
-        setIsLoginStep(true);
-
         try 
         {
             const checkUserResponse = await fetch(getURL('/check-email-registration'), 
@@ -84,10 +82,12 @@ const Login: React.FC = () =>
                 }
                 if(userData.registered && isSignUp)
                 {
-                    showToast("Already Registered", "This email is already registered. Please log in instead.", "error");
                     setIsLoginStep(false);
+                    showToast("Already Registered", "This email is already registered. Please log in instead.", "error");
                     return;
                 }
+
+                setIsLoginStep(true);
 
                 const response = await fetch(getURL('/send-verification-email'), 
                 {
