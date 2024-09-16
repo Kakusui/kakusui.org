@@ -57,7 +57,9 @@ const HomeHeader: React.FC = () =>
                     </Flex>
                     <Flex align="center">
                         {!isLoading && isLoggedIn && userEmail && (
-                            <Text mr={4} fontSize="sm">{userEmail}</Text>
+                            <Text fontSize="sm" fontWeight="medium" color="orange.400" mr={4}>
+                                {userEmail}
+                            </Text>
                         )}
                         <Login />
                     </Flex>
