@@ -14,6 +14,7 @@ interface AuthContextType
 {
     isLoggedIn:boolean;
     userEmail:string | null;
+    isPrivilegedUser:boolean;
     login:(token:string) => void;
     logout:() => void;
     checkLoginStatus:() => Promise<void>;
@@ -26,6 +27,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 {
     const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false);
     const [userEmail, setUserEmail] = useState<string | null>(null);
+    const [isPrivilegedUser, setIsPrivilegedUser] = useState<boolean>(false);
     const [isLoading, setIsLoading] = useState<boolean>(true);
 
     const checkLoginStatus = async () => 
@@ -42,6 +44,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 {
                     setIsLoggedIn(true);
                     setUserEmail(decoded.sub as string);
+                    setIsPrivilegedUser(decoded.sub === 'kbilyeu@kakusui.org');
                 } 
                 else 
                 {
@@ -58,6 +61,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         {
             setIsLoggedIn(false);
             setUserEmail(null);
+            setIsPrivilegedUser(false);
         }
         setIsLoading(false);
     };
@@ -73,6 +77,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         const decoded = jwtDecode(token);
         setIsLoggedIn(true);
         setUserEmail(decoded.sub as string);
+        setIsPrivilegedUser(decoded.sub === 'kbilyeu@kakusui.org');
     };
 
     const logout = () => 
@@ -81,10 +86,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         document.cookie = 'refresh_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; secure; HttpOnly';
         setIsLoggedIn(false);
         setUserEmail(null);
+        setIsPrivilegedUser(false);
     };
 
     return (
-        <AuthContext.Provider value={{ isLoggedIn, userEmail, login, logout, checkLoginStatus, isLoading }}>
+        <AuthContext.Provider value={{ isLoggedIn, userEmail, isPrivilegedUser, login, logout, checkLoginStatus, isLoading }}>
             {children}
         </AuthContext.Provider>
     );

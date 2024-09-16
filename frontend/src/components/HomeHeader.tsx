@@ -5,8 +5,7 @@
 // maintain allman bracket style for consistency
 
 // react
-import React, { useEffect, useState } from 'react';
-import { jwtDecode } from "jwt-decode";
+import React from 'react';
 
 // chakra-ui
 import {
@@ -29,34 +28,7 @@ import { useAuth } from '../AuthContext';
 
 const HomeHeader: React.FC = () => 
 {
-    const { isLoggedIn, userEmail, isLoading } = useAuth();
-    const [isPrivilegedUser, setIsPrivilegedUser] = useState(false);
-
-    useEffect(() => 
-    {
-        const checkPrivilegedUser = () => 
-        {
-            const token = localStorage.getItem('token');
-            if(token) 
-            {
-                try 
-                {
-                    const decodedToken = jwtDecode(token);
-                    setIsPrivilegedUser(decodedToken.sub === 'kbilyeu@kakusui.org');
-                } 
-                catch(error) 
-                {
-                    setIsPrivilegedUser(false);
-                }
-            } 
-            else 
-            {
-                setIsPrivilegedUser(false);
-            }
-        };
-
-        checkPrivilegedUser();
-    }, [isLoggedIn]);
+    const { isLoggedIn, userEmail, isLoading, isPrivilegedUser } = useAuth();
 
     const navItems = isPrivilegedUser ? [...NAV_ITEMS, { label: 'Admin', href: '/admin' }] : NAV_ITEMS;
 

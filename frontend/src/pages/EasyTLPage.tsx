@@ -7,7 +7,6 @@
 // react
 import { useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
-import { jwtDecode } from "jwt-decode";
 
 // chakra-ui
 import {
@@ -39,6 +38,7 @@ import DownloadButton from "../components/DownloadButton";
 import HowToUseSection from "../components/HowToUseSection";
 import LegalLinks from "../components/LegalLinks";
 import { getURL } from "../utils";
+import { useAuth } from "../AuthContext";
 
 type FormInput = 
 {
@@ -88,33 +88,7 @@ Additional instructions:
   const [modelOptions, setModelOptions] = useState<string[]>([]);
   const [isAdvancedSettingsVisible, setAdvancedSettingsVisible] = useState(false);
   const toast = useToast();
-  const [isPrivilegedUser, setIsPrivilegedUser] = useState(false);
-
-  useEffect(() => 
-  {
-    const checkPrivilegedUser = () => 
-    {
-      const token = localStorage.getItem('token');
-      if (token) 
-      {
-        try 
-        {
-          const decodedToken = jwtDecode(token);
-          setIsPrivilegedUser(decodedToken.sub === 'kbilyeu@kakusui.org');
-        } 
-        catch (error) 
-        {
-          setIsPrivilegedUser(false);
-        }
-      } 
-      else 
-      {
-        setIsPrivilegedUser(false);
-      }
-    };
-
-    checkPrivilegedUser();
-  }, []);
+  const { isPrivilegedUser } = useAuth();
 
   useEffect(() => 
   {
@@ -169,7 +143,7 @@ Additional instructions:
 
     updateModelOptions();
     updateApiKey();
-  }, [selectedLLM, setValue]);
+  }, [selectedLLM, setValue, selectedModel]);
 
   const handleToggleShowApiKey = () => setShowApiKey(!showApiKey);
 
