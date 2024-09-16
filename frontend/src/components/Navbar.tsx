@@ -22,10 +22,12 @@ import { CloseIcon, HamburgerIcon } from '@chakra-ui/icons';
 import logo from '../assets/images/kakusui_logo.webp';
 
 // components
-import { DesktopNav, MobileNav } from './NavItems';
+import { DesktopNav, MobileNav, NAV_ITEMS } from './NavItems';
 import Login from './Login';
 
 import { useAuth } from '../AuthContext';
+import { useEffect, useState } from 'react';
+import { jwtDecode } from "jwt-decode";
 
 interface NavbarProps 
 {
@@ -36,6 +38,35 @@ export default function Navbar({ isHomePage }: NavbarProps)
 {
     const { isOpen, onToggle } = useDisclosure();
     const { isLoggedIn, userEmail, isLoading } = useAuth();
+    const [isPrivilegedUser, setIsPrivilegedUser] = useState(false);
+
+    useEffect(() => 
+    {
+        const checkPrivilegedUser = () => 
+        {
+            const token = localStorage.getItem('token');
+            if(token) 
+            {
+                try 
+                {
+                    const decodedToken = jwtDecode(token);
+                    setIsPrivilegedUser(decodedToken.sub === 'kbilyeu@kakusui.org');
+                } 
+                catch(error) 
+                {
+                    setIsPrivilegedUser(false);
+                }
+            } 
+            else 
+            {
+                setIsPrivilegedUser(false);
+            }
+        };
+
+        checkPrivilegedUser();
+    }, [isLoggedIn]);
+
+    const navItems = isPrivilegedUser ? [...NAV_ITEMS, { label: 'Admin', href: '/admin' }] : NAV_ITEMS;
 
     const bgColor = isHomePage ? 'transparent' : '#14192b';
     const borderColor = isHomePage ? 'transparent' : 'rgba(255, 255, 255, 0.1)';
@@ -81,7 +112,7 @@ export default function Navbar({ isHomePage }: NavbarProps)
                             <Image src={logo} boxSize='30px' alt='Kakusui Logo'/>
                         </Link>
                         <Flex display={{base: 'none', md: 'flex'}} ml={10}>
-                            <DesktopNav/>
+                            <DesktopNav items={navItems}/>
                         </Flex>
                     </Flex>
                     <Flex align="center">
@@ -94,7 +125,7 @@ export default function Navbar({ isHomePage }: NavbarProps)
             </Flex>
 
             <Collapse in={isOpen} animateOpacity>
-                <MobileNav/>
+                <MobileNav items={navItems}/>
             </Collapse>
         </Box>
     );

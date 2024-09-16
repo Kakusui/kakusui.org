@@ -54,7 +54,7 @@ const NAV_ITEMS: Array<NavItem> = [
     },
 ];
 
-const DesktopNav = () => 
+const DesktopNav = ({ items }: { items: Array<NavItem> }) => 
 {
     const linkColor = 'gray.300';
     const linkHoverColor = 'white';
@@ -62,7 +62,7 @@ const DesktopNav = () =>
 
     return (
         <Stack direction={'row'} spacing={4}>
-            {NAV_ITEMS.map((navItem) => (
+            {items.map((navItem) => (
                 <Box key={navItem.label}>
                     <Popover trigger={'hover'} placement={'bottom-start'}>
                         <PopoverTrigger>
@@ -138,14 +138,14 @@ const DesktopSubNav = ({label, href, subLabel}: NavItem) =>
     );
 };
 
-const MobileNav = () => 
+const MobileNav = ({ items }: { items: Array<NavItem> }) => 
 {
     return (
         <Stack
             bg="#14192b"
             p={4}
             display={{md: 'none'}}>
-            {NAV_ITEMS.map((navItem) => (
+            {items.map((navItem) => (
                 <MobileNavItem key={navItem.label} {...navItem} />
             ))}
         </Stack>
