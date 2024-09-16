@@ -165,7 +165,7 @@ def get_current_user(token:str = Depends(oauth2_scheme)):
     except HTTPException as e:
         raise e
 
-def get_current_active_user(current_user:str = Depends(get_current_user)):
+def check_if_admin_user(current_user:str = Depends(get_current_user)):
 
     """
 

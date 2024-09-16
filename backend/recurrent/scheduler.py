@@ -15,14 +15,14 @@ import atexit
 
 from apscheduler.schedulers.background import BackgroundScheduler
 
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm import Session
 
 ## custom imports
 from email_util.backup import perform_backup_scheduled
 
 from constants import BACKUP_LOGS_DIR, VERIFICATION_DATA_DIR, RATE_LIMIT_DATA_DIR, DATABASE_PATH
 
-def start_scheduler(SessionLocal:sessionmaker) -> None:
+def start_scheduler(db:Session) -> None:
 
     """
 
@@ -39,8 +39,8 @@ def start_scheduler(SessionLocal:sessionmaker) -> None:
 
     for _ in range(max_retries):
         try:
-            with shelve.open(os.path.join(BACKUP_LOGS_DIR, 'backup_scheduler.db')) as db:
-                last_run = db.get('last_run', None)
+            with shelve.open(os.path.join(BACKUP_LOGS_DIR, 'backup_scheduler.db')) as database:
+                last_run = database.get('last_run', None)
 
                 should_run_initial = True
                 if(last_run):
@@ -61,11 +61,11 @@ def start_scheduler(SessionLocal:sessionmaker) -> None:
 
     if(should_run_initial):
         cleanup_expired_codes()
-        perform_backup_scheduled(SessionLocal)
+        perform_backup_scheduled(db)
 
     scheduler = BackgroundScheduler()
 
-    scheduler.add_job(lambda: perform_backup_scheduled(SessionLocal), 'interval', hours=6)
+    scheduler.add_job(lambda: perform_backup_scheduled(db), 'interval', hours=6)
     scheduler.add_job(cleanup_expired_codes, 'interval', hours=1)
 
     scheduler.start()

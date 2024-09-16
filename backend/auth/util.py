@@ -10,6 +10,9 @@ from fastapi import HTTPException
 
 from werkzeug.utils import secure_filename
 
+## custom modules
+from constants import ENVIRONMENT
+
 def get_secure_path(base_dir:str, filename:str) -> str:
     secure_name = secure_filename(filename)
     return os.path.join(base_dir, secure_name)
@@ -33,6 +36,9 @@ def check_internal_request(origin:str | None) -> None:
         "http://localhost:5173",
         ".kakusui-org.pages.dev"
     ]
+
+    if(ENVIRONMENT != "development"):
+        allowed_domains.pop(allowed_domains.index("http://localhost:5173"))
 
     if(origin is None or (origin is not None and not any(origin.endswith(domain) for domain in allowed_domains))):
         raise HTTPException(status_code=403, detail="Forbidden")

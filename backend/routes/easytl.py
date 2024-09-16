@@ -3,7 +3,7 @@
 ## license that can be found in the LICENSE file.
 
 ## third-party imports
-from fastapi import APIRouter, Request, status, Depends, HTTPException
+from fastapi import APIRouter, Request, status
 from fastapi.responses import JSONResponse
 import logging
 

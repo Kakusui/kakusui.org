@@ -48,3 +48,7 @@ class ElucidateRequest(BaseModel):
 
 class VerifyTurnstileRequest(BaseModel):
     token:str
+
+class EmailRequest(BaseModel):
+    subject:str
+    body:str

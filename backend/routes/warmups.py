@@ -3,34 +3,52 @@
 ## license that can be found in the LICENSE file.
 
 ## third-party imports
-from fastapi import APIRouter, status
+from fastapi import APIRouter, status, Request
 from fastapi.responses import JSONResponse
+
+from auth.util import check_internal_request
 
 router = APIRouter()        
 
 @router.get("/", status_code=status.HTTP_200_OK)
 async def api_home():
+
     return JSONResponse(
         status_code=status.HTTP_200_OK,
-        content={"message": "Welcome to the API"}
+        content={"message": "Welcome to the Kakusui API."}
     )
 
 @router.get("/v1/kairyou", status_code=status.HTTP_200_OK)
-async def kairyou_warm_up():
+async def kairyou_warm_up(request:Request):
+
+    origin = request.headers.get('origin')
+
+    check_internal_request(origin)
+
     return JSONResponse(
         status_code=status.HTTP_200_OK,
         content={"message": "Kairyou is running."}
     )
 
 @router.get("/v1/easytl", status_code=status.HTTP_200_OK)
-async def easytl_warm_up():
+async def easytl_warm_up(request:Request):
+
+    origin = request.headers.get('origin')
+
+    check_internal_request(origin)
+
     return JSONResponse(
         status_code=status.HTTP_200_OK,
         content={"message": "EasyTL is running."}
     )
 
 @router.get("/v1/elucidate", status_code=status.HTTP_200_OK)
-async def elucidate_warm_up():
+async def elucidate_warm_up(request:Request):
+
+    origin = request.headers.get('origin')
+
+    check_internal_request(origin)
+
     return JSONResponse(
         status_code=status.HTTP_200_OK,
         content={"message": "Elucidate is running."}

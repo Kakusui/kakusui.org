@@ -10,6 +10,9 @@ from constants import *
 import os
 import threading
 
+maintenance_mode = False
+maintenance_lock = threading.Lock()
+
 ## third-party libraries
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
@@ -30,9 +33,6 @@ from routes.elucidate import router as elucidate_router
 from routes.auth import router as auth_router
 from routes.turnstile import router as turnstile_router
 ##-----------------------------------------start-of-main----------------------------------------------------------------------------------------------------------------------------------------------------------
-
-maintenance_mode = False
-maintenance_lock = threading.Lock()
 
 if(not os.path.exists("database") and ACCESS_TOKEN_SECRET == "secret"):
     os.makedirs("database", exist_ok=True)
@@ -80,9 +80,10 @@ app.add_middleware(
 
 @app.middleware("http")
 async def maintenance_middleware(request:Request, call_next):
-    global maintenance_mode
-    if(maintenance_mode):
-        return JSONResponse(status_code=503, content={"message": "Server is in maintenance mode"})
+    global maintenance_mode, maintenance_lock
+    with maintenance_lock:
+        if(maintenance_mode):
+            return JSONResponse(status_code=503, content={"message": "Server is in maintenance mode"})
     
     response = await call_next(request)
     
@@ -97,4 +98,5 @@ app.include_router(turnstile_router)
 
 @app.on_event("startup")
 async def startup_event():
-    start_scheduler(SessionLocal)
+    db = SessionLocal()
+    start_scheduler(db)

@@ -168,7 +168,7 @@ def decompress_file(file_path:str, decompressed_path:str) -> str:
         
     return decompressed_path
 
-def perform_backup(SessionLocal:sessionmaker) -> None:
+def perform_backup(db:Session) -> None:
 
     """
 
@@ -179,8 +179,6 @@ def perform_backup(SessionLocal:sessionmaker) -> None:
     ENCRYPTION_KEY, SMTP_SERVER, SMTP_PORT, SMTP_USER, SMTP_PASSWORD, FROM_EMAIL, TO_EMAIL = get_smtp_envs()
 
     timestamp = datetime.now().strftime("%Y-%m-%d %H_%M_%S")
-
-    db:Session = next(get_db(SessionLocal))
 
     number_of_email_alerts = db.query(EmailAlertModel).count()
     number_of_users = db.query(User).count()
@@ -233,7 +231,7 @@ def perform_backup(SessionLocal:sessionmaker) -> None:
 
 ##----------------------------------/----------------------------------##
 
-def perform_backup_scheduled(SessionLocal:sessionmaker) -> None:
+def perform_backup_scheduled(db:Session) -> None:
 
     """
 
@@ -241,11 +239,11 @@ def perform_backup_scheduled(SessionLocal:sessionmaker) -> None:
 
     """
 
-    with shelve.open(os.path.join(BACKUP_LOGS_DIR, 'backup_scheduler.db')) as db:
-        perform_backup(SessionLocal)
-        db['last_run'] = datetime.now()
+    with shelve.open(os.path.join(BACKUP_LOGS_DIR, 'backup_scheduler.db')) as database:
+        perform_backup(db)
+        database['last_run'] = datetime.now()
 
-def replace_sqlite_db(engine: Engine, extracted_db_path: str, current_db_path: str) -> None:
+def replace_sqlite_db(engine:Engine, extracted_db_path: str, current_db_path: str) -> None:
     """
     Replace the current SQLite database with the extracted SQLite database and restart the application.
 
@@ -254,13 +252,13 @@ def replace_sqlite_db(engine: Engine, extracted_db_path: str, current_db_path: s
     extracted_db_path (str): The path to the extracted SQLite database
     current_db_path (str): The path to the current SQLite database
     """
+    
     close_all_sessions()
     
     engine.dispose()
     
     os.replace(extracted_db_path, current_db_path)
 
-    
     # Restart the application
     python = sys.executable
     os.execl(python, python, *sys.argv)
