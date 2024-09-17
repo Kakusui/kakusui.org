@@ -140,8 +140,9 @@ const Login: React.FC = () =>
                 const data = await response.json();
                 if (data.access_token) 
                 {
-                    login(data.access_token);
+                    await login(data.access_token);
                     handleClose();
+                    showToast("Success", `Successfully ${isSignUp ? "signed up" : "logged in"}`, "success");
                 } 
                 else 
                 {
@@ -187,7 +188,7 @@ const Login: React.FC = () =>
         <>
             <motion.div whileHover="hover" variants={buttonVariants}>
                 <Button 
-                    onClick={isLoggedIn ? logout : onOpen} 
+                    onClick={isLoggedIn ? async () => { await logout(); showToast("Success", "Successfully logged out", "success"); } : onOpen} 
                     rounded="full"
                     bg="orange.400"
                     color="white"

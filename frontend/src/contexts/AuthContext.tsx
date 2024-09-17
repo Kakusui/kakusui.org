@@ -71,18 +71,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         checkLoginStatus();
     }, []);
 
-    const login = (access_token:string) => 
+    const login = async (access_token: string) => 
     {
         localStorage.setItem('access_token', access_token);
+        await checkLoginStatus();
     };
 
-    const logout = () => 
+    const logout = async () => 
     {
         localStorage.removeItem('access_token');
         document.cookie = 'refresh_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; secure; HttpOnly';
-        setIsLoggedIn(false);
-        setUserEmail(null);
-        setIsPrivilegedUser(false);
+        await checkLoginStatus();
     };
 
     return (
