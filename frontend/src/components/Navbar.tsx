@@ -25,7 +25,7 @@ import logo from '../assets/images/kakusui_logo.webp';
 import { DesktopNav, MobileNav, NAV_ITEMS } from './NavItems';
 import Login from './Login';
 
-import { useAuth } from '../AuthContext';
+import { useAuth } from '../contexts/AuthContext';
 
 interface NavbarProps 
 {

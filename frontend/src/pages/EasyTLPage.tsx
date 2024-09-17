@@ -38,7 +38,7 @@ import DownloadButton from "../components/DownloadButton";
 import HowToUseSection from "../components/HowToUseSection";
 import LegalLinks from "../components/LegalLinks";
 import { getURL } from "../utils";
-import { useAuth } from "../AuthContext";
+import { useAuth } from "../contexts/AuthContext";
 
 type FormInput = 
 {
@@ -90,6 +90,8 @@ Additional instructions:
   const toast = useToast();
   const { isPrivilegedUser } = useAuth();
 
+  const access_token = localStorage.getItem('access_token');
+
   useEffect(() => 
   {
     const warmUpAPI = async () => 
@@ -113,10 +115,10 @@ Additional instructions:
   }, []);
 
   useEffect(() => {
-    const savedTone = localStorage.getItem('tone');
-    const savedLanguage = localStorage.getItem('language');
-    const savedAdditionalInstructions = localStorage.getItem('additional_instructions');
-    const savedEasytlCustomInstructionFormat = localStorage.getItem('easytlCustomInstructionFormat');
+    const savedTone = localStorage.getItem('easytl_tone');
+    const savedLanguage = localStorage.getItem('easytl_language');
+    const savedAdditionalInstructions = localStorage.getItem('easytl_additional_instructions');
+    const savedEasytlCustomInstructionFormat = localStorage.getItem('easytl_custom_instruction_format');
     
     if (savedTone) setValue('tone', savedTone);
     if (savedLanguage) setValue('language', savedLanguage);
@@ -137,7 +139,7 @@ Additional instructions:
     };
 
     const updateApiKey = () => {
-      const savedApiKey = localStorage.getItem(`${selectedLLM}-apiKey`);
+      const savedApiKey = localStorage.getItem(`easytl_${selectedLLM.toLowerCase()}_apiKey`);
       setValue("userAPIKey", savedApiKey || "");
     };
 
@@ -177,7 +179,7 @@ Additional instructions:
   {
     try 
     {
-      const verificationResponse = await fetch(getURL("/verify-turnstile"), 
+      const verificationResponse = await fetch(getURL("/auth/verify-turnstile"), 
       {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -227,11 +229,11 @@ Additional instructions:
         throw new Error("Turnstile verification failed. Please try again.");
       }
 
-      localStorage.setItem(`${data.llmType}-apiKey`, data.userAPIKey);
-      localStorage.setItem('tone', data.tone);
-      localStorage.setItem('language', data.language);
-      localStorage.setItem('additional_instructions', data.additional_instructions);
-      localStorage.setItem('easytlCustomInstructionFormat', data.easytlCustomInstructionFormat);
+      localStorage.setItem(`easytl_${data.llmType.toLowerCase()}_apiKey`, data.userAPIKey);
+      localStorage.setItem('easytl_tone', data.tone);
+      localStorage.setItem('easytl_language', data.language);
+      localStorage.setItem('easytl_additional_instructions', data.additional_instructions);
+      localStorage.setItem('easytl_custom_instruction_format', data.easytlCustomInstructionFormat);
 
       let translationInstructions = data.easytlCustomInstructionFormat
         .replace("{{language}}", data.language)
@@ -260,7 +262,7 @@ Additional instructions:
         headers: 
         { 
           "Content-Type": "application/json",
-          "Authorization": `Bearer ${localStorage.getItem('token')}`
+          "Authorization": `Bearer ${access_token}` 
         },
         body: JSON.stringify(requestBody),
       });

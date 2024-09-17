@@ -16,7 +16,7 @@ import Footer from "./components/Footer.tsx";
 import PageWrapper from "./components/PageWrapper.tsx";
 import theme from "./theme.ts";
 import Router from "./Router.tsx";
-import { AuthProvider } from './AuthContext';
+import { AuthProvider } from './contexts/AuthContext';
 
 function App() 
 {

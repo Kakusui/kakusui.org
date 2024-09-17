@@ -39,7 +39,7 @@ import InternalErrorPage from './pages/error_pages/500.tsx';
 import AdminPanel from './pages/AdminPanel.tsx';
 
 // auth
-import { useAuth } from './AuthContext';
+import { useAuth } from './contexts/AuthContext';
 
 // util
 import { getURL } from './utils';
@@ -54,7 +54,6 @@ const ProtectedAdminRoute = ({ children }: { children: ReactNode }) =>
         {
             if (isLoading) 
             {
-                console.log('Auth status is loading, waiting...');
                 return;
             }
 
@@ -62,12 +61,11 @@ const ProtectedAdminRoute = ({ children }: { children: ReactNode }) =>
             {
                 try 
                 {
-                    console.log('Checking admin status...');
-                    const response = await fetch(getURL('/check-admin'), 
+                    const response = await fetch(getURL('/auth/check-if-admin-user'), 
                     {
                         method: 'POST',
                         headers: {
-                            'Authorization': `Bearer ${localStorage.getItem('token')}`,
+                            'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
                         },
                     });
                     if (response.ok) 

@@ -115,9 +115,9 @@ Evaluation Instructions:
 
   useEffect(() => 
   {
-    const savedEvaluationInstructions = localStorage.getItem('evaluationInstructions');
-    const savedElucidateCustomInstructionFormat = localStorage.getItem('elucidateCustomInstructionFormat');
-    const savedInstructionPreset = localStorage.getItem('instructionPreset');
+    const savedEvaluationInstructions = localStorage.getItem('elucidate_evaluationInstructions');
+    const savedElucidateCustomInstructionFormat = localStorage.getItem('elucidate_customInstructionFormat');
+    const savedInstructionPreset = localStorage.getItem('elucidate_instructionPreset');
     
     if (savedEvaluationInstructions) setValue('evaluationInstructions', savedEvaluationInstructions);
     if (savedElucidateCustomInstructionFormat) setValue('elucidateCustomInstructionFormat', savedElucidateCustomInstructionFormat);
@@ -142,7 +142,7 @@ Evaluation Instructions:
 
     const updateApiKey = () => 
     {
-      const savedApiKey = localStorage.getItem(`${selectedLLM}-apiKey`);
+      const savedApiKey = localStorage.getItem(`elucidate_${selectedLLM}_apiKey`);
       setValue("userAPIKey", savedApiKey || "");
     };
 
@@ -211,7 +211,7 @@ Evaluation Instructions:
   {
     try 
     {
-      const verificationResponse = await fetch(getURL("/verify-turnstile"), 
+      const verificationResponse = await fetch(getURL("/auth/verify-turnstile"), 
       {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -261,10 +261,10 @@ Evaluation Instructions:
         throw new Error("Turnstile verification failed. Please try again.");
       }
 
-      localStorage.setItem(`${data.llmType}-apiKey`, data.userAPIKey);
-      localStorage.setItem('evaluationInstructions', data.evaluationInstructions);
-      localStorage.setItem('elucidateCustomInstructionFormat', data.elucidateCustomInstructionFormat);
-      localStorage.setItem('instructionPreset', data.instructionPreset);
+      localStorage.setItem(`elucidate_${data.llmType}_apiKey`, data.userAPIKey);
+      localStorage.setItem('elucidate_evaluationInstructions', data.evaluationInstructions);
+      localStorage.setItem('elucidate_customInstructionFormat', data.elucidateCustomInstructionFormat);
+      localStorage.setItem('elucidate_instructionPreset', data.instructionPreset);
 
       let evaluationInstructions = data.elucidateCustomInstructionFormat
         .replace("{{untranslatedText}}", data.untranslatedText)

@@ -47,7 +47,7 @@ function HomePage()
         checkMobile();
         window.addEventListener('resize', checkMobile);
 
-        const shouldShowModal = localStorage.getItem('hideModalPermanently') !== 'true';
+        const shouldShowModal = localStorage.getItem('hideMobileModalWarningPersistent') !== 'true';
         if (isMobile && shouldShowModal) {
             onOpen();
         }
@@ -56,7 +56,7 @@ function HomePage()
     }, [onOpen, isMobile]);
 
     const handleDoNotShowAgain = () => {
-        localStorage.setItem('hideModalPermanently', 'true');
+        localStorage.setItem('hideMobileModalWarningPersistent', 'true');
         onClose();
     };
 

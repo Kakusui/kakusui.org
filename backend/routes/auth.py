@@ -3,7 +3,7 @@
 ## license that can be found in the LICENSE file.
 
 ## built-in imports
-from datetime import timedelta
+from datetime import timedelta, datetime
 
 ## third-party imports
 from fastapi import APIRouter, HTTPException, Request, status, Cookie, Depends
@@ -12,13 +12,16 @@ from sqlalchemy.orm import Session
 
 ## custom imports
 from db.base import SessionLocal
-from db.models import User
+from db.models import User, EmailAlertModel
 from db.common import get_db
 
-from routes.models import LoginModel, LoginToken, RegisterForEmailAlert, SendVerificationEmailRequest
+
+from routes.models import LoginModel, LoginToken, RegisterForEmailAlert, SendVerificationEmailRequest, VerifyEmailCodeRequest
 
 from auth.func import verify_verification_code, create_access_token, create_refresh_token, func_verify_token, generate_verification_code, save_verification_data, send_verification_email, get_current_user
 from auth.util import check_internal_request
+
+from email_util.verification import get_verification_data, remove_verification_data
 
 from rate_limit.func import rate_limit
 
@@ -252,3 +255,48 @@ async def check_admin(request: Request, current_user:str = Depends(get_current_u
     is_admin = current_user == ADMIN_USER
 
     return JSONResponse(status_code=status.HTTP_200_OK, content={"result": is_admin})
+
+@router.post("/auth/landing-verify-code", response_model=LoginToken)
+async def landing_verify_code_endpoint(request_data:VerifyEmailCodeRequest, request:Request):
+    origin = request.headers.get('origin')
+
+    check_internal_request(origin)
+
+    email = request_data.email
+    submitted_code = request_data.code
+
+    db: Session = next(get_db(SessionLocal))
+
+    try:
+        verification_data = get_verification_data(email)
+        if(not verification_data):
+            return JSONResponse(status_code=status.HTTP_400_BAD_REQUEST, content={"message": "Verification code not found or expired."})
+
+        stored_code = verification_data["code"]
+        expiration_time = datetime.fromisoformat(verification_data["expiration"])
+
+        if(datetime.now() > expiration_time):
+            remove_verification_data(email)
+            return JSONResponse(status_code=status.HTTP_400_BAD_REQUEST, content={"message": "Verification code has expired."})
+
+        if(submitted_code != stored_code):
+            return JSONResponse(status_code=status.HTTP_400_BAD_REQUEST, content={"message": "Invalid verification code."})
+
+        existing_email_alert = db.query(EmailAlertModel).filter(EmailAlertModel.email == email).first()
+        if(existing_email_alert):
+            return JSONResponse(status_code=status.HTTP_400_BAD_REQUEST, content={"message": "Email already registered for alerts."})
+
+        new_email_alert = EmailAlertModel(email=email)
+        db.add(new_email_alert)
+        db.commit()
+        
+        remove_verification_data(email)
+        return JSONResponse(status_code=status.HTTP_200_OK, content={"message": "Email successfully verified and registered for alerts.", "token_type": "bearer"})
+    
+    except Exception as e:
+        db.rollback()
+        print(f"Error verifying landing page email code: {str(e)}")
+        return JSONResponse(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, content={"message": "An error occurred while verifying the email code."})
+    
+    finally:
+        db.close()

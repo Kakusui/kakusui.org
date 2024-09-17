@@ -59,7 +59,8 @@ function LandingPage()
 
     const handleEmailSubmit = async () =>
     {
-        if (!email || !email.includes('@'))
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if(!email || !emailRegex.test(email)) 
         {
             toast({
                 title: "Invalid email",
@@ -75,7 +76,7 @@ function LandingPage()
 
         try
         {
-            const response = await fetch(getURL('/send-verification-email'), {
+            const response = await fetch(getURL('/auth/send-verification-email'), {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -133,7 +134,7 @@ function LandingPage()
 
         try
         {
-            const response = await fetch(getURL('/verify-email-code'), {
+            const response = await fetch(getURL('/auth/landing-verify-code'), {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -174,6 +175,21 @@ function LandingPage()
                 duration: 5000,
                 isClosable: true,
             });
+        }
+    };
+
+    const handleKeyPress = (event: React.KeyboardEvent<HTMLInputElement>) =>
+    {
+        if(event.key === 'Enter')
+        {
+            if(isVerificationStep)
+            {
+                handleVerificationSubmit();
+            }
+            else
+            {
+                handleEmailSubmit();
+            }
         }
     };
 
@@ -280,6 +296,7 @@ function LandingPage()
                                     placeholder="Enter verification code"
                                     value={verificationCode}
                                     onChange={(e) => setVerificationCode(e.target.value)}
+                                    onKeyPress={handleKeyPress}
                                     bg="whiteAlpha.200"
                                     border="none"
                                     _focus={{ bg: "whiteAlpha.300" }}
@@ -292,6 +309,7 @@ function LandingPage()
                                     placeholder="Enter your email"
                                     value={email}
                                     onChange={(e) => setEmail(e.target.value)}
+                                    onKeyPress={handleKeyPress}
                                     bg="whiteAlpha.200"
                                     border="none"
                                     _focus={{ bg: "whiteAlpha.300" }}

@@ -20,7 +20,7 @@ import { motion } from 'framer-motion';
 import { buttonVariants } from '../animations/commonAnimations';
 
 // auth
-import { useAuth } from '../AuthContext';
+import { useAuth } from '../contexts/AuthContext';
 
 const Login: React.FC = () => 
 {
@@ -62,7 +62,7 @@ const Login: React.FC = () =>
 
         try 
         {
-            const checkUserResponse = await fetch(getURL('/check-email-registration'), 
+            const checkUserResponse = await fetch(getURL('/auth/check-email-registration'), 
             {
                 method: 'POST',
                 headers: 
@@ -90,7 +90,7 @@ const Login: React.FC = () =>
 
                 setIsLoginStep(true);
 
-                const response = await fetch(getURL('/send-verification-email'), 
+                const response = await fetch(getURL('/auth/send-verification-email'), 
                 {
                     method: 'POST',
                     headers: 
@@ -124,7 +124,7 @@ const Login: React.FC = () =>
     {
         try 
         {
-            const endpoint = isSignUp ? '/signup' : '/login';
+            const endpoint = isSignUp ? '/auth/signup' : '/auth/login';
             const response = await fetch(getURL(endpoint), 
             {
                 method: 'POST',

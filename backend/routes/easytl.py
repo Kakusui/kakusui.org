@@ -3,7 +3,7 @@
 ## license that can be found in the LICENSE file.
 
 ## third-party imports
-from fastapi import APIRouter, Request, status
+from fastapi import APIRouter, Request, status, Depends
 from fastapi.responses import JSONResponse
 import logging
 
@@ -17,7 +17,7 @@ from routes.models import EasyTLRequest
 from constants import V1_EASYTL_ROOT_KEY, V1_EASYTL_PUBLIC_API_KEY, ADMIN_USER
 
 from auth.util import check_internal_request
-from auth.func import get_current_user, get_admin_api_key
+from auth.func import get_current_user, get_admin_api_key, check_if_admin_user
 
 from util import get_url
 
@@ -26,20 +26,13 @@ router = APIRouter()
 logger = logging.getLogger(__name__)
 
 @router.post("/v1/easytl")
-async def easytl(request_data:EasyTLRequest, request:Request):
+async def easytl(request_data:EasyTLRequest, request:Request, is_admin:bool = Depends(check_if_admin_user)):
 
     text_to_translate = request_data.textToTranslate
     translation_instructions = request_data.translationInstructions
     llm_type = request_data.llmType.lower()
     user_api_key = request_data.userAPIKey
     model = request_data.model
-
-    try:
-
-        current_user = get_current_user(request.headers.get("Authorization").split(" ")[1]) # type: ignore
-
-    except:
-        current_user = ""
 
     api_key = request.headers.get("X-API-Key")
 
@@ -64,9 +57,6 @@ async def easytl(request_data:EasyTLRequest, request:Request):
         "claude-3-sonnet-20240229", 
         "claude-3-opus-20240229"
     ]
-
-
-    is_admin = current_user == ADMIN_USER
 
     if(api_key not in [V1_EASYTL_ROOT_KEY, V1_EASYTL_PUBLIC_API_KEY] and not is_admin):
         return JSONResponse(**ERRORS["invalid_api_key"])

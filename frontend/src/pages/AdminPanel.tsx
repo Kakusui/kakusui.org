@@ -44,7 +44,7 @@ function AdminPanel()
                 headers: 
                 {
                     'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                    'Authorization': `Bearer ${localStorage.getItem('access_token')}`
                 },
                 body: JSON.stringify({ subject: emailSubject, body: emailBody })
             });
@@ -89,7 +89,7 @@ function AdminPanel()
                 headers: 
                 {
                     'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                    'Authorization': `Bearer ${localStorage.getItem('access_token')}`
                 },
                 body: JSON.stringify({ query: sqlQuery })
             });
