@@ -52,8 +52,8 @@ function AdminPanel()
             if (response.ok) 
             {
                 toast({
-                    title: "Email Sent",
-                    description: "The email has been sent successfully.",
+                    title: "Emails Sent",
+                    description: "The emails have been sent to all users successfully.",
                     status: "success",
                     duration: 5000,
                     isClosable: true,
@@ -63,14 +63,15 @@ function AdminPanel()
             } 
             else 
             {
-                throw new Error('Failed to send email');
+                const errorData = await response.json();
+                throw new Error(errorData.message || 'Failed to send emails');
             }
         } 
         catch (error) 
         {
             toast({
                 title: "Error",
-                description: "Failed to send email. Please try again.",
+                description: (error as Error).message || "Failed to send emails. Please try again.",
                 status: "error",
                 duration: 5000,
                 isClosable: true,
@@ -298,7 +299,7 @@ function AdminPanel()
                                 flex={1}
                                 resize="none"
                             />
-                            <Button onClick={handleSendEmail} colorScheme="orange">Send Email</Button>
+                            <Button onClick={handleSendEmail} colorScheme="orange">Send Email to All</Button>
                         </TabPanel>
                         <TabPanel height="100%" display="flex" flexDirection="column">
                             <Textarea

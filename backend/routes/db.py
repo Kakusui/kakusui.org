@@ -6,9 +6,11 @@ import typing
 import os
 import shutil
 
-from fastapi import APIRouter, Depends, UploadFile, File, HTTPException, Request
+from fastapi import APIRouter, Depends, UploadFile, File, HTTPException, Request, Body
+from fastapi.responses import JSONResponse
 
 from sqlalchemy.orm import Session
+from sqlalchemy import text
 
 from email_util.backup import perform_backup, decrypt_file, decompress_file, replace_sqlite_db
 
@@ -48,7 +50,7 @@ def force_backup(request:Request, is_admin:bool = Depends(check_if_admin_user), 
     return {"message": "Backup started"}
 
 @router.post("/replace-database")
-async def upload_backup(request:Request, file: UploadFile = File(...), db:Session = Depends(get_db), is_admin:bool = Depends(check_if_admin_user)) -> typing.Dict[str, str]:
+async def upload_backup(request:Request, file: UploadFile = File(...), is_admin:bool = Depends(check_if_admin_user)) -> typing.Dict[str, str]:
 
     """
 
@@ -82,7 +84,9 @@ async def upload_backup(request:Request, file: UploadFile = File(...), db:Sessio
             with open(decrypted_file, "rb") as f:
                 decompressed_file = decompress_file(decrypted_file, "backup.db")
 
-            replace_sqlite_db(engine, decompressed_file, "blog.db")
+            db_path = os.path.join(os.path.dirname(__file__), "..", "database", "kakusui.db")
+
+            replace_sqlite_db(engine, decompressed_file, db_path)
 
             os.remove("backup.zip.pgp")
             os.remove(decrypted_file)
@@ -95,3 +99,35 @@ async def upload_backup(request:Request, file: UploadFile = File(...), db:Sessio
     finally:
         with maintenance_lock:
             maintenance_mode = False
+
+@router.post("/query-database")
+async def query_database(
+    request:Request,
+    sql_query:str = Body(..., embed=True),
+    is_admin:bool = Depends(check_if_admin_user),
+    db: Session = Depends(get_db)
+) -> JSONResponse:
+    """
+    Execute an SQL query on the database and return the result as JSON
+
+    Args:
+    request (Request): The incoming request
+    sql_query (str): The SQL query to execute
+    is_admin (bool): Flag to check if the user is an admin
+    db (Session): The database session
+
+    Returns:
+    JSONResponse: The result of the query in JSON format
+    """
+
+    origin = request.headers.get('origin')
+    check_internal_request(origin)
+
+    try:
+        result = db.execute(text(sql_query))
+        columns = result.keys()
+        rows = [dict(zip(columns, row)) for row in result.fetchall()]
+        return JSONResponse(content={"result": rows})
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
