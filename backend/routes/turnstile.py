@@ -16,7 +16,7 @@ from routes.models import VerifyTurnstileRequest
 
 router = APIRouter()
 
-@router.post("/verify-turnstile")
+@router.post("/auth/verify-turnstile")
 async def verify_turnstile(request_data:VerifyTurnstileRequest, request:Request):
 
     origin = request.headers.get('origin')

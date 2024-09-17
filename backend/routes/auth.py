@@ -28,7 +28,7 @@ import typing
 
 router = APIRouter()
 
-@router.post('/check-email-registration')
+@router.post('/auth/check-email-registration')
 async def check_email_registration(data:RegisterForEmailAlert, request:Request):
     origin = request.headers.get('origin')
 
@@ -47,7 +47,7 @@ async def check_email_registration(data:RegisterForEmailAlert, request:Request):
     finally:
         db.close()
 
-@router.post("/login", response_model=LoginToken)
+@router.post("/auth/login", response_model=LoginToken)
 def login(data:LoginModel, request:Request) -> typing.Dict[str, str]:
     
     """
@@ -98,7 +98,7 @@ def login(data:LoginModel, request:Request) -> typing.Dict[str, str]:
     finally:
         db.close()
 
-@router.post("/signup")
+@router.post("/auth/signup")
 async def signup(data:LoginModel, request:Request) -> JSONResponse:
 
     origin = request.headers.get('origin')
@@ -143,7 +143,7 @@ async def signup(data:LoginModel, request:Request) -> JSONResponse:
     finally:
         db.close()
 
-@router.post("/refresh", response_model=LoginToken)
+@router.post("/auth/refresh-access-token", response_model=LoginToken)
 def refresh_token(request:Request, refresh_token: str = Cookie(None)) -> JSONResponse:
     
     """
@@ -187,7 +187,7 @@ def refresh_token(request:Request, refresh_token: str = Cookie(None)) -> JSONRes
     return response
     
 
-@router.post("/send-verification-email")
+@router.post("/auth/send-verification-email")
 async def send_verification_email_endpoint(request_data: SendVerificationEmailRequest, request: Request):
     origin = request.headers.get('origin')
 
@@ -222,7 +222,7 @@ async def send_verification_email_endpoint(request_data: SendVerificationEmailRe
     finally:
         db.close()
 
-@router.post("/verify-token")
+@router.post("/auth/verify-token")
 async def verify_token_endpoint(request: Request):
 
     origin = request.headers.get('origin')
@@ -243,7 +243,7 @@ async def verify_token_endpoint(request: Request):
     except HTTPException as e:
         return {"valid": False, "detail": str(e.detail)}
 
-@router.post("/check-admin")
+@router.post("/auth/check-if-admin-user")
 async def check_admin(request: Request, current_user:str = Depends(get_current_user)):
     origin = request.headers.get('origin')
 
