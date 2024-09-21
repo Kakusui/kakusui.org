@@ -88,7 +88,7 @@ export default function Navbar({ isHomePage }: NavbarProps)
                     </Flex>
                     <Flex align="center">
                         {!isLoading && isLoggedIn && userEmail && (
-                            <Text mr={4} fontSize="sm">{userEmail}</Text>
+                            <Text mr={4} fontSize="sm" fontWeight="medium" color="orange.400">{userEmail}</Text>
                         )}
                         <Login />
                     </Flex>
