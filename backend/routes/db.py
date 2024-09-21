@@ -12,6 +12,7 @@ from fastapi import APIRouter, Depends, UploadFile, File, HTTPException, Request
 from fastapi.responses import JSONResponse
 
 from sqlalchemy.orm import Session
+from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy import text
 
 ## custom modules
@@ -140,7 +141,6 @@ async def upload_backup(request:Request, file: UploadFile = File(...), is_admin:
 @router.post("/admin/db/run-query")
 async def run_query(
     request:Request,
-
     sql_query:str = Body(..., embed=True),
     is_admin:bool = Depends(check_if_admin_user),
     db: Session = Depends(get_db)
@@ -155,17 +155,33 @@ async def run_query(
     db (Session): The database session
 
     Returns:
-    JSONResponse: The result of the query in JSON format
+    JSONResponse: The result of the query in JSON format or an error message
     """
 
     origin = request.headers.get('origin')
     check_internal_request(origin)
 
     try:
+        if(sql_query.lower() in ["tables", "show tables"]):
+            sql_query = "SELECT name FROM sqlite_master WHERE type='table';"
+
         result = db.execute(text(sql_query))
         columns = result.keys()
         rows = [dict(zip(columns, row)) for row in result.fetchall()]
         return JSONResponse(content={"result": rows})
 
+    except ValueError as ve:
+        return JSONResponse(
+            status_code=400,
+            content={"error": str(ve)}
+        )
+    except SQLAlchemyError as sqle:
+        return JSONResponse(
+            status_code=400,
+            content={"error": f"SQL Error: {str(sqle)}"}
+        )
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        return JSONResponse(
+            status_code=500,
+            content={"error": f"Unexpected error: {str(e)}"}
+        )
