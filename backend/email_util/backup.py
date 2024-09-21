@@ -257,8 +257,3 @@ def replace_sqlite_db(engine:Engine, extracted_db_path: str, current_db_path: st
     engine.dispose()
     
     os.replace(extracted_db_path, current_db_path)
-
-    # Restart the application
-    python = sys.executable
-    os.execl(python, python, *sys.argv)
-
