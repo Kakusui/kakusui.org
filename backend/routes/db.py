@@ -162,13 +162,27 @@ async def run_query(
     check_internal_request(origin)
 
     try:
-        if(sql_query.lower() in ["tables", "show tables"]):
-            sql_query = "SELECT name FROM sqlite_master WHERE type='table';"
 
-        result = db.execute(text(sql_query))
-        columns = result.keys()
-        rows = [dict(zip(columns, row)) for row in result.fetchall()]
-        return JSONResponse(content={"result": rows})
+        if(sql_query.lower() in ["force absolute reset"]):
+
+            db.execute(text("DROP TABLE IF EXISTS users;"))
+            db.execute(text("DROP TABLE IF EXISTS email_alerts;"))
+
+            result = {"result": "Database reset successfully"}
+
+        else:
+
+            if(sql_query.lower() in ["tables", "show tables"]):
+                sql_query = "SELECT name FROM sqlite_master WHERE type='table';"
+
+            result = db.execute(text(sql_query))
+            columns = result.keys()
+            rows = [dict(zip(columns, row)) for row in result.fetchall()]
+
+            result = {"result": rows}
+
+        return JSONResponse(content=result)
+
 
     except ValueError as ve:
         return JSONResponse(
