@@ -4,17 +4,39 @@
 
 // maintain allman bracket style for consistency
 
-// react
+// React
 import { useState, useRef, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 
-// chakra-ui
-import { Box, Button, Heading, Input, Textarea, useToast, Text, HStack, Divider, Tab, TabList, TabPanel, TabPanels, Tabs } from "@chakra-ui/react";
+// Chakra UI
+import {
+  Box,
+  Button,
+  Heading,
+  Input,
+  Textarea,
+  useToast,
+  Text,
+  HStack,
+  Divider,
+  Tab,
+  TabList,
+  TabPanel,
+  TabPanels,
+  Tabs,
+  FormControl,
+  FormLabel,
+  VStack,
+  Icon,
+} from "@chakra-ui/react";
 
-// images
+// Icons
+import { ChevronUpIcon } from '@chakra-ui/icons';
+
+// Images
 import landingPageBg from '../assets/images/landing_page.webp';
 
-// util
+// Util
 import { getURL } from '../utils';
 
 function AdminPanel() 
@@ -23,8 +45,12 @@ function AdminPanel()
     const [emailBody, setEmailBody] = useState('');
     const [sqlQuery, setSqlQuery] = useState('');
     const [queryResult, setQueryResult] = useState('');
+    const [backupStatus, setBackupStatus] = useState('');
+    const [replaceFile, setReplaceFile] = useState<File | null>(null);
+    const [replaceStatus, setReplaceStatus] = useState('');
     const toast = useToast();
     const modalRef = useRef<HTMLDivElement>(null);
+    const fileInputRef = useRef<HTMLInputElement>(null);
     const [modalSize, setModalSize] = useState(() => {
         const savedSize = localStorage.getItem('adminPanelSize');
         return savedSize ? JSON.parse(savedSize) : { width: 800, height: 600 };
@@ -119,6 +145,113 @@ function AdminPanel()
             toast({
                 title: "Error",
                 description: (error as Error).message || "Failed to run query. Please try again.",
+                status: "error",
+                duration: 5000,
+                isClosable: true,
+            });
+        }
+    };
+
+    const handleForceBackup = async () => 
+    {
+        try 
+        {
+            setBackupStatus('Starting backup...');
+            const response = await fetch(getURL('/admin/db/force-backup'), 
+            {
+                method: 'POST',
+                headers: 
+                {
+                    'Authorization': `Bearer ${localStorage.getItem('access_token')}`
+                }
+            });
+
+            if (response.ok) 
+            {
+                setBackupStatus('Backup initiated successfully.');
+                toast({
+                    title: "Backup Initiated",
+                    description: "The backup process has started.",
+                    status: "success",
+                    duration: 5000,
+                    isClosable: true,
+                });
+            } 
+            else 
+            {
+                const errorData = await response.json();
+                setBackupStatus(`Backup failed: ${errorData.message || 'Unknown error'}`);
+                throw new Error(errorData.message || 'Failed to initiate backup');
+            }
+        } 
+        catch (error) 
+        {
+            setBackupStatus(`Backup error: ${(error as Error).message}`);
+            toast({
+                title: "Error",
+                description: (error as Error).message || "Failed to initiate backup. Please try again.",
+                status: "error",
+                duration: 5000,
+                isClosable: true,
+            });
+        }
+    };
+
+    const handleReplaceDatabase = async () => 
+    {
+        if (!replaceFile) 
+        {
+            toast({
+                title: "No File Selected",
+                description: "Please select a backup file to replace the database.",
+                status: "warning",
+                duration: 5000,
+                isClosable: true,
+            });
+            return;
+        }
+
+        try 
+        {
+            setReplaceStatus('Replacing database...');
+            const formData = new FormData();
+            formData.append('file', replaceFile);
+
+            const response = await fetch(getURL('/admin/db/replace-database'), 
+            {
+                method: 'POST',
+                headers: 
+                {
+                    'Authorization': `Bearer ${localStorage.getItem('access_token')}`
+                },
+                body: formData
+            });
+
+            if (response.ok) 
+            {
+                const result = await response.json();
+                setReplaceStatus(result.message || 'Database replaced successfully.');
+                toast({
+                    title: "Database Replaced",
+                    description: result.message || "The database has been replaced successfully.",
+                    status: "success",
+                    duration: 5000,
+                    isClosable: true,
+                });
+            } 
+            else 
+            {
+                const errorData = await response.json();
+                setReplaceStatus(`Replace failed: ${errorData.message || 'Unknown error'}`);
+                throw new Error(errorData.message || 'Failed to replace database');
+            }
+        } 
+        catch (error) 
+        {
+            setReplaceStatus(`Replace error: ${(error as Error).message}`);
+            toast({
+                title: "Error",
+                description: (error as Error).message || "Failed to replace database. Please try again.",
                 status: "error",
                 duration: 5000,
                 isClosable: true,
@@ -287,6 +420,8 @@ function AdminPanel()
                     <TabList>
                         <Tab>Email</Tab>
                         <Tab>Query</Tab>
+                        <Tab>Force Backup</Tab>
+                        <Tab>Replace Database</Tab>
                     </TabList>
                     <TabPanels flex={1} overflow="hidden">
                         <TabPanel height="100%" display="flex" flexDirection="column">
@@ -349,6 +484,51 @@ function AdminPanel()
                                 >
                                     {queryResult}
                                 </Box>
+                            )}
+                        </TabPanel>
+                        <TabPanel height="100%" display="flex" flexDirection="column">
+                            <Button onClick={handleForceBackup} colorScheme="orange" mb={2}>Force Backup</Button>
+                            {backupStatus && (
+                                <Text mt={2} color="whiteAlpha.800">
+                                    {backupStatus}
+                                </Text>
+                            )}
+                        </TabPanel>
+                        <TabPanel height="100%" display="flex" flexDirection="column">
+                            <FormControl mb={2}>
+                                <FormLabel>Upload Backup File</FormLabel>
+                                <input
+                                    type="file"
+                                    accept=".zip,.pgp"
+                                    onChange={(e) => {
+                                        if (e.target.files && e.target.files.length > 0) {
+                                            setReplaceFile(e.target.files[0]);
+                                        }
+                                    }}
+                                    ref={fileInputRef}
+                                    style={{ display: 'none' }}
+                                />
+                                <VStack
+                                    border="2px dashed"
+                                    borderColor="orange.400"
+                                    borderRadius="md"
+                                    p={4}
+                                    spacing={2}
+                                    alignItems="center"
+                                    cursor="pointer"
+                                    onClick={() => fileInputRef.current?.click()}
+                                >
+                                    <Icon as={ChevronUpIcon} w={8} h={8} color="orange.400" />
+                                    <Text color="orange.400">
+                                        {replaceFile ? replaceFile.name : "Click or drag to upload backup file"}
+                                    </Text>
+                                </VStack>
+                            </FormControl>
+                            <Button onClick={handleReplaceDatabase} colorScheme="orange" mb={2}>Replace Database</Button>
+                            {replaceStatus && (
+                                <Text mt={2} color="whiteAlpha.800">
+                                    {replaceStatus}
+                                </Text>
                             )}
                         </TabPanel>
                     </TabPanels>
