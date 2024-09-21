@@ -64,6 +64,7 @@ function AdminPanel()
             else 
             {
                 const errorData = await response.json();
+                setQueryResult(JSON.stringify(errorData, null, 2));
                 throw new Error(errorData.message || 'Failed to send emails');
             }
         } 
@@ -91,7 +92,7 @@ function AdminPanel()
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${localStorage.getItem('access_token')}`
                 },
-                body: JSON.stringify({ query: sqlQuery })
+                body: JSON.stringify({ sql_query: sqlQuery })
             });
 
             if (response.ok) 
@@ -108,14 +109,16 @@ function AdminPanel()
             } 
             else 
             {
-                throw new Error('Failed to run query');
+                const errorData = await response.json();
+                setQueryResult(JSON.stringify(errorData, null, 2));
+                throw new Error(errorData.message || 'Failed to run query');
             }
         } 
         catch (error) 
         {
             toast({
                 title: "Error",
-                description: "Failed to run query. Please try again.",
+                description: (error as Error).message || "Failed to run query. Please try again.",
                 status: "error",
                 duration: 5000,
                 isClosable: true,
@@ -125,7 +128,9 @@ function AdminPanel()
 
     const handleDrag = (e: React.MouseEvent<HTMLDivElement>) => 
     {
-        // Prevent dragging when clicking on the resize handle
+        // Prevent dragging when interacting with input, textarea, button, or select elements
+        const interactiveElements = ['input', 'textarea', 'button', 'select'];
+        if (interactiveElements.some(el => (e.target as HTMLElement).closest(el))) return;
         if ((e.target as HTMLElement).closest('.resize-handle')) return;
 
         const modal = modalRef.current;
@@ -298,6 +303,13 @@ function AdminPanel()
                                 mb={2}
                                 flex={1}
                                 resize="none"
+                                sx={{
+                                    '&::-webkit-scrollbar': {
+                                        display: 'none',
+                                    },
+                                    scrollbarWidth: 'none',
+                                    overflow: 'auto',
+                                }}
                             />
                             <Button onClick={handleSendEmail} colorScheme="orange">Send Email to All</Button>
                         </TabPanel>
@@ -307,8 +319,15 @@ function AdminPanel()
                                 value={sqlQuery}
                                 onChange={(e) => setSqlQuery(e.target.value)}
                                 mb={2}
-                                flex={1}
+                                flex={0.5}
                                 resize="none"
+                                sx={{
+                                    '&::-webkit-scrollbar': {
+                                        display: 'none',
+                                    },
+                                    scrollbarWidth: 'none',
+                                    overflow: 'auto',
+                                }}
                             />
                             <Button onClick={handleRunQuery} colorScheme="orange" mb={2}>Run Query</Button>
                             {queryResult && (
@@ -320,7 +339,13 @@ function AdminPanel()
                                     fontSize="sm"
                                     fontFamily="monospace"
                                     whiteSpace="pre-wrap"
-                                    overflow="hidden"
+                                    overflow="auto"
+                                    sx={{
+                                        '&::-webkit-scrollbar': {
+                                            display: 'none',
+                                        },
+                                        scrollbarWidth: 'none',
+                                    }}
                                 >
                                     {queryResult}
                                 </Box>
