@@ -38,7 +38,7 @@ function AdminPanel()
     {
         try 
         {
-            const response = await fetch(getURL('/admin/send-email'), 
+            const response = await fetch(getURL('/admin/db/send-email'), 
             {
                 method: 'POST',
                 headers: 
@@ -83,7 +83,7 @@ function AdminPanel()
     {
         try 
         {
-            const response = await fetch(getURL('/admin/run-query'), 
+            const response = await fetch(getURL('/admin/db/run-query'), 
             {
                 method: 'POST',
                 headers: 
