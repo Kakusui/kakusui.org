@@ -16,11 +16,9 @@ from email_util.common import send_email
 
 from email_util.common import get_smtp_envs, send_email
 
-from util import get_url
-
 from db.models import EmailAlertModel
 from sqlalchemy.orm import Session
-from db.common import get_db
+from db.base import get_db
 
 router = APIRouter()
 

@@ -14,8 +14,7 @@ from sqlalchemy import text
 
 from email_util.backup import perform_backup, decrypt_file, decompress_file, replace_sqlite_db
 
-from db.common import get_db
-from db.base import engine
+from db.base import engine, get_db
 
 from auth.func import check_if_admin_user
 from auth.util import check_internal_request
@@ -27,7 +26,7 @@ from main import maintenance_mode, maintenance_lock
 router = APIRouter()
 
 @router.post('/admin/db/force-backup')
-def force_backup(request:Request, is_admin:bool = Depends(check_if_admin_user), db:Session = Depends(get_db)) -> typing.Dict[str, str]:
+def force_backup(request:Request, db:Session = Depends(get_db), is_admin:bool = Depends(check_if_admin_user)):
 
     """
 
@@ -51,6 +50,7 @@ def force_backup(request:Request, is_admin:bool = Depends(check_if_admin_user), 
 
 @router.post("/admin/db/replace-database")
 async def upload_backup(request:Request, file: UploadFile = File(...), is_admin:bool = Depends(check_if_admin_user)) -> typing.Dict[str, str]:
+
 
     """
 
@@ -100,9 +100,10 @@ async def upload_backup(request:Request, file: UploadFile = File(...), is_admin:
         with maintenance_lock:
             maintenance_mode = False
 
-@router.post("/admin/db/query-database")
-async def query_database(
+@router.post("/admin/db/run-query")
+async def run_query(
     request:Request,
+
     sql_query:str = Body(..., embed=True),
     is_admin:bool = Depends(check_if_admin_user),
     db: Session = Depends(get_db)

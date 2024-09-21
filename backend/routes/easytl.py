@@ -14,10 +14,10 @@ import httpx
 ## custom imports
 from routes.models import EasyTLRequest
 
-from constants import V1_EASYTL_ROOT_KEY, V1_EASYTL_PUBLIC_API_KEY, ADMIN_USER
+from constants import V1_EASYTL_ROOT_KEY, V1_EASYTL_PUBLIC_API_KEY
 
 from auth.util import check_internal_request
-from auth.func import get_current_user, get_admin_api_key, check_if_admin_user
+from auth.func import get_admin_api_key, check_if_admin_user
 
 from util import get_url
 

@@ -32,6 +32,7 @@ from routes.easytl import router as easytl_router
 from routes.elucidate import router as elucidate_router
 from routes.auth import router as auth_router
 from routes.turnstile import router as turnstile_router
+from routes.db import router as db_router
 ##-----------------------------------------start-of-main----------------------------------------------------------------------------------------------------------------------------------------------------------
 
 if(not os.path.exists("database") and ACCESS_TOKEN_SECRET == "secret"):
@@ -95,6 +96,7 @@ app.include_router(easytl_router)
 app.include_router(auth_router)
 app.include_router(elucidate_router)
 app.include_router(turnstile_router)
+app.include_router(db_router)
 
 @app.on_event("startup")
 async def startup_event():

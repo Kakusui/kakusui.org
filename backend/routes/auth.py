@@ -11,9 +11,8 @@ from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
 
 ## custom imports
-from db.base import SessionLocal
+from db.base import get_db
 from db.models import User, EmailAlertModel
-from db.common import get_db
 
 
 from routes.models import LoginModel, LoginToken, RegisterForEmailAlert, SendVerificationEmailRequest, VerifyEmailCodeRequest
@@ -32,12 +31,10 @@ import typing
 router = APIRouter()
 
 @router.post('/auth/check-email-registration')
-async def check_email_registration(data:RegisterForEmailAlert, request:Request):
+async def check_email_registration(data:RegisterForEmailAlert, request:Request, db:Session = Depends(get_db)):
     origin = request.headers.get('origin')
 
     check_internal_request(origin)
-
-    db:Session = next(get_db(SessionLocal))
 
     try:
         existing_user = db.query(User).filter(User.email == data.email).first()
@@ -51,7 +48,7 @@ async def check_email_registration(data:RegisterForEmailAlert, request:Request):
         db.close()
 
 @router.post("/auth/login", response_model=LoginToken)
-def login(data:LoginModel, request:Request) -> typing.Dict[str, str]:
+def login(data:LoginModel, request:Request, db:Session = Depends(get_db)) -> typing.Dict[str, str]:
     
     """
     
@@ -69,7 +66,6 @@ def login(data:LoginModel, request:Request) -> typing.Dict[str, str]:
 
     check_internal_request(origin)
 
-    db: Session = next(get_db(SessionLocal))
 
     try:
         existing_user = db.query(User).filter(User.email == data.email).first()
@@ -102,15 +98,16 @@ def login(data:LoginModel, request:Request) -> typing.Dict[str, str]:
         db.close()
 
 @router.post("/auth/signup")
-async def signup(data:LoginModel, request:Request) -> JSONResponse:
+async def signup(data:LoginModel, request:Request, db:Session = Depends(get_db)) -> JSONResponse:
 
     origin = request.headers.get('origin')
 
     check_internal_request(origin)
 
-    db:Session = next(get_db(SessionLocal))
     try:
+
         existing_user = db.query(User).filter(User.email == data.email).first()
+
 
         if(existing_user):
             return JSONResponse(status_code=status.HTTP_400_BAD_REQUEST, content={"message": "Email already registered."})
@@ -191,7 +188,7 @@ def refresh_token(request:Request, refresh_token: str = Cookie(None)) -> JSONRes
     
 
 @router.post("/auth/send-verification-email")
-async def send_verification_email_endpoint(request_data: SendVerificationEmailRequest, request: Request):
+async def send_verification_email_endpoint(request_data: SendVerificationEmailRequest, request: Request, db: Session = Depends(get_db)):
     origin = request.headers.get('origin')
 
     check_internal_request(origin)
@@ -199,7 +196,6 @@ async def send_verification_email_endpoint(request_data: SendVerificationEmailRe
     email = request_data.email
     client_id = request_data.clientID
 
-    db: Session = SessionLocal()
     try:
         existing_user = db.query(User).filter(User.email == email).first()
         
@@ -221,9 +217,6 @@ async def send_verification_email_endpoint(request_data: SendVerificationEmailRe
     except Exception as e:
         print(f"Error sending verification email: {str(e)}")
         return JSONResponse(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, content={"message": "An error occurred while sending the verification email."})
-    
-    finally:
-        db.close()
 
 @router.post("/auth/verify-token")
 async def verify_token_endpoint(request: Request):
@@ -257,15 +250,13 @@ async def check_admin(request: Request, current_user:str = Depends(get_current_u
     return JSONResponse(status_code=status.HTTP_200_OK, content={"result": is_admin})
 
 @router.post("/auth/landing-verify-code", response_model=LoginToken)
-async def landing_verify_code_endpoint(request_data:VerifyEmailCodeRequest, request:Request):
+async def landing_verify_code_endpoint(request_data:VerifyEmailCodeRequest, request:Request, db: Session = Depends(get_db)):
     origin = request.headers.get('origin')
 
     check_internal_request(origin)
 
     email = request_data.email
     submitted_code = request_data.code
-
-    db: Session = next(get_db(SessionLocal))
 
     try:
         verification_data = get_verification_data(email)
@@ -297,6 +288,3 @@ async def landing_verify_code_endpoint(request_data:VerifyEmailCodeRequest, requ
         db.rollback()
         print(f"Error verifying landing page email code: {str(e)}")
         return JSONResponse(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, content={"message": "An error occurred while verifying the email code."})
-    
-    finally:
-        db.close()

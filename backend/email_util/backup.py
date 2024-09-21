@@ -14,7 +14,7 @@ from datetime import datetime
 import shelve
 
 from sqlalchemy.engine import Engine
-from sqlalchemy.orm import close_all_sessions, sessionmaker, Session
+from sqlalchemy.orm import close_all_sessions, Session
 
 from gnupg import GPG
 
@@ -22,7 +22,6 @@ from gnupg import GPG
 from constants import DATABASE_PATH, BACKUP_LOGS_DIR
 
 from db.models import EmailAlertModel, User
-from db.common import get_db
 
 from email_util.common import get_smtp_envs, send_email
 
