@@ -2,28 +2,65 @@
 ## Use of this source code is governed by an GNU Affero General Public License v3.0
 ## license that can be found in the LICENSE file.
 
+## build-in imports
 import typing
 import os
 import shutil
 
-from fastapi import APIRouter, Depends, UploadFile, File, HTTPException, Request, Body
+## third-party imports
+from fastapi import APIRouter, Depends, UploadFile, File, HTTPException, Request, Body, status
 from fastapi.responses import JSONResponse
 
 from sqlalchemy.orm import Session
 from sqlalchemy import text
 
+## custom modules
 from email_util.backup import perform_backup, decrypt_file, decompress_file, replace_sqlite_db
+from email_util.common import send_email, get_smtp_envs
 
 from db.base import engine, get_db
+from db.models import EmailAlertModel
 
 from auth.func import check_if_admin_user
 from auth.util import check_internal_request
 
 from constants import ENCRYPTION_KEY
 
+from routes.models import EmailRequest
+
 from main import maintenance_mode, maintenance_lock
 
+
 router = APIRouter()
+
+@router.post("/admin/db/send-email")
+async def send_email_to_all(request: Request, email_request:EmailRequest, db: Session = Depends(get_db), is_admin:bool = Depends(check_if_admin_user)):
+    origin = request.headers.get('origin')
+    check_internal_request(origin)
+
+    try:
+        recipients = db.query(EmailAlertModel.email).all()
+        smtp_envs = get_smtp_envs()
+        _, SMTP_SERVER, SMTP_PORT, SMTP_USER, SMTP_PASSWORD, FROM_EMAIL, _ = smtp_envs
+        
+        for recipient in recipients:
+            send_email(
+                subject=email_request.subject,
+                body=email_request.body,
+                to_email=recipient.email,
+                attachment_path=None,
+                from_email=FROM_EMAIL,
+                smtp_server=SMTP_SERVER,
+                smtp_port=SMTP_PORT,
+                smtp_user=SMTP_USER,
+                smtp_password=SMTP_PASSWORD
+            )
+        
+        return {"message": "Emails sent to all users successfully."}
+    
+    except Exception as e:
+        return JSONResponse(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, content={"message": f"An error occurred: {str(e)}"})
+
 
 @router.post('/admin/db/force-backup')
 def force_backup(request:Request, db:Session = Depends(get_db), is_admin:bool = Depends(check_if_admin_user)):
