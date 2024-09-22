@@ -44,6 +44,10 @@ import { useAuth } from './contexts/AuthContext';
 // util
 import { getURL } from './utils';
 
+import TosPage from './pages/TosPage.tsx';
+
+import PrivacyPolicyPage from './pages/PrivacyPolicyPage.tsx';
+
 const ProtectedAdminRoute = ({ children }: { children: ReactNode }) => 
 {
     const { isLoggedIn, isLoading } = useAuth();
@@ -145,6 +149,8 @@ function Router()
                     </ProtectedAdminRoute>
                 } 
             />
+            <Route path="/tos" element={<TosPage />} />
+            <Route path="/privacy" element={<PrivacyPolicyPage />} />
         </Routes>
     );
 }
