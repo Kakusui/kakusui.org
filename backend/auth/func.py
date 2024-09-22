@@ -163,13 +163,14 @@ def get_current_user(token:str = Depends(oauth2_scheme)):
     """
 
     if(not token):
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="No token provided")
+        return ""
 
     try:
         token_data = func_verify_token(token)
         return token_data.email
+    
     except HTTPException as e:
-        raise e
+        return ""
 
 def check_if_admin_user(current_user:str = Depends(get_current_user)):
 
@@ -185,10 +186,12 @@ def check_if_admin_user(current_user:str = Depends(get_current_user)):
 
     """
 
-    if(current_user != ADMIN_USER):
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Unauthorized")
-    
-    return current_user
+    is_admin = False
+
+    if(current_user == ADMIN_USER):
+        is_admin = True
+        
+    return is_admin
 
 def generate_verification_code() -> str:
     return ''.join(random.choices(string.digits, k=6))
@@ -228,7 +231,7 @@ def send_verification_email(email:str, code:str) -> None:
     _, SMTP_SERVER, SMTP_PORT, SMTP_USER, SMTP_PASSWORD, FROM_EMAIL, _ = get_smtp_envs()
 
     subject = "Email Verification Code for Kakusui.org"
-    body = f"Your verification code is {code}"
+    body = f"Your verification code is {code}. Do not share this code with anyone. Someone from Kakusui will never ask you for this code."
 
     send_email(subject=subject, body=body, to_email=email, attachment_path=None, from_email=FROM_EMAIL, smtp_server=SMTP_SERVER, smtp_port=SMTP_PORT, smtp_user=SMTP_USER, smtp_password=SMTP_PASSWORD)
 

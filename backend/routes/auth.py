@@ -48,7 +48,7 @@ async def check_email_registration(data:RegisterForEmailAlert, request:Request, 
         db.close()
 
 @router.post("/auth/login", response_model=LoginToken)
-def login(data:LoginModel, request:Request, db:Session = Depends(get_db)) -> typing.Dict[str, str]:
+async def login(data:LoginModel, request:Request, db:Session = Depends(get_db)) -> typing.Dict[str, str]:
     
     """
     
@@ -144,7 +144,7 @@ async def signup(data:LoginModel, request:Request, db:Session = Depends(get_db))
         db.close()
 
 @router.post("/auth/refresh-access-token", response_model=LoginToken)
-def refresh_token(request:Request, refresh_token: str = Cookie(None)) -> JSONResponse:
+async def refresh_token(request:Request, refresh_token: str = Cookie(None)) -> JSONResponse:
     
     """
 

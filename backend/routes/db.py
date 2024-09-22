@@ -64,7 +64,7 @@ async def send_email_to_all(request: Request, email_request:EmailRequest, db: Se
 
 
 @router.post('/admin/db/force-backup')
-def force_backup(request:Request, db:Session = Depends(get_db), is_admin:bool = Depends(check_if_admin_user)):
+async def force_backup(request:Request, db:Session = Depends(get_db), is_admin:bool = Depends(check_if_admin_user)):
 
     """
 

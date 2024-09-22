@@ -2,13 +2,9 @@
 ## Use of this source code is governed by an GNU Affero General Public License v3.0
 ## license that can be found in the LICENSE file.
 
-## built-in imports
-import typing
-
 ## third-party imports
-from sqlalchemy.orm import Session
 from sqlalchemy.inspection import inspect
-from sqlalchemy.orm import DeclarativeMeta, sessionmaker
+from sqlalchemy.orm import DeclarativeMeta
 from sqlalchemy.engine import Engine, Inspector
 
 from sqlite3 import OperationalError

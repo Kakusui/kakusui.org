@@ -6,7 +6,6 @@
 import os
 import shutil
 import zipfile
-import sys
 
 from datetime import datetime
 

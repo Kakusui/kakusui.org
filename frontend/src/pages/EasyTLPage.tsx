@@ -271,7 +271,7 @@ Additional instructions:
         const errorText = await response.text();
         console.error(`Error response: ${response.status} ${response.statusText}`);
         console.error(`Error details: ${errorText}`);
-        throw new Error(`HTTP error! status: ${response.status}`);
+        throw new Error(`HTTP error! status: ${response.status} ${errorText}`);
       }
 
       const result = await response.json();
