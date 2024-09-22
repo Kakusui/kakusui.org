@@ -110,11 +110,14 @@ def verify_verification_code(email: str, verification_code: str) -> bool:
     expiration_time = datetime.fromisoformat(verification_data["expiration"])
     
     if(datetime.now() > expiration_time):
+        remove_verification_data(email)
         return False
     
-    remove_verification_data(email)
+    if(verification_code == stored_code):
+        remove_verification_data(email)
+        return True
     
-    return verification_code == stored_code
+    return False
 
 def func_verify_token(token:str) -> TokenData:
 
