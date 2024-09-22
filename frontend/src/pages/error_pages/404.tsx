@@ -17,8 +17,7 @@ import {
   Text,
   VStack,
   Box,
-  keyframes,
-  Code
+  keyframes
 } from "@chakra-ui/react";
 
 const rotateAnimation = keyframes`
