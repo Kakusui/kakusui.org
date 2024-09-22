@@ -21,14 +21,14 @@ import { AuthProvider } from './contexts/AuthContext';
 function App() 
 {
     const location = useLocation();
-    const isLandingPage = location.pathname === '/';
+    const isBorderLessFullScreen = location.pathname === '/' || location.pathname === '/pricing';
     const isFullScreenPage = location.pathname === '/home' || location.pathname === '/admin';
 
     return (
         <ChakraProvider theme={theme}>
             <AuthProvider>
-                {!isLandingPage && !isFullScreenPage && <Navbar isHomePage={false} />}
-                {isLandingPage || isFullScreenPage ? (
+                {!isBorderLessFullScreen && !isFullScreenPage && <Navbar isHomePage={false} />}
+                {isBorderLessFullScreen || isFullScreenPage ? (
                     <Router />
                 ) : (
                     <PageWrapper showBackground={false}>
@@ -37,7 +37,7 @@ function App()
                         </Box>
                     </PageWrapper>
                 )}
-                {!isLandingPage && !isFullScreenPage && <Footer />}
+                {!isBorderLessFullScreen && !isFullScreenPage && <Footer />}
             </AuthProvider>
         </ChakraProvider>
     );

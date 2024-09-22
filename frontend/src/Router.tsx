@@ -48,6 +48,8 @@ import TosPage from './pages/TosPage.tsx';
 
 import PrivacyPolicyPage from './pages/PrivacyPolicyPage.tsx';
 
+import PricingPage from './pages/PricingPage';
+
 const ProtectedAdminRoute = ({ children }: { children: ReactNode }) => 
 {
     const { isLoggedIn, isLoading } = useAuth();
@@ -137,6 +139,7 @@ function Router()
             <Route path="/kairyou/tos" element={<KairyouTermsOfServicePage />} />
             <Route path="/kairyou/privacy" element={<KairyouPrivacyPolicyPage />} />
             <Route path="/kairyou/license" element={<KairyouLicensePage />} />
+            <Route path="/pricing" element={<PricingPage />} />
             <Route path="/404" element={<NotFoundPage />} />
             <Route path="/403" element={<ForbiddenPage />} />
             <Route path="/500" element={<InternalErrorPage />} />
