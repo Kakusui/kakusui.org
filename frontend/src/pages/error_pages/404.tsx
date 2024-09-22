@@ -4,6 +4,9 @@
 
 // maintain allman bracket style for consistency
 
+// react
+import { useState, useEffect, useRef } from "react";
+
 // chakra-ui
 import {
   Button,
@@ -12,10 +15,81 @@ import {
   Flex,
   Heading,
   Text,
-  VStack
+  VStack,
+  Box,
+  keyframes,
+  Code
 } from "@chakra-ui/react";
 
-const NotFoundPage = () => {
+const rotateAnimation = keyframes`
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+`;
+
+const launchAnimation = keyframes`
+  0% {
+    transform: translateY(0) rotate(0deg);
+    opacity: 1;
+  }
+  70% {
+    transform: translateY(-200px) rotate(1440deg);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(-300px) rotate(2160deg);
+    opacity: 0;
+  }
+`;
+
+const NotFoundPage = () =>
+{
+  const [launch, setLaunch] = useState(false);
+  const hoverTimer = useRef<NodeJS.Timeout | null>(null);
+  const isLaunching = useRef(false);
+
+  const handleMouseEnter = () =>
+  {
+    if (isLaunching.current) return;
+
+    // Start a timer for 3 seconds before launching
+    hoverTimer.current = setTimeout(() =>
+    {
+      isLaunching.current = true;
+      setLaunch(true);
+    }, 3000);
+  };
+
+  const handleMouseLeave = () =>
+  {
+    if (hoverTimer.current)
+    {
+      clearTimeout(hoverTimer.current);
+      hoverTimer.current = null;
+    }
+  };
+
+  const handleAnimationEnd = () =>
+  {
+    if (launch)
+    {
+      // Reset the launch state after animation completes
+      setLaunch(false);
+      isLaunching.current = false;
+    }
+  };
+
+  // Cleanup timer on unmount
+  useEffect(() =>
+  {
+    return () =>
+    {
+      if (hoverTimer.current)
+      {
+        clearTimeout(hoverTimer.current);
+      }
+    };
+  }, []);
+
   return (
     <Flex
       bg="#14192b"
@@ -23,17 +97,38 @@ const NotFoundPage = () => {
       align="center"
       justify="center"
       color="white"
+      position="relative"
+      overflow="hidden"
     >
-      <Container textAlign="center" maxW="md">
+      <Container textAlign="center" maxW="md" position="relative">
         <VStack spacing={6}>
+          <Box
+            fontSize="8xl"
+            mb={4}
+            animation={
+              launch
+                ? `${launchAnimation} 1.5s forwards`
+                : `${rotateAnimation} var(--rotation-duration, 10s) linear infinite`
+            }
+            sx={{
+              "--rotation-duration": "10s",
+              "&:hover": {
+                "--rotation-duration": "5s",
+              },
+            }}
+            transition="--rotation-duration 2s ease-in-out"
+            cursor="pointer"
+            onMouseEnter={handleMouseEnter}
+            onMouseLeave={handleMouseLeave}
+            onAnimationEnd={handleAnimationEnd}
+          >
+            🌐
+          </Box>
           <Heading as="h1" size="2xl">
-            Oops!
+            Lost in Translation
           </Heading>
-          <Text fontSize="2xl" fontWeight="semibold">
+          <Text fontSize="xl" color="orange.400">
             404 - Page not found
-          </Text>
-          <Text fontSize="lg" color="gray.500">
-            It seems like either we can't code or you went to a page that doesn't exist...
           </Text>
           <Button
             as="a"
@@ -48,7 +143,7 @@ const NotFoundPage = () => {
               bg: "orange.500",
             }}
           >
-            Return to Home
+            Return to Safety
           </Button>
           <chakra.a
             href="https://github.com/kakusui/kakusui-org/issues"
@@ -56,7 +151,7 @@ const NotFoundPage = () => {
             color="orange.400"
             _hover={{ color: "white" }}
           >
-            Something Broken? Tell us!
+            Get Our Programmers in Trouble
           </chakra.a>
         </VStack>
       </Container>
