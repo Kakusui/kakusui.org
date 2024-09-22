@@ -7,8 +7,8 @@
 // react
 import React, { createContext, useState, useContext, useEffect } from 'react';
 
-// third-party libraries
-import { jwtDecode } from 'jwt-decode';
+// custom
+import { getURL } from '../utils';
 
 interface AuthContextType 
 {
@@ -29,26 +29,82 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const [userEmail, setUserEmail] = useState<string | null>(null);
     const [isPrivilegedUser, setIsPrivilegedUser] = useState<boolean>(false);
     const [isLoading, setIsLoading] = useState<boolean>(true);
+    const [lastFullCheck, setLastFullCheck] = useState<number>(0);
 
-    const checkLoginStatus = async () => 
+    const checkTokenExpiration = () => 
+    {
+        const token = localStorage.getItem('access_token');
+        if(token) 
+        {
+            const payload = JSON.parse(atob(token.split('.')[1]));
+            if(payload.exp * 1000 > Date.now()) 
+            {
+                return true;
+            }
+        }
+        return false;
+    };
+
+    const checkLoginStatus = async (forceFullCheck = false) => 
     {
         setIsLoading(true);
+        const currentTime = Date.now();
+        const twoHours = 2 * 60 * 60 * 1000;
+
+        if(forceFullCheck || currentTime - lastFullCheck > twoHours) 
+        {
+            await performFullCheck();
+            setLastFullCheck(currentTime);
+        } 
+        else 
+        {
+            if(checkTokenExpiration()) 
+            {
+                setIsLoggedIn(true);
+            } 
+            else 
+            {
+                await performFullCheck();
+                setLastFullCheck(currentTime);
+            }
+        }
+        setIsLoading(false);
+    };
+
+    const performFullCheck = async () => 
+    {
         const access_token = localStorage.getItem('access_token');
         if(access_token) 
         {
             try 
             {
-                const decoded = jwtDecode(access_token);
-                const currentTime = Date.now() / 1000;
-                if(decoded.exp && decoded.exp > currentTime) 
+                const response = await fetch(getURL('/auth/verify-token'), 
                 {
-                    setIsLoggedIn(true);
-                    setUserEmail(decoded.sub as string);
-                    setIsPrivilegedUser(decoded.sub === 'kbilyeu@kakusui.org');
+                    method: 'POST',
+                    headers: 
+                    {
+                        'Authorization': `Bearer ${access_token}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                if(response.ok) 
+                {
+                    const data = await response.json();
+                    if(data.valid) 
+                    {
+                        setIsLoggedIn(true);
+                        setUserEmail(data.email);
+                        setIsPrivilegedUser(data.email === 'kbilyeu@kakusui.org');
+                    } 
+                    else 
+                    {
+                        throw new Error('Token invalid');
+                    }
                 } 
                 else 
                 {
-                    throw new Error('Token expired');
+                    throw new Error('Failed to verify token');
                 }
             } 
             catch (error) 
@@ -63,25 +119,27 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             setUserEmail(null);
             setIsPrivilegedUser(false);
         }
-        setIsLoading(false);
     };
 
     useEffect(() => 
     {
-        checkLoginStatus();
+        checkLoginStatus(true);
     }, []);
 
     const login = async (access_token: string) => 
     {
         localStorage.setItem('access_token', access_token);
-        await checkLoginStatus();
+        await checkLoginStatus(true);
     };
 
     const logout = async () => 
     {
         localStorage.removeItem('access_token');
         document.cookie = 'refresh_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; secure; HttpOnly';
-        await checkLoginStatus();
+        setIsLoggedIn(false);
+        setUserEmail(null);
+        setIsPrivilegedUser(false);
+        setLastFullCheck(0);
     };
 
     return (

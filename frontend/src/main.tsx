@@ -11,11 +11,14 @@ import { BrowserRouter } from 'react-router-dom'
 
 // Custom
 import App from "./App.tsx";
+import { AuthProvider } from './contexts/AuthContext'
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
     <React.StrictMode>
         <BrowserRouter>
-            <App/>
+            <AuthProvider>
+                <App />
+            </AuthProvider>
         </BrowserRouter>
     </React.StrictMode>,
 )

@@ -6,6 +6,8 @@
 
 // react
 import { useLocation } from 'react-router-dom';
+import { useEffect } from 'react';
+import { useAuth } from './contexts/AuthContext';
 
 // chakra-ui
 import { ChakraProvider, Box } from "@chakra-ui/react";
@@ -16,29 +18,42 @@ import Footer from "./components/Footer.tsx";
 import PageWrapper from "./components/PageWrapper.tsx";
 import theme from "./theme.ts";
 import Router from "./Router.tsx";
-import { AuthProvider } from './contexts/AuthContext';
 
-function App() 
+function AppContent() 
 {
     const location = useLocation();
+    const { checkLoginStatus } = useAuth();
+
+    useEffect(() => 
+    {
+        checkLoginStatus();
+    }, [location]);
+
     const isBorderLessFullScreen = location.pathname === '/' || location.pathname === '/pricing';
     const isFullScreenPage = location.pathname === '/home' || location.pathname === '/admin';
 
     return (
+        <>
+            {!isBorderLessFullScreen && !isFullScreenPage && <Navbar isHomePage={false} />}
+            {isBorderLessFullScreen || isFullScreenPage ? (
+                <Router />
+            ) : (
+                <PageWrapper showBackground={false}>
+                    <Box maxWidth="container.xl" margin="0 auto">
+                        <Router />
+                    </Box>
+                </PageWrapper>
+            )}
+            {!isBorderLessFullScreen && !isFullScreenPage && <Footer />}
+        </>
+    );
+}
+
+function App() 
+{
+    return (
         <ChakraProvider theme={theme}>
-            <AuthProvider>
-                {!isBorderLessFullScreen && !isFullScreenPage && <Navbar isHomePage={false} />}
-                {isBorderLessFullScreen || isFullScreenPage ? (
-                    <Router />
-                ) : (
-                    <PageWrapper showBackground={false}>
-                        <Box maxWidth="container.xl" margin="0 auto">
-                            <Router />
-                        </Box>
-                    </PageWrapper>
-                )}
-                {!isBorderLessFullScreen && !isFullScreenPage && <Footer />}
-            </AuthProvider>
+            <AppContent />
         </ChakraProvider>
     );
 }
