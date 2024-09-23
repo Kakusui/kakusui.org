@@ -127,7 +127,10 @@ const NotFoundPage = () =>
             Lost in Translation
           </Heading>
           <Text fontSize="xl" color="orange.400">
-            404 - Page not found
+            404 - Page Not Found
+          </Text>
+          <Text fontSize="lg" color="gray.500">
+            We couldn't map a translation to your request...
           </Text>
           <Button
             as="a"
