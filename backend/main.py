@@ -101,4 +101,10 @@ app.include_router(db_router)
 @app.on_event("startup")
 async def startup_event():
     db = SessionLocal()
-    start_scheduler(db)
+    app.state.scheduler = await start_scheduler(db)
+
+@app.on_event("shutdown")
+async def shutdown_event():
+    scheduler = app.state.scheduler
+    if(scheduler):
+        scheduler.shutdown(wait=False)

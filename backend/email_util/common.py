@@ -4,8 +4,10 @@
 
 ## built-in imports
 import os
+import asyncio
 import typing
 import smtplib
+import aiofiles
 
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
@@ -14,7 +16,7 @@ from email import encoders
 
 ##----------------------------------/----------------------------------##
 
-def get_smtp_envs() -> typing.Tuple[str, str, int, str, str, str, str]:
+async def get_smtp_envs() -> typing.Tuple[str, str, int, str, str, str, str]:
 
     """
     
@@ -31,11 +33,13 @@ def get_smtp_envs() -> typing.Tuple[str, str, int, str, str, str, str]:
 
     """
 
-    if(os.path.exists(".env")):
-        with open(".env", "r") as f:
-            for line in f:
-                key, value = line.strip().split("=")
-                os.environ[key] = value
+    if(await asyncio.to_thread(os.path.exists, ".env")):
+        async with asyncio.Lock():
+            async with aiofiles.open(".env", "r") as f:
+                lines = await f.readlines()
+                for line in lines:
+                    key, value = line.strip().split("=")
+                    os.environ[key] = value
 
     ENCRYPTION_KEY:str = os.getenv('ENCRYPTION_KEY') or ""
     SMTP_SERVER:str = os.getenv('SMTP_SERVER') or ""
@@ -57,7 +61,7 @@ def get_smtp_envs() -> typing.Tuple[str, str, int, str, str, str, str]:
 
 ##----------------------------------/----------------------------------##
 
-def send_email(subject:str, body:str, to_email:str, attachment_path:str | None, from_email:str, smtp_server:str, smtp_port:int, smtp_user:str, smtp_password:str) -> None:
+async def send_email(subject:str, body:str, to_email:str, attachment_path:str | None, from_email:str, smtp_server:str, smtp_port:int, smtp_user:str, smtp_password:str) -> None:
 
     """
 
@@ -76,7 +80,6 @@ def send_email(subject:str, body:str, to_email:str, attachment_path:str | None, 
 
     """
 
-
     msg = MIMEMultipart()
     msg['Subject'] = subject
     msg['From'] = from_email
@@ -85,21 +88,22 @@ def send_email(subject:str, body:str, to_email:str, attachment_path:str | None, 
     msg.attach(MIMEText(body, 'plain'))
 
     if(attachment_path is not None):
-
-        with open(attachment_path, 'rb') as f:
+        async with aiofiles.open(attachment_path, 'rb') as f:
+            content = await f.read()
             part = MIMEBase('application', 'octet-stream')
-            part.set_payload(f.read())
+            part.set_payload(content)
             encoders.encode_base64(part)
             part.add_header('Content-Disposition', f'attachment; filename={os.path.basename(attachment_path)}')
             msg.attach(part)
 
     try:
-
-        with smtplib.SMTP(smtp_server, smtp_port) as server:
-            server.starttls() 
-            server.login(smtp_user, smtp_password)
-            server.send_message(msg)
-            server.quit()
-
+        await asyncio.to_thread(send_email_sync, msg, smtp_server, smtp_port, smtp_user, smtp_password)
+        
     except Exception as e:
         print(f"Error: {e}")
+
+def send_email_sync(msg, smtp_server, smtp_port, smtp_user, smtp_password):
+    with smtplib.SMTP(smtp_server, smtp_port) as server:
+        server.starttls() 
+        server.login(smtp_user, smtp_password)
+        server.send_message(msg)

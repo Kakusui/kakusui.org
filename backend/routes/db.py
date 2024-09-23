@@ -6,6 +6,8 @@
 import typing
 import os
 import shutil
+import asyncio
+import aiofiles
 
 ## third-party imports
 from fastapi import APIRouter, Depends, UploadFile, File, HTTPException, Request, Body, status
@@ -37,14 +39,17 @@ router = APIRouter()
 @router.post("/admin/db/send-email")
 async def send_email_to_all(request: Request, email_request:EmailRequest, db: Session = Depends(get_db), is_admin:bool = Depends(check_if_admin_user)):
     origin = request.headers.get('origin')
-    check_internal_request(origin)
+    await check_internal_request(origin)
 
+    if(not is_admin):
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="You are not authorized to perform this action.")
+    
     try:
         recipients = db.query(EmailAlertModel.email).all()
-        smtp_envs = get_smtp_envs()
+        smtp_envs = await get_smtp_envs()
         _, SMTP_SERVER, SMTP_PORT, SMTP_USER, SMTP_PASSWORD, FROM_EMAIL, _ = smtp_envs
         
-        for recipient in recipients:
+        tasks = [
             send_email(
                 subject=email_request.subject,
                 body=email_request.body,
@@ -56,6 +61,9 @@ async def send_email_to_all(request: Request, email_request:EmailRequest, db: Se
                 smtp_user=SMTP_USER,
                 smtp_password=SMTP_PASSWORD
             )
+            for recipient in recipients
+        ]
+        await asyncio.gather(*tasks)
         
         return {"message": "Emails sent to all users successfully."}
     
@@ -80,9 +88,12 @@ async def force_backup(request:Request, db:Session = Depends(get_db), is_admin:b
 
     origin = request.headers.get('origin')
 
-    check_internal_request(origin)
+    await check_internal_request(origin)
 
-    perform_backup(db)
+    if(not is_admin):
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="You are not authorized to perform this action.")
+
+    await perform_backup(db)
 
     return {"message": "Backup started"}
 
@@ -106,28 +117,31 @@ async def upload_backup(request:Request, file: UploadFile = File(...), is_admin:
 
     origin = request.headers.get('origin')
 
-    check_internal_request(origin)
+    await check_internal_request(origin)
+
+    if(not is_admin):
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="You are not authorized to perform this action.")
 
     try:
         global maintenance_mode
         with maintenance_lock:
             maintenance_mode = True
 
-            with open("backup.zip.pgp", "wb") as buffer:
-                shutil.copyfileobj(file.file, buffer)
+            async with aiofiles.open("backup.zip.pgp", "wb") as buffer:
+                await buffer.write(await file.read())
 
-            with open("backup.zip.pgp", "rb") as f:
-                decrypted_file = decrypt_file("backup.zip.pgp", ENCRYPTION_KEY) # type: ignore
+            async with aiofiles.open("backup.zip.pgp", "rb") as f:
+                decrypted_file = await decrypt_file("backup.zip.pgp", ENCRYPTION_KEY) # type: ignore
 
-            with open(decrypted_file, "rb") as f:
-                decompressed_file = decompress_file(decrypted_file, "backup.db")
+            async with aiofiles.open(decrypted_file, "rb") as f:
+                decompressed_file = await decompress_file(decrypted_file, "backup.db")
 
             db_path = os.path.join(os.path.dirname(__file__), "..", "database", "kakusui.db")
 
-            replace_sqlite_db(engine, decompressed_file, db_path)
+            await replace_sqlite_db(engine, decompressed_file, db_path)
 
-            os.remove("backup.zip.pgp")
-            os.remove(decrypted_file)
+            await asyncio.to_thread(os.remove, "backup.zip.pgp")
+            await asyncio.to_thread(os.remove, decrypted_file)
 
         return {"message": "Database replaced successfully"}
 
@@ -159,7 +173,11 @@ async def run_query(
     """
 
     origin = request.headers.get('origin')
-    check_internal_request(origin)
+
+    await check_internal_request(origin)
+
+    if(not is_admin):
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="You are not authorized to perform this action.")
 
     try:
 

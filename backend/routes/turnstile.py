@@ -21,7 +21,7 @@ async def verify_turnstile(request_data:VerifyTurnstileRequest, request:Request)
 
     origin = request.headers.get('origin')
 
-    check_internal_request(origin)
+    await check_internal_request(origin)
 
     try:
         url = "https://challenges.cloudflare.com/turnstile/v0/siteverify"

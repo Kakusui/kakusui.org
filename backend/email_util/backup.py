@@ -4,6 +4,7 @@
 
 ## built-in imports
 import os
+import asyncio
 import shutil
 import zipfile
 
@@ -25,7 +26,7 @@ from db.models import EmailAlertModel, User
 from email_util.common import get_smtp_envs, send_email
 
 
-def export_db(db_path:str, export_path:str) -> str:
+async def export_db(db_path:str, export_path:str) -> str:
 
     """
 
@@ -40,12 +41,12 @@ def export_db(db_path:str, export_path:str) -> str:
 
     """
 
-    shutil.copy(db_path, export_path)
+    await asyncio.to_thread(shutil.copy, db_path, export_path)
     return export_path
 
 ##----------------------------------/----------------------------------##
 
-def encrypt_file(file_path:str, passphrase:str) -> str:
+async def encrypt_file(file_path:str, passphrase:str) -> str:
 
     """
 
@@ -64,13 +65,7 @@ def encrypt_file(file_path:str, passphrase:str) -> str:
     encrypted_path = file_path + '.pgp'
     
     with open(file_path, 'rb') as f:
-        status = gpg.encrypt_file(
-            f, 
-            recipients=None, 
-            symmetric=True, 
-            passphrase=passphrase, 
-            output=encrypted_path
-        )
+        status = await asyncio.to_thread(gpg.encrypt_file, f, recipients=None, symmetric=True, passphrase=passphrase, output=encrypted_path)
         
     if(not status.ok):
         raise ValueError('Failed to encrypt the file:', status.stderr)
@@ -79,7 +74,7 @@ def encrypt_file(file_path:str, passphrase:str) -> str:
 
 ##----------------------------------/----------------------------------##
 
-def decrypt_file(file_path:str, passphrase:str) -> str:
+async def decrypt_file(file_path:str, passphrase:str) -> str:
 
     """
 
@@ -97,11 +92,7 @@ def decrypt_file(file_path:str, passphrase:str) -> str:
     decrypted_path = file_path.replace('.pgp', '')
     
     with open(file_path, 'rb') as f:
-        status = gpg.decrypt_file(
-            f, 
-            passphrase=passphrase, 
-            output=decrypted_path
-        )
+        status = await asyncio.to_thread(gpg.decrypt_file, f, passphrase=passphrase, output=decrypted_path)
         
     if(not status.ok):
         raise ValueError('Failed to decrypt the file:', status.stderr)
@@ -110,7 +101,7 @@ def decrypt_file(file_path:str, passphrase:str) -> str:
 
 ##----------------------------------/----------------------------------##
 
-def compress_file(file_path:str) -> str:
+async def compress_file(file_path:str) -> str:
 
     """
 
@@ -127,11 +118,11 @@ def compress_file(file_path:str) -> str:
     compressed_path = file_path + '.zip'
 
     with zipfile.ZipFile(compressed_path, 'w', zipfile.ZIP_DEFLATED) as zipf:
-        zipf.write(file_path, os.path.basename(file_path))
+        await asyncio.to_thread(zipf.write, file_path, os.path.basename(file_path))
 
     return compressed_path
 
-def decompress_file(file_path:str, decompressed_path:str) -> str:
+async def decompress_file(file_path:str, decompressed_path:str) -> str:
 
     """
 
@@ -149,8 +140,8 @@ def decompress_file(file_path:str, decompressed_path:str) -> str:
         
         ## Extract all files to a temporary directory
         temp_dir = os.path.join(os.getcwd(), "temp_extracted")
-        os.makedirs(temp_dir, exist_ok=True)
-        zipf.extractall(temp_dir)
+        await asyncio.to_thread(os.makedirs, temp_dir, exist_ok=True)
+        await asyncio.to_thread(zipf.extractall, temp_dir)
         
         extracted_files = os.listdir(temp_dir)
         
@@ -160,13 +151,13 @@ def decompress_file(file_path:str, decompressed_path:str) -> str:
         extracted_file = extracted_files[0]
         extracted_file_path = os.path.join(temp_dir, extracted_file)
         
-        shutil.move(extracted_file_path, decompressed_path)
+        await asyncio.to_thread(shutil.move, extracted_file_path, decompressed_path)
     
-        shutil.rmtree(temp_dir)
+        await asyncio.to_thread(shutil.rmtree, temp_dir)
         
     return decompressed_path
 
-def perform_backup(db:Session) -> None:
+async def perform_backup(db:Session) -> None:
 
     """
 
@@ -174,7 +165,7 @@ def perform_backup(db:Session) -> None:
 
     """
 
-    ENCRYPTION_KEY, SMTP_SERVER, SMTP_PORT, SMTP_USER, SMTP_PASSWORD, FROM_EMAIL, TO_EMAIL = get_smtp_envs()
+    ENCRYPTION_KEY, SMTP_SERVER, SMTP_PORT, SMTP_USER, SMTP_PASSWORD, FROM_EMAIL, TO_EMAIL = await get_smtp_envs()
 
     timestamp = datetime.now().strftime("%Y-%m-%d %H_%M_%S")
 
@@ -182,15 +173,16 @@ def perform_backup(db:Session) -> None:
     number_of_users = db.query(User).count()
 
     export_path = f'exported_db_{timestamp}.db'
+    
+    await export_db(DATABASE_PATH, export_path)
 
-    export_db(DATABASE_PATH, export_path)
+    compressed_path = await compress_file(export_path)
+    await asyncio.to_thread(os.remove, export_path)
 
-    compressed_path = compress_file(export_path)
-    os.remove(export_path)
+    encrypted_path = await encrypt_file(compressed_path, ENCRYPTION_KEY)
+    await asyncio.to_thread(os.remove, compressed_path)
 
-    encrypted_path = encrypt_file(compressed_path, ENCRYPTION_KEY)
-    os.remove(compressed_path)
-    send_email(
+    await send_email(
         subject=f'SQLite Database Backup ({timestamp})',
         body=(
             'Please find the attached encrypted and compressed SQLite database backup. '
@@ -207,29 +199,29 @@ def perform_backup(db:Session) -> None:
         smtp_password=SMTP_PASSWORD
     )
 
-    os.remove(encrypted_path)
+    await asyncio.to_thread(os.remove, encrypted_path)
 
     try:
 
-        os.remove(export_path)
-        os.remove(compressed_path)
-        os.remove(encrypted_path)
+        await asyncio.to_thread(os.remove, export_path)
+        await asyncio.to_thread(os.remove, compressed_path)
+        await asyncio.to_thread(os.remove, encrypted_path)
 
     except Exception:
         pass
 
     finally:
         try:
-            os.remove(export_path)
-            os.remove(compressed_path)
-            os.remove(encrypted_path)
+            await asyncio.to_thread(os.remove, export_path)
+            await asyncio.to_thread(os.remove, compressed_path)
+            await asyncio.to_thread(os.remove, encrypted_path)
 
         except:
             pass
 
 ##----------------------------------/----------------------------------##
 
-def perform_backup_scheduled(db:Session) -> None:
+async def perform_backup_scheduled(db:Session) -> None:
 
     """
 
@@ -238,10 +230,10 @@ def perform_backup_scheduled(db:Session) -> None:
     """
 
     with shelve.open(os.path.join(BACKUP_LOGS_DIR, 'backup_scheduler.db')) as database:
-        perform_backup(db)
+        await perform_backup(db)
         database['last_run'] = datetime.now()
 
-def replace_sqlite_db(engine:Engine, extracted_db_path: str, current_db_path: str) -> None:
+async def replace_sqlite_db(engine:Engine, extracted_db_path: str, current_db_path: str) -> None:
     """
     Replace the current SQLite database with the extracted SQLite database and restart the application.
 
@@ -253,6 +245,6 @@ def replace_sqlite_db(engine:Engine, extracted_db_path: str, current_db_path: st
     
     close_all_sessions()
     
-    engine.dispose()
+    await asyncio.to_thread(engine.dispose)
     
-    os.replace(extracted_db_path, current_db_path)
+    await asyncio.to_thread(os.replace, extracted_db_path, current_db_path)
