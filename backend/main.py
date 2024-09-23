@@ -46,20 +46,24 @@ security = HTTPBasic()
 if(not os.path.exists(BACKUP_LOGS_DIR)):
     os.makedirs(BACKUP_LOGS_DIR, exist_ok=True)
 
-envs = [TURNSTILE_SECRET_KEY, 
-        ENCRYPTION_KEY, 
-        ADMIN_USER, 
-        ADMIN_PASS_HASH, 
-        TOTP_SECRET, 
-        ACCESS_TOKEN_SECRET, 
-        REFRESH_TOKEN_SECRET, 
-        V1_KAIRYOU_ROOT_KEY, 
-        V1_EASYTL_ROOT_KEY, 
-        V1_EASYTL_PUBLIC_API_KEY, 
-        V1_ELUCIDATE_ROOT_KEY]
+envs = {
+    "TURNSTILE_SECRET_KEY": TURNSTILE_SECRET_KEY,
+    "ENCRYPTION_KEY": ENCRYPTION_KEY,
+    "ADMIN_USER": ADMIN_USER,
+    "ADMIN_PASS_HASH": ADMIN_PASS_HASH,
+    "ACCESS_TOKEN_SECRET": ACCESS_TOKEN_SECRET,
+    "REFRESH_TOKEN_SECRET": REFRESH_TOKEN_SECRET,
+    "V1_KAIRYOU_ROOT_KEY": V1_KAIRYOU_ROOT_KEY,
+    "V1_EASYTL_ROOT_KEY": V1_EASYTL_ROOT_KEY,
+    "V1_EASYTL_PUBLIC_API_KEY": V1_EASYTL_PUBLIC_API_KEY,
+    "V1_ELUCIDATE_ROOT_KEY": V1_ELUCIDATE_ROOT_KEY,
+    "OPENAI_API_KEY": OPENAI_API_KEY,
+    "ANTHROPIC_API_KEY": ANTHROPIC_API_KEY,
+    "GEMINI_API_KEY": GEMINI_API_KEY
+}
 
-for env in envs:
-    assert env, f"{env} environment variable not set"
+for key, value in envs.items():
+    assert value, f"{key} environment variable not set"
 
 create_tables_if_not_exist(engine, Base)
 
