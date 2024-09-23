@@ -4,6 +4,8 @@
 
 ## built-in imports
 import os
+import asyncio
+import aiofiles
 import json
 import random
 import string
@@ -20,7 +22,7 @@ from auth.util import get_secure_filename
 def generate_verification_code() -> str:
     return ''.join(random.choices(string.digits, k=6))
 
-def save_verification_data(email:str, code:str) -> None:
+async def save_verification_data(email:str, code:str) -> None:
     expiration_time = datetime.now() + timedelta(minutes=VERIFICATION_EXPIRATION_MINUTES)
     data = {
         "code": code,
@@ -28,33 +30,35 @@ def save_verification_data(email:str, code:str) -> None:
     }
     
     if(not os.path.exists(VERIFICATION_DATA_DIR)):
-        os.makedirs(VERIFICATION_DATA_DIR)
+        await asyncio.to_thread(os.makedirs, VERIFICATION_DATA_DIR)
 
-    secure_email = get_secure_filename(email)
+    secure_email = await get_secure_filename(email)
 
-    with open(f"{VERIFICATION_DATA_DIR}/{secure_email}.json", "w") as f:
-        json.dump(data, f)
+    async with aiofiles.open(f"{VERIFICATION_DATA_DIR}/{secure_email}.json", "w") as f:
+        await f.write(json.dumps(data))
 
-def get_verification_data(email:str) -> dict | None:
+async def get_verification_data(email:str) -> dict | None:
     try:
-        secure_email = get_secure_filename(email)
-        with open(f"{VERIFICATION_DATA_DIR}/{secure_email}.json", "r") as f:
-            data = json.load(f)
+        secure_email = await get_secure_filename(email)
+
+        async with aiofiles.open(f"{VERIFICATION_DATA_DIR}/{secure_email}.json", "r") as f:
+            data = json.loads(await f.read())
         return data
+    
     except FileNotFoundError:
         return None
 
-def remove_verification_data(email:str) -> None:
+async def remove_verification_data(email:str) -> None:
     try:
-        secure_email = get_secure_filename(email)
-        os.remove(f"{VERIFICATION_DATA_DIR}/{secure_email}.json")
+        secure_email = await get_secure_filename(email)
+        await asyncio.to_thread(os.remove, f"{VERIFICATION_DATA_DIR}/{secure_email}.json")
     except FileNotFoundError:
         pass
 
-def send_verification_email(email:str, code:str) -> None:
-    _, SMTP_SERVER, SMTP_PORT, SMTP_USER, SMTP_PASSWORD, FROM_EMAIL, _ = get_smtp_envs()
+async def send_verification_email(email:str, code:str) -> None:
+    _, SMTP_SERVER, SMTP_PORT, SMTP_USER, SMTP_PASSWORD, FROM_EMAIL, _ = await get_smtp_envs()
 
     subject = "Email Verification Code for Kakusui.org"
     body = f"Your verification code is {code}"
 
-    send_email(subject=subject, body=body, to_email=email, attachment_path=None, from_email=FROM_EMAIL, smtp_server=SMTP_SERVER, smtp_port=SMTP_PORT, smtp_user=SMTP_USER, smtp_password=SMTP_PASSWORD)
+    await send_email(subject=subject, body=body, to_email=email, attachment_path=None, from_email=FROM_EMAIL, smtp_server=SMTP_SERVER, smtp_port=SMTP_PORT, smtp_user=SMTP_USER, smtp_password=SMTP_PASSWORD)

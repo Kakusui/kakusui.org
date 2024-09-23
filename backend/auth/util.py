@@ -4,6 +4,7 @@
 
 ## built-in imports
 import os
+import asyncio
 
 ## third-party imports
 from fastapi import HTTPException
@@ -13,14 +14,14 @@ from werkzeug.utils import secure_filename
 ## custom modules
 from constants import ENVIRONMENT
 
-def get_secure_path(base_dir:str, filename:str) -> str:
-    secure_name = secure_filename(filename)
+async def get_secure_path(base_dir:str, filename:str) -> str:
+    secure_name = await get_secure_filename(filename)
     return os.path.join(base_dir, secure_name)
 
-def get_secure_filename(filename:str) -> str:
-    return secure_filename(filename)
+async def get_secure_filename(filename:str) -> str:
+    return await asyncio.to_thread(secure_filename, filename)
 
-def check_internal_request(origin:str | None) -> None:
+async def check_internal_request(origin:str | None) -> None:
 
     """
 

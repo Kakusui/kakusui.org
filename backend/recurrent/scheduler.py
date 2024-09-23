@@ -10,30 +10,20 @@ from datetime import datetime, timedelta
 
 ## third-party imports
 import shelve
-
-import atexit
-
-from apscheduler.schedulers.background import BackgroundScheduler
-
+from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from sqlalchemy.orm import Session
 
 ## custom imports
 from email_util.backup import perform_backup_scheduled
-
 from constants import BACKUP_LOGS_DIR, VERIFICATION_DATA_DIR, RATE_LIMIT_DATA_DIR, DATABASE_PATH
 
-def start_scheduler(db:Session) -> None:
-
+async def start_scheduler(db:Session) -> AsyncIOScheduler:
     """
-
     Starts the scheduler for the application.
 
     Args:
-    BACKUP_LOGS_DIR (str): The directory to store the backup logs
-    VERIFICATION_DATA_DIR (str): The directory to store the verification data
-    RATE_LIMIT_DATA_DIR (str): The directory to store the rate limit data
+    db (Session): The database session
     """
-
     max_retries = 5
     retry_delay = 3
 
@@ -49,40 +39,35 @@ def start_scheduler(db:Session) -> None:
                         should_run_initial = False
 
             break
-
         except Exception as e:
             if("Resource temporarily unavailable" in str(e)):
                 time.sleep(retry_delay)
             else:
                 raise
     else:
-        print("Failed to initialize scheduler after multiple attempts")
-        return
+        raise Exception("Failed to initialize scheduler after multiple attempts")
 
     if(should_run_initial):
-        cleanup_expired_codes()
-        perform_backup_scheduled(db)
+        await cleanup_expired_codes()
+        await perform_backup_scheduled(db)
 
-    scheduler = BackgroundScheduler()
+    scheduler = AsyncIOScheduler()
 
-    scheduler.add_job(lambda: perform_backup_scheduled(db), 'interval', hours=6)
+    scheduler.add_job(perform_backup_scheduled, 'interval', hours=6, args=[db])
     scheduler.add_job(cleanup_expired_codes, 'interval', hours=1)
 
     scheduler.start()
 
-    atexit.register(lambda: scheduler.shutdown())
+    return scheduler
 
-def cleanup_expired_codes() -> None:
-
+async def cleanup_expired_codes() -> None:
     """
-
     Cleans up the expired codes in the verification data directory and the rate limit data directory.
 
     Args:
     VERIFICATION_DATA_DIR (str): The directory to store the verification data
     RATE_LIMIT_DATA_DIR (str): The directory to store the rate limit data
     """
-
     if(not os.path.exists(VERIFICATION_DATA_DIR)):
         return
 

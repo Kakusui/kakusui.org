@@ -2,16 +2,12 @@
 ## Use of this source code is governed by an GNU Affero General Public License v3.0
 ## license that can be found in the LICENSE file.
 
-import os 
+import os
 
 def get_env_variables() -> None:
-
     """
-
     Only used in development. This function reads the .env file and sets the environment variables.
-
     """
-
     if(not os.path.exists(".env")):
         return
 
@@ -50,8 +46,8 @@ OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY")
 ANTHROPIC_API_KEY = os.environ.get("ANTHROPIC_API_KEY")
 GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY")
 
-DATABASE_URL: str = "sqlite:///./database/kakusui.db"
-DATABASE_PATH: str = "database/kakusui.db"
+DATABASE_URL:str = "sqlite:///./database/kakusui.db"
+DATABASE_PATH:str = "database/kakusui.db"
 BACKUP_LOGS_DIR = 'database/logs'
 VERIFICATION_DATA_DIR = 'database/temp_verification'
 RATE_LIMIT_DATA_DIR = 'database/rate_limit'

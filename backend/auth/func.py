@@ -8,6 +8,7 @@ import os
 import json
 import random
 import string
+import asyncio
 
 from datetime import datetime, timedelta, timezone
 
@@ -30,8 +31,7 @@ from constants import ACCESS_TOKEN_SECRET, REFRESH_TOKEN_SECRET, TOKEN_ALGORITHM
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
 
-
-def create_access_token(data:dict, 
+async def create_access_token(data:dict, 
                         expires_delta:typing.Optional[timedelta]) -> str:
 
     """
@@ -59,7 +59,7 @@ def create_access_token(data:dict,
 
     return encoded_jwt
 
-def create_refresh_token(data:dict, 
+async def create_refresh_token(data:dict, 
                          expires_delta:typing.Optional[timedelta]) -> str:
 
     """
@@ -86,7 +86,7 @@ def create_refresh_token(data:dict,
     encoded_jwt = jwt.encode(to_encode, REFRESH_TOKEN_SECRET, algorithm=TOKEN_ALGORITHM) # type: ignore
     return encoded_jwt
 
-def verify_verification_code(email: str, verification_code: str) -> bool:
+async def verify_verification_code(email: str, verification_code: str) -> bool:
 
     """
 
@@ -102,7 +102,7 @@ def verify_verification_code(email: str, verification_code: str) -> bool:
 
     """
 
-    verification_data = get_verification_data(email)
+    verification_data = await get_verification_data(email)
     if(not verification_data):
         return False
     
@@ -110,16 +110,16 @@ def verify_verification_code(email: str, verification_code: str) -> bool:
     expiration_time = datetime.fromisoformat(verification_data["expiration"])
     
     if(datetime.now() > expiration_time):
-        remove_verification_data(email)
+        await remove_verification_data(email)
         return False
     
     if(verification_code == stored_code):
-        remove_verification_data(email)
+        await remove_verification_data(email)
         return True
     
     return False
 
-def func_verify_token(token:str) -> TokenData:
+async def func_verify_token(token:str) -> TokenData:
 
     """
 
@@ -145,10 +145,10 @@ def func_verify_token(token:str) -> TokenData:
     except jwt.ExpiredSignatureError:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Token expired")
 
-    except PyJWTError as e:
+    except PyJWTError:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token")
     
-def get_current_user(token:str = Depends(oauth2_scheme)):
+async def get_current_user(token:str = Depends(oauth2_scheme)):
 
     """
 
@@ -166,13 +166,13 @@ def get_current_user(token:str = Depends(oauth2_scheme)):
         return ""
 
     try:
-        token_data = func_verify_token(token)
+        token_data = await func_verify_token(token)
         return token_data.email
     
     except HTTPException as e:
         return ""
 
-def check_if_admin_user(current_user:str = Depends(get_current_user)):
+async def check_if_admin_user(current_user:str = Depends(get_current_user)):
 
     """
 
@@ -193,10 +193,10 @@ def check_if_admin_user(current_user:str = Depends(get_current_user)):
         
     return is_admin
 
-def generate_verification_code() -> str:
+async def generate_verification_code() -> str:
     return ''.join(random.choices(string.digits, k=6))
 
-def save_verification_data(email:str, code:str) -> None:
+async def save_verification_data(email:str, code:str) -> None:
     expiration_time = datetime.now() + timedelta(minutes=VERIFICATION_EXPIRATION_MINUTES)
     data = {
         "code": code,
@@ -204,38 +204,58 @@ def save_verification_data(email:str, code:str) -> None:
     }
     
     if(not os.path.exists(VERIFICATION_DATA_DIR)):
-        os.makedirs(VERIFICATION_DATA_DIR)
+        await asyncio.to_thread(os.makedirs, VERIFICATION_DATA_DIR)
 
-    secure_email = get_secure_filename(email)
+    secure_email = await get_secure_filename(email)
 
-    with open(f"{VERIFICATION_DATA_DIR}/{secure_email}.json", "w") as f:
-        json.dump(data, f)
+    async with asyncio.Lock():
+        await asyncio.to_thread(
+            lambda: json.dump(
+                data, 
+                open(f"{VERIFICATION_DATA_DIR}/{secure_email}.json", "w")
+            )
+        )
 
-def get_verification_data(email:str) -> dict | None:
+async def get_verification_data(email:str) -> dict | None:
     try:
-        secure_email = get_secure_filename(email)
-        with open(f"{VERIFICATION_DATA_DIR}/{secure_email}.json", "r") as f:
-            data = json.load(f)
+        secure_email = await get_secure_filename(email)
+        async with asyncio.Lock():
+            data = await asyncio.to_thread(
+                lambda: json.load(
+                    open(f"{VERIFICATION_DATA_DIR}/{secure_email}.json", "r")
+                )
+            )
         return data
     except FileNotFoundError:
         return None
 
-def remove_verification_data(email:str) -> None:
+async def remove_verification_data(email:str) -> None:
     try:
         secure_email = get_secure_filename(email)
-        os.remove(f"{VERIFICATION_DATA_DIR}/{secure_email}.json")
+        async with asyncio.Lock():
+            await asyncio.to_thread(os.remove, f"{VERIFICATION_DATA_DIR}/{secure_email}.json")
     except FileNotFoundError:
         pass
 
-def send_verification_email(email:str, code:str) -> None:
-    _, SMTP_SERVER, SMTP_PORT, SMTP_USER, SMTP_PASSWORD, FROM_EMAIL, _ = get_smtp_envs()
+async def send_verification_email(email:str, code:str) -> None:
+    _, SMTP_SERVER, SMTP_PORT, SMTP_USER, SMTP_PASSWORD, FROM_EMAIL, _ = await get_smtp_envs()
 
     subject = "Email Verification Code for Kakusui.org"
     body = f"Your verification code is {code}. Do not share this code with anyone. Someone from Kakusui will never ask you for this code."
 
-    send_email(subject=subject, body=body, to_email=email, attachment_path=None, from_email=FROM_EMAIL, smtp_server=SMTP_SERVER, smtp_port=SMTP_PORT, smtp_user=SMTP_USER, smtp_password=SMTP_PASSWORD)
+    await send_email(
+        subject=subject, 
+        body=body, 
+        to_email=email, 
+        attachment_path=None, 
+        from_email=FROM_EMAIL, 
+        smtp_server=SMTP_SERVER, 
+        smtp_port=SMTP_PORT, 
+        smtp_user=SMTP_USER, 
+        smtp_password=SMTP_PASSWORD
+    )
 
-def get_admin_api_key(llm_type:str) -> str | None: 
+async def get_admin_api_key(llm_type:str) -> str | None: 
     if(llm_type == "openai"):
         return OPENAI_API_KEY
     elif(llm_type == "anthropic"):

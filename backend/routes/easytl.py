@@ -72,7 +72,7 @@ async def easytl(request_data:EasyTLRequest, request:Request, is_admin:bool = De
     
     try:
         if(is_admin):
-            admin_api_key = get_admin_api_key(llm_type)
+            admin_api_key = await get_admin_api_key(llm_type)
             EasyTL.set_credentials(api_type=llm_type, credentials=admin_api_key) # type: ignore
         else:
             EasyTL.set_credentials(api_type=llm_type, credentials=user_api_key) # type: ignore
@@ -104,7 +104,7 @@ async def easytl(request_data:EasyTLRequest, request:Request, is_admin:bool = De
 async def proxy_easytl(request_data:EasyTLRequest, request:Request):
     origin = request.headers.get('origin')
 
-    check_internal_request(origin)
+    await check_internal_request(origin)
 
     async with httpx.AsyncClient(timeout=None) as client:
         headers = {
@@ -112,6 +112,6 @@ async def proxy_easytl(request_data:EasyTLRequest, request:Request):
             "X-API-Key": V1_EASYTL_ROOT_KEY,
             "Authorization": request.headers.get("Authorization")
         }
-        response = await client.post(f"{get_url()}/v1/easytl", json=request_data.model_dump(), headers=headers)
+        response = await client.post(f"{await get_url()}/v1/easytl", json=request_data.model_dump(), headers=headers)
 
         return JSONResponse(status_code=response.status_code, content=response.json())

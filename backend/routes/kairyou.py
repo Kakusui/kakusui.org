@@ -4,7 +4,7 @@
 
 ## built-in imports
 import json
-
+import asyncio
 ## third-party imports
 from fastapi import APIRouter, status, Request
 from fastapi.responses import JSONResponse
@@ -49,9 +49,9 @@ async def kairyou(request_data:KairyouRequest, request:Request):
         )
 
     try:
-        replacements_json = json.loads(replacements_json)
+        replacements_json = await asyncio.to_thread(json.loads, replacements_json)
 
-        preprocessed_text, preprocessing_log, error_log = Kairyou.preprocess(text_to_preprocess, replacements_json)
+        preprocessed_text, preprocessing_log, error_log = await asyncio.to_thread(Kairyou.preprocess, text_to_preprocess, replacements_json)
 
         return JSONResponse(
             status_code=status.HTTP_200_OK,
@@ -71,10 +71,10 @@ async def kairyou(request_data:KairyouRequest, request:Request):
         )
 
     except SpacyModelNotFound:
-        return JSONResponse(
+        return JSONResponse(    
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             content={
-                "message": "An internal error occurred. Please contact the administrator at contact@kakusui.org."
+                "message": "An internal error occurred regarding the spacy model. Please contact the administrator at contact@kakusui.org."
             }
         )
     
@@ -82,13 +82,13 @@ async def kairyou(request_data:KairyouRequest, request:Request):
 async def proxy_kairyou(request_data:KairyouRequest, request:Request):
     origin = request.headers.get('origin')
 
-    check_internal_request(origin)
+    await check_internal_request(origin)
 
     async with httpx.AsyncClient(timeout=None) as client:
         headers = {
             "Content-Type": "application/json",
             "X-API-Key": V1_KAIRYOU_ROOT_KEY
         }
-        response = await client.post(f"{get_url()}/v1/kairyou", json=request_data.model_dump(), headers=headers)
+        response = await client.post(f"{await get_url()}/v1/kairyou", json=request_data.model_dump(), headers=headers)
 
         return JSONResponse(status_code=response.status_code, content=response.json())

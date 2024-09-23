@@ -34,7 +34,7 @@ router = APIRouter()
 async def check_email_registration(data:RegisterForEmailAlert, request:Request, db:Session = Depends(get_db)):
     origin = request.headers.get('origin')
 
-    check_internal_request(origin)
+    await check_internal_request(origin)
 
     try:
         existing_user = db.query(User).filter(User.email == data.email).first()
@@ -64,7 +64,7 @@ async def login(data:LoginModel, request:Request, db:Session = Depends(get_db)) 
 
     origin = request.headers.get('origin')
 
-    check_internal_request(origin)
+    await check_internal_request(origin)
 
 
     try:
@@ -84,11 +84,11 @@ async def login(data:LoginModel, request:Request, db:Session = Depends(get_db)) 
             )
 
         access_token_expires = timedelta(minutes=TOKEN_EXPIRE_MINUTES)
-        access_token = create_access_token(
+        access_token = await create_access_token(
             data={"sub": data.email}, expires_delta=access_token_expires
         )
         refresh_token_expires = timedelta(minutes=TOKEN_EXPIRE_MINUTES)
-        refresh_token = create_refresh_token(
+        refresh_token = await create_refresh_token(
             data={"sub": data.email}, expires_delta=refresh_token_expires
         )
 
@@ -102,7 +102,7 @@ async def signup(data:LoginModel, request:Request, db:Session = Depends(get_db))
 
     origin = request.headers.get('origin')
 
-    check_internal_request(origin)
+    await check_internal_request(origin)
 
     try:
 
@@ -112,7 +112,7 @@ async def signup(data:LoginModel, request:Request, db:Session = Depends(get_db))
         if(existing_user):
             return JSONResponse(status_code=status.HTTP_400_BAD_REQUEST, content={"message": "Email already registered."})
 
-        if(not verify_verification_code(data.email, data.verification_code)):
+        if(not await verify_verification_code(data.email, data.verification_code)):
             return JSONResponse(status_code=status.HTTP_401_UNAUTHORIZED, content={"message": "Invalid email or verification code"})
 
         new_user = User(email=data.email)
@@ -120,11 +120,11 @@ async def signup(data:LoginModel, request:Request, db:Session = Depends(get_db))
         db.commit()
 
         access_token_expires = timedelta(minutes=TOKEN_EXPIRE_MINUTES)
-        access_token = create_access_token(
+        access_token = await create_access_token(
             data={"sub": data.email}, expires_delta=access_token_expires
         )
         refresh_token_expires = timedelta(minutes=TOKEN_EXPIRE_MINUTES)
-        refresh_token = create_refresh_token(
+        refresh_token = await create_refresh_token(
             data={"sub": data.email}, expires_delta=refresh_token_expires
         )
 
@@ -160,18 +160,18 @@ async def refresh_token(request:Request, refresh_token: str = Cookie(None)) -> J
 
     origin = request.headers.get('origin')
 
-    check_internal_request(origin)
+    await check_internal_request(origin)
 
     if(refresh_token is None):
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="No refresh token provided")
 
-    token_data = func_verify_token(refresh_token)
+    token_data = await func_verify_token(refresh_token)
     access_token_expires = timedelta(minutes=TOKEN_EXPIRE_MINUTES)
-    access_token = create_access_token(
+    access_token = await create_access_token(
         data={"sub": token_data.email}, expires_delta=access_token_expires
     )
     refresh_token_expires = timedelta(minutes=TOKEN_EXPIRE_MINUTES)
-    new_refresh_token = create_refresh_token(
+    new_refresh_token = await create_refresh_token(
         data={"sub": token_data.email}, expires_delta=refresh_token_expires
     )
 
@@ -191,7 +191,7 @@ async def refresh_token(request:Request, refresh_token: str = Cookie(None)) -> J
 async def send_verification_email_endpoint(request_data: SendVerificationEmailRequest, request: Request, db: Session = Depends(get_db)):
     origin = request.headers.get('origin')
 
-    check_internal_request(origin)
+    await check_internal_request(origin)
     
     email = request_data.email
     client_id = request_data.clientID
@@ -201,13 +201,13 @@ async def send_verification_email_endpoint(request_data: SendVerificationEmailRe
         
         if(not existing_user):
             try:
-                rate_limit(email, client_id)
+                await rate_limit(email, client_id)
             except HTTPException as e:
                 return JSONResponse(status_code=e.status_code, content={"message": e.detail})
         
-        verification_code = generate_verification_code()
-        save_verification_data(email, verification_code)
-        send_verification_email(email, verification_code)
+        verification_code = await generate_verification_code()
+        await save_verification_data(email, verification_code)
+        await send_verification_email(email, verification_code)
 
         if(existing_user):
             return JSONResponse(status_code=status.HTTP_200_OK, content={"message": "Verification email sent successfully for login."})
@@ -223,7 +223,7 @@ async def verify_token_endpoint(request: Request):
 
     origin = request.headers.get('origin')
 
-    check_internal_request(origin)
+    await check_internal_request(origin)
 
     auth_header = request.headers.get("Authorization")
     
@@ -233,7 +233,7 @@ async def verify_token_endpoint(request: Request):
     token = auth_header.split(" ")[1]
 
     try:
-        token_data = func_verify_token(token)
+        token_data = await func_verify_token(token)
         return {"valid": True, "email": token_data.email}
     
     except HTTPException as e:
@@ -243,7 +243,7 @@ async def verify_token_endpoint(request: Request):
 async def check_admin(request: Request, current_user:str = Depends(get_current_user)):
     origin = request.headers.get('origin')
 
-    check_internal_request(origin)
+    await check_internal_request(origin)
 
     is_admin = current_user == ADMIN_USER
 
@@ -253,13 +253,13 @@ async def check_admin(request: Request, current_user:str = Depends(get_current_u
 async def landing_verify_code_endpoint(request_data:VerifyEmailCodeRequest, request:Request, db: Session = Depends(get_db)):
     origin = request.headers.get('origin')
 
-    check_internal_request(origin)
+    await check_internal_request(origin)
 
     email = request_data.email
     submitted_code = request_data.code
 
     try:
-        verification_data = get_verification_data(email)
+        verification_data = await get_verification_data(email)
         if(not verification_data):
             return JSONResponse(status_code=status.HTTP_400_BAD_REQUEST, content={"message": "Verification code not found or expired."})
 
@@ -267,7 +267,7 @@ async def landing_verify_code_endpoint(request_data:VerifyEmailCodeRequest, requ
         expiration_time = datetime.fromisoformat(verification_data["expiration"])
 
         if(datetime.now() > expiration_time):
-            remove_verification_data(email)
+            await remove_verification_data(email)
             return JSONResponse(status_code=status.HTTP_400_BAD_REQUEST, content={"message": "Verification code has expired."})
 
         if(submitted_code != stored_code):
@@ -281,7 +281,7 @@ async def landing_verify_code_endpoint(request_data:VerifyEmailCodeRequest, requ
         db.add(new_email_alert)
         db.commit()
         
-        remove_verification_data(email)
+        await remove_verification_data(email)
         return JSONResponse(status_code=status.HTTP_200_OK, content={"message": "Email successfully verified and registered for alerts.", "token_type": "bearer"})
     
     except Exception as e:

@@ -14,7 +14,6 @@ def create_tables_if_not_exist(engine:Engine, base:DeclarativeMeta) -> None:
     for table_name in base.metadata.tables.keys():
 
         try:
-
             if(not inspector.has_table(table_name)):
                 base.metadata.tables[table_name].create(engine)
 

@@ -4,6 +4,7 @@
 - [**Preface**](#preface)
 - [**Prerequisites**](#prerequisites)
 - [**Python Requirements**](#python-requirements)
+- [aiofiles==23.2.1](#aiofiles2321)
 - [**Node Requirements**](#node-requirements)
 - [**To build locally (Manual)**](#to-build-locally-manual)
   - [**Raw Docker Method**](#raw-docker-method)
@@ -68,6 +69,7 @@ python-multipart==0.0.9
 
 werkzeug==3.0.4
 
+aiofiles==23.2.1
 --------------------------------------------------------------------------------------------------------------------------------------------------
 
 ## **Node Requirements**<a name="node-requirements"></a>

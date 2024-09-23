@@ -2,6 +2,9 @@
 ## Use of this source code is governed by an GNU Affero General Public License v3.0
 ## license that can be found in the LICENSE file.
 
+## built-in imports
+import asyncio
+
 ## third-party imports
 from fastapi import APIRouter, Request, status, Depends
 from fastapi.responses import JSONResponse
@@ -23,16 +26,19 @@ from db.base import get_db
 router = APIRouter()
 
 @router.post("/admin/send-email")
-async def send_email_to_all(request: Request, email_request: EmailRequest, db: Session = Depends(get_db), is_admin: bool = Depends(check_if_admin_user)):
+async def send_email_to_all(request: Request, email_request: EmailRequest, db: Session = Depends(get_db), is_admin:bool = Depends(check_if_admin_user)):
     origin = request.headers.get('origin')
-    check_internal_request(origin)
+    await check_internal_request(origin)
+
+    if(not is_admin):
+        return JSONResponse(status_code=status.HTTP_401_UNAUTHORIZED, content={"message": "You are not authorized to send emails."})
     
     try:
         recipients = db.query(EmailAlertModel.email).all()
-        smtp_envs = get_smtp_envs()
+        smtp_envs = await get_smtp_envs()
         _, SMTP_SERVER, SMTP_PORT, SMTP_USER, SMTP_PASSWORD, FROM_EMAIL, _ = smtp_envs
         
-        for recipient in recipients:
+        tasks = [
             send_email(
                 subject=email_request.subject,
                 body=email_request.body,
@@ -44,6 +50,9 @@ async def send_email_to_all(request: Request, email_request: EmailRequest, db: S
                 smtp_user=SMTP_USER,
                 smtp_password=SMTP_PASSWORD
             )
+            for recipient in recipients
+        ]
+        await asyncio.gather(*tasks)
         
         return {"message": "Emails sent to all users successfully."}
     

@@ -6,6 +6,8 @@
 import os
 import json
 import time
+import aiofiles
+import asyncio
 
 ## third-party imports
 from fastapi import HTTPException, status
@@ -16,44 +18,44 @@ from constants import RATE_LIMIT_DATA_DIR, MAX_REQUESTS_PER_EMAIL, MAX_REQUESTS_
 from auth.util import get_secure_path
 
 
-def rate_limit(email:str, id:str) -> None:
+async def rate_limit(email:str, id:str) -> None:
 
     if(not os.path.exists(RATE_LIMIT_DATA_DIR)):
-        os.makedirs(RATE_LIMIT_DATA_DIR)
+        await asyncio.to_thread(os.makedirs, RATE_LIMIT_DATA_DIR)
 
-    email_data = load_rate_limit_data(email, is_email=True)
-    check_and_update_rate_limit(email_data, MAX_REQUESTS_PER_EMAIL, "email")
+    email_data = await load_rate_limit_data(email, is_email=True)
+    await check_and_update_rate_limit(email_data, MAX_REQUESTS_PER_EMAIL, "email")
 
-    id_data = load_rate_limit_data(id, is_email=False)
-    check_and_update_rate_limit(id_data, MAX_REQUESTS_PER_ID, "ID")
+    id_data = await load_rate_limit_data(id, is_email=False)
+    await check_and_update_rate_limit(id_data, MAX_REQUESTS_PER_ID, "ID")
 
-    save_rate_limit_data(email, is_email=True, data=email_data)
-    save_rate_limit_data(id, is_email=False, data=id_data)
+    await save_rate_limit_data(email, is_email=True, data=email_data)
+    await save_rate_limit_data(id, is_email=False, data=id_data)
 
-def load_rate_limit_data(email_or_id:str, is_email:bool) -> dict:
+async def load_rate_limit_data(email_or_id:str, is_email:bool) -> dict:
     directory = RATE_LIMIT_DATA_DIR
     prefix = "email_" if is_email else "id_"
     filename = f"{prefix}{email_or_id}.json"
-    file_path = get_secure_path(directory, filename)
+    file_path = await get_secure_path(directory, filename)
 
     try:
-        with open(file_path, 'r') as f:
-            return json.load(f)
+        async with aiofiles.open(file_path, 'r') as f:
+            return json.loads(await f.read())
         
     except FileNotFoundError:
         return {"requests": [], "blocked_until": None}
 
-def save_rate_limit_data(email_or_id:str, is_email:bool, data:dict) -> None:
+async def save_rate_limit_data(email_or_id:str, is_email:bool, data:dict) -> None:
 
     directory = RATE_LIMIT_DATA_DIR
     prefix = "email_" if is_email else "id_"
     filename = f"{prefix}{email_or_id}.json"
-    file_path = get_secure_path(directory, filename)
+    file_path = await get_secure_path(directory, filename)
 
-    with open(file_path, 'w') as f:
+    async with aiofiles.open(file_path, 'w') as f:
         json.dump(data, f)
 
-def check_and_update_rate_limit(data:dict, max_requests:int, limit_type:str) -> None:
+async def check_and_update_rate_limit(data:dict, max_requests:int, limit_type:str) -> None:
     current_time = time.time()
 
     data['requests'] = [req for req in data['requests'] if current_time - req < RATE_LIMIT_WINDOW]

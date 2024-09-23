@@ -18,14 +18,14 @@ engine:Engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": F
 SessionLocal:sessionmaker = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 
-def get_db() -> typing.Generator[Session, None, None]:
+async def get_db() -> typing.AsyncGenerator[Session, None]:
     
     """
 
     Get the database session.
 
     Returns:
-    typing.Generator[Session, None, None]: The database session
+    typing.AsyncGenerator[Session, None]: The database session
 
     """
 
