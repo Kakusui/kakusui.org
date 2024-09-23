@@ -5,7 +5,7 @@
 // maintain allman bracket style for consistency
 
 // react
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 // chakra-ui
 import { Box, Button, Input, Modal, ModalOverlay, ModalContent, ModalHeader, ModalFooter, ModalBody, ModalCloseButton, Text, useDisclosure, Spinner, Flex, useToast } from "@chakra-ui/react";
@@ -29,8 +29,29 @@ const Login: React.FC = () =>
     const [loginCode, setLoginCode] = useState('');
     const [isLoginStep, setIsLoginStep] = useState(false);
     const [isSignUp, setIsSignUp] = useState(false);
+    const [clientId, setClientId] = useState('');
     const toast = useToast();
     const { isLoggedIn, login, logout, isLoading } = useAuth();
+
+    useEffect(() =>
+    {
+        let storedClientId = localStorage.getItem('kakusui_client_id');
+        if (!storedClientId)
+        {
+            storedClientId = generateClientId();
+            localStorage.setItem('kakusui_client_id', storedClientId);
+        }
+        setClientId(storedClientId);
+    }, []);
+
+    const generateClientId = () =>
+    {
+        return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) 
+        {
+            var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
+            return v.toString(16);
+        });
+    };
 
     const handleClose = () => 
     {
@@ -69,7 +90,7 @@ const Login: React.FC = () =>
                 {
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify({ email })
+                body: JSON.stringify({ email, clientID: clientId })
             });
 
             if(checkUserResponse.ok) 
@@ -97,7 +118,7 @@ const Login: React.FC = () =>
                     {
                         'Content-Type': 'application/json'
                     },
-                    body: JSON.stringify({ email, clientID: 'web-client' })
+                    body: JSON.stringify({ email, clientID: clientId })
                 });
 
                 if(!response.ok) 
