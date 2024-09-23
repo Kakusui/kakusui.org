@@ -1,5 +1,5 @@
 ## Copyright 2024 Kakusui LLC (https://kakusui.org) (https://github.com/Kakusui) (https://github.com/Kakusui/kakusui.org)
-## Use of this source code is governed by a GNU General Public License v3.0
+## Use of this source code is governed by an GNU Affero General Public License v3.0
 ## license that can be found in the LICENSE file.
 
 ## built-in libraries
@@ -36,7 +36,7 @@ def download_spacy_model() -> None:
 
     try:
         ## Check if spacy is installed
-        import spacy
+        import spacy # type: ignore
 
         try:
             spacy.load("ja_core_news_lg")
@@ -57,7 +57,7 @@ def download_spacy_model() -> None:
         sys.exit(1)
 
     except ImportError:
-        print("Error: spacy library not found")
+        print("Error: spacy library not found.")
         sys.exit(1)
 
 ##-------------------start-of-setup_local_environment()---------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -81,7 +81,8 @@ def setup_local_environment() -> None:
         "V1_EASYTL_ROOT_KEY": "test",
         "V1_EASYTL_PUBLIC_API_KEY": "test",
         "V1_ELUCIDATE_ROOT_KEY": "test",
-        "TURNSTILE_SECRET_KEY": "test"
+        "TURNSTILE_SECRET_KEY": "test",
+        "NODE_ENV": "development"
     }
 
     try:
@@ -109,6 +110,7 @@ def setup_local_environment() -> None:
                 f"V1_EASYTL_ROOT_KEY={env_to_key_local['V1_EASYTL_ROOT_KEY']}\n"
                 f"V1_EASYTL_PUBLIC_API_KEY={env_to_key_local['V1_EASYTL_PUBLIC_API_KEY']}\n"
                 f"V1_ELUCIDATE_ROOT_KEY={env_to_key_local['V1_ELUCIDATE_ROOT_KEY']}\n"
+                f"TURNSTILE_SECRET_KEY={env_to_key_local['TURNSTILE_SECRET_KEY']}\n"
             )
         else:
 
@@ -137,6 +139,6 @@ def main():
     install_dependencies()
     download_spacy_model()
     setup_local_environment()
-
+    
 if(__name__ == "__main__"):
     main()

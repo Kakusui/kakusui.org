@@ -36,3 +36,6 @@ dist-ssr
 ## Database
 database/
 
+.cursorrules
+
+.venv/

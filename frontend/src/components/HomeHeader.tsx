@@ -14,16 +14,24 @@ import {
     Image,
     Divider,
     Link,
+    Text,
 } from '@chakra-ui/react';
 
 // logos and images
 import logo from '../assets/images/kakusui_logo.webp';
 
 // components
-import { DesktopNav } from './NavItems';
+import { DesktopNav, NAV_ITEMS } from './NavItems';
+import Login from './Login';
+
+import { useAuth } from '../contexts/AuthContext';
 
 const HomeHeader: React.FC = () => 
 {
+    const { isLoggedIn, userEmail, isLoading, isPrivilegedUser } = useAuth();
+
+    const navItems = isPrivilegedUser ? [...NAV_ITEMS, { label: 'Admin', href: '/admin' }] : NAV_ITEMS;
+
     return (
         <Box position="absolute" top={0} left={0} right={0} zIndex={1} mb={4}>
             <Flex
@@ -38,13 +46,23 @@ const HomeHeader: React.FC = () =>
                 <Flex
                     width="100%"
                     maxWidth="container.xl"
-                    justify="flex-start"
+                    justify="space-between"
                     align="center"
                 >
-                    <Link href="/">
-                        <Image src={logo} boxSize='30px' alt='Kakusui Logo' mr={4}/>
-                    </Link>
-                    <DesktopNav />
+                    <Flex align="center">
+                        <Link href="/">
+                            <Image src={logo} boxSize='30px' alt='Kakusui Logo' mr={4}/>
+                        </Link>
+                        <DesktopNav items={navItems} />
+                    </Flex>
+                    <Flex align="center">
+                        {!isLoading && isLoggedIn && userEmail && (
+                            <Text fontSize="sm" fontWeight="medium" color="orange.400" mr={4}>
+                                {userEmail}
+                            </Text>
+                        )}
+                        <Login />
+                    </Flex>
                 </Flex>
             </Flex>
             <Divider borderColor="rgba(255, 255, 255, 0.1)" />

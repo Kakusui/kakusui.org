@@ -38,6 +38,7 @@ import DownloadButton from "../components/DownloadButton";
 import HowToUseSection from "../components/HowToUseSection";
 import LegalLinks from "../components/LegalLinks";
 import { getURL } from "../utils";
+import { useAuth } from "../contexts/AuthContext";
 
 type FormInput = 
 {
@@ -56,7 +57,7 @@ type ResponseValues =
   translatedText: string;
 };
 
-function EasyTLPage() 
+function EasyTLPage()  
 {
   useEffect(() => {
     document.title = 'Kakusui | EasyTL';
@@ -87,6 +88,9 @@ Additional instructions:
   const [modelOptions, setModelOptions] = useState<string[]>([]);
   const [isAdvancedSettingsVisible, setAdvancedSettingsVisible] = useState(false);
   const toast = useToast();
+  const { isPrivilegedUser } = useAuth();
+
+  const access_token = localStorage.getItem('access_token');
 
   useEffect(() => 
   {
@@ -111,10 +115,10 @@ Additional instructions:
   }, []);
 
   useEffect(() => {
-    const savedTone = localStorage.getItem('tone');
-    const savedLanguage = localStorage.getItem('language');
-    const savedAdditionalInstructions = localStorage.getItem('additional_instructions');
-    const savedEasytlCustomInstructionFormat = localStorage.getItem('easytlCustomInstructionFormat');
+    const savedTone = localStorage.getItem('easytl_tone');
+    const savedLanguage = localStorage.getItem('easytl_language');
+    const savedAdditionalInstructions = localStorage.getItem('easytl_additional_instructions');
+    const savedEasytlCustomInstructionFormat = localStorage.getItem('easytl_custom_instruction_format');
     
     if (savedTone) setValue('tone', savedTone);
     if (savedLanguage) setValue('language', savedLanguage);
@@ -135,13 +139,13 @@ Additional instructions:
     };
 
     const updateApiKey = () => {
-      const savedApiKey = localStorage.getItem(`${selectedLLM}-apiKey`);
+      const savedApiKey = localStorage.getItem(`easytl_${selectedLLM.toLowerCase()}_apiKey`);
       setValue("userAPIKey", savedApiKey || "");
     };
 
     updateModelOptions();
     updateApiKey();
-  }, [selectedLLM, setValue]);
+  }, [selectedLLM, setValue, selectedModel]);
 
   const handleToggleShowApiKey = () => setShowApiKey(!showApiKey);
 
@@ -175,7 +179,7 @@ Additional instructions:
   {
     try 
     {
-      const verificationResponse = await fetch(getURL("/verify-turnstile"), 
+      const verificationResponse = await fetch(getURL("/auth/verify-turnstile"), 
       {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -225,11 +229,11 @@ Additional instructions:
         throw new Error("Turnstile verification failed. Please try again.");
       }
 
-      localStorage.setItem(`${data.llmType}-apiKey`, data.userAPIKey);
-      localStorage.setItem('tone', data.tone);
-      localStorage.setItem('language', data.language);
-      localStorage.setItem('additional_instructions', data.additional_instructions);
-      localStorage.setItem('easytlCustomInstructionFormat', data.easytlCustomInstructionFormat);
+      localStorage.setItem(`easytl_${data.llmType.toLowerCase()}_apiKey`, data.userAPIKey);
+      localStorage.setItem('easytl_tone', data.tone);
+      localStorage.setItem('easytl_language', data.language);
+      localStorage.setItem('easytl_additional_instructions', data.additional_instructions);
+      localStorage.setItem('easytl_custom_instruction_format', data.easytlCustomInstructionFormat);
 
       let translationInstructions = data.easytlCustomInstructionFormat
         .replace("{{language}}", data.language)
@@ -244,16 +248,33 @@ Additional instructions:
         translationInstructions = translationInstructions.replace("{{#if additional_instructions}}\nAdditional instructions:\n{{additional_instructions}}\n{{/if}}", '');
       }
 
+      const requestBody = {
+        textToTranslate: data.textToTranslate,
+        translationInstructions,
+        llmType: data.llmType.toLowerCase(),
+        userAPIKey: isPrivilegedUser ? "" : data.userAPIKey,
+        model: data.model
+      };
+
       const response = await fetch(getURL("/proxy/easytl"), 
       {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...data, translationInstructions }),
+        headers: 
+        { 
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${access_token}` 
+        },
+        body: JSON.stringify(requestBody),
       });
 
-      const result = await response.json();
-      if(!response.ok) throw new Error(result.message || "An unknown error occurred");
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error(`Error response: ${response.status} ${response.statusText}`);
+        console.error(`Error details: ${errorText}`);
+        throw new Error(`HTTP error! status: ${response.status} ${errorText}`);
+      }
 
+      const result = await response.json();
       setResponse(result);
     } 
     catch (error) 
@@ -339,24 +360,26 @@ Additional instructions:
               </Select>
             </FormControl>
 
-            <FormControl isInvalid={!!errors.userAPIKey} flex={1}>
-              <FormLabel>API Key</FormLabel>
-              <InputGroup>
-                <Input
-                  {...register("userAPIKey", { required: true })}
-                  type={showApiKey ? "text" : "password"}
-                  placeholder="Enter API key"
-                />
-                <InputRightElement>
-                  <IconButton
-                    aria-label={showApiKey ? "Hide API key" : "Show API key"}
-                    icon={showApiKey ? <ViewOffIcon /> : <ViewIcon />}
-                    onClick={handleToggleShowApiKey}
-                    variant="ghost"
+            {!isPrivilegedUser && (
+              <FormControl isInvalid={!!errors.userAPIKey} flex={1}>
+                <FormLabel>API Key</FormLabel>
+                <InputGroup>
+                  <Input
+                    {...register("userAPIKey", { required: !isPrivilegedUser })}
+                    type={showApiKey ? "text" : "password"}
+                    placeholder="Enter API key"
                   />
-                </InputRightElement>
-              </InputGroup>
-            </FormControl>
+                  <InputRightElement>
+                    <IconButton
+                      aria-label={showApiKey ? "Hide API key" : "Show API key"}
+                      icon={showApiKey ? <ViewOffIcon /> : <ViewIcon />}
+                      onClick={handleToggleShowApiKey}
+                      variant="ghost"
+                    />
+                  </InputRightElement>
+                </InputGroup>
+              </FormControl>
+            )}
           </HStack>
 
           <Box width="100%">

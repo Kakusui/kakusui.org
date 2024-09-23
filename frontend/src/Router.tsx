@@ -5,7 +5,12 @@
 // maintain allman bracket style for consistency
 
 // react
-import { Routes, Route } from 'react-router-dom';
+import { Routes, Route, Navigate } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { ReactNode } from 'react';
+
+// chakra-ui
+import { Spinner, Center } from "@chakra-ui/react";
 
 // pages
 import HomePage from "./pages/HomePage.tsx";
@@ -31,6 +36,91 @@ import NotFoundPage from './pages/error_pages/404.tsx';
 import ForbiddenPage from './pages/error_pages/403.tsx';
 import InternalErrorPage from './pages/error_pages/500.tsx';
 
+import AdminPanel from './pages/AdminPanel.tsx';
+
+// auth
+import { useAuth } from './contexts/AuthContext';
+
+// util
+import { getURL } from './utils';
+
+import TosPage from './pages/TosPage.tsx';
+
+import PrivacyPolicyPage from './pages/PrivacyPolicyPage.tsx';
+
+import PricingPage from './pages/PricingPage';
+
+const ProtectedAdminRoute = ({ children }: { children: ReactNode }) => 
+{
+    const { isLoggedIn, isLoading } = useAuth();
+    const [isAdmin, setIsAdmin] = useState<boolean | null>(null);
+
+    useEffect(() => {
+        const checkAdminStatus = async () => 
+        {
+            if (isLoading) 
+            {
+                return;
+            }
+
+            if (isLoggedIn) 
+            {
+                try 
+                {
+                    const response = await fetch(getURL('/auth/check-if-admin-user'), 
+                    {
+                        method: 'POST',
+                        headers: {
+                            'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
+                        },
+                    });
+                    if (response.ok) 
+                    {
+                        const data = await response.json();
+                        setIsAdmin(data.result);
+                    } 
+                    else 
+                    {
+                        setIsAdmin(false);
+                    }
+                } 
+                catch (error) 
+                {
+                    setIsAdmin(false);
+                }
+            } 
+            else 
+            {
+                setIsAdmin(false);
+            }
+        };
+
+        checkAdminStatus();
+    }, [isLoggedIn, isLoading]);
+
+    if (isLoading || isAdmin === null) 
+    {
+        return (
+            <Center height="100vh">
+                <Spinner 
+                    thickness="4px"
+                    speed="0.65s"
+                    emptyColor="gray.200"
+                    color="orange.500"
+                    size="xl"
+                />
+            </Center>
+        );
+    }
+
+    if (!isLoggedIn || !isAdmin) 
+    {
+        return <Navigate to="/403" replace />;
+    }
+
+    return <>{children}</>;
+};
+
 function Router() 
 {
     return (
@@ -49,10 +139,21 @@ function Router()
             <Route path="/kairyou/tos" element={<KairyouTermsOfServicePage />} />
             <Route path="/kairyou/privacy" element={<KairyouPrivacyPolicyPage />} />
             <Route path="/kairyou/license" element={<KairyouLicensePage />} />
+            <Route path="/pricing" element={<PricingPage />} />
             <Route path="/404" element={<NotFoundPage />} />
             <Route path="/403" element={<ForbiddenPage />} />
             <Route path="/500" element={<InternalErrorPage />} />
             <Route path="*" element={<NotFoundPage />} />
+            <Route 
+                path="/admin" 
+                element={
+                    <ProtectedAdminRoute>
+                        <AdminPanel />
+                    </ProtectedAdminRoute>
+                } 
+            />
+            <Route path="/tos" element={<TosPage />} />
+            <Route path="/privacy" element={<PrivacyPolicyPage />} />
         </Routes>
     );
 }

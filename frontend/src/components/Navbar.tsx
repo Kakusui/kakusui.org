@@ -13,6 +13,7 @@ import {
     Image,
     useDisclosure,
     Link,
+    Text,
 } from '@chakra-ui/react';
 
 import { CloseIcon, HamburgerIcon } from '@chakra-ui/icons';
@@ -21,7 +22,10 @@ import { CloseIcon, HamburgerIcon } from '@chakra-ui/icons';
 import logo from '../assets/images/kakusui_logo.webp';
 
 // components
-import { DesktopNav, MobileNav } from './NavItems';
+import { DesktopNav, MobileNav, NAV_ITEMS } from './NavItems';
+import Login from './Login';
+
+import { useAuth } from '../contexts/AuthContext';
 
 interface NavbarProps 
 {
@@ -30,7 +34,10 @@ interface NavbarProps
 
 export default function Navbar({ isHomePage }: NavbarProps) 
 {
-    const {isOpen, onToggle} = useDisclosure();
+    const { isOpen, onToggle } = useDisclosure();
+    const { isLoggedIn, userEmail, isLoading, isPrivilegedUser } = useAuth();
+
+    const navItems = isPrivilegedUser ? [...NAV_ITEMS, { label: 'Admin', href: '/admin' }] : NAV_ITEMS;
 
     const bgColor = isHomePage ? 'transparent' : '#14192b';
     const borderColor = isHomePage ? 'transparent' : 'rgba(255, 255, 255, 0.1)';
@@ -57,34 +64,39 @@ export default function Navbar({ isHomePage }: NavbarProps)
                     align="center"
                     justify="space-between"
                 >
-                    <Flex
-                        flex={{base: 1, md: 'auto'}}
-                        ml={{base: -2}}
-                        display={{base: 'flex', md: 'none'}}
-                    >
-                        <IconButton
-                            onClick={onToggle}
-                            icon={
-                                isOpen ? <CloseIcon w={3} h={3}/> : <HamburgerIcon w={5} h={5}/>
-                            }
-                            variant={'ghost'}
-                            aria-label={'Toggle Navigation'}
-                            color="white"
-                        />
-                    </Flex>
-                    <Flex flex={{base: 1}} justify={{base: 'center', md: 'start'}} align="center">
+                    <Flex align="center">
+                        <Flex
+                            display={{base: 'flex', md: 'none'}}
+                            mr={2}
+                        >
+                            <IconButton
+                                onClick={onToggle}
+                                icon={
+                                    isOpen ? <CloseIcon w={3} h={3}/> : <HamburgerIcon w={5} h={5}/>
+                                }
+                                variant={'ghost'}
+                                aria-label={'Toggle Navigation'}
+                                color="white"
+                            />
+                        </Flex>
                         <Link href="/">
                             <Image src={logo} boxSize='30px' alt='Kakusui Logo'/>
                         </Link>
                         <Flex display={{base: 'none', md: 'flex'}} ml={10}>
-                            <DesktopNav/>
+                            <DesktopNav items={navItems}/>
                         </Flex>
+                    </Flex>
+                    <Flex align="center">
+                        {!isLoading && isLoggedIn && userEmail && (
+                            <Text mr={4} fontSize="sm" fontWeight="medium" color="orange.400">{userEmail}</Text>
+                        )}
+                        <Login />
                     </Flex>
                 </Flex>
             </Flex>
 
             <Collapse in={isOpen} animateOpacity>
-                <MobileNav/>
+                <MobileNav items={navItems}/>
             </Collapse>
         </Box>
     );

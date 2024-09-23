@@ -108,7 +108,7 @@ function KairyouPage()
 
     const handleVerification = async () => 
     {
-        const verificationResponse = await fetch(getURL("/verify-turnstile"), {
+        const verificationResponse = await fetch(getURL("/auth/verify-turnstile"), {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ token: turnstileToken }),

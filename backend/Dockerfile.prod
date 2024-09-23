@@ -6,28 +6,31 @@ FROM python:3.11.8-slim
 
 WORKDIR /app
 
-## Copy backend files
-COPY backend/main.py backend/requirements.txt ./
-
-## Test COPY
-##COPY backend/main.py backend/requirements.txt backend/.env ./
+## Copy only requirements file first to leverage Docker cache
+COPY requirements.txt .
 
 ## Install required Python packages
 RUN pip install --no-cache-dir -r requirements.txt && \
     python -m spacy download ja_core_news_lg
 
-## Install required packages (linux) including GPG
+## Install required packages (linux) including GPG and bash
 RUN apt-get update && \
     apt-get install -y --no-install-recommends gnupg2 && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
-## Copy entrypoint script and make it executable
-COPY entrypoint.sh .
-RUN chmod +x entrypoint.sh
+## Copy the rest of the application code
+COPY . .
 
-## Expose port 8000
+## Convert line endings and make entrypoint script executable
+RUN sed -i 's/\r$//' entrypoint_prod.sh && \
+    chmod +x entrypoint_prod.sh
+
+## Remove unnecessary files
+RUN rm -rf __pycache__ Dockerfile.prod entrypoint_dev.sh setup.py requirements.txt Dockerfile.dev .env
+
+ENV PYTHONPATH=/app
+
 EXPOSE 8000
 
-## Start the app
-CMD ["./entrypoint.sh"]
+CMD ["./entrypoint_prod.sh"]

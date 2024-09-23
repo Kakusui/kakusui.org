@@ -6,6 +6,8 @@
 
 // react
 import { useLocation } from 'react-router-dom';
+import { useEffect } from 'react';
+import { useAuth } from './contexts/AuthContext';
 
 // chakra-ui
 import { ChakraProvider, Box } from "@chakra-ui/react";
@@ -17,25 +19,41 @@ import PageWrapper from "./components/PageWrapper.tsx";
 import theme from "./theme.ts";
 import Router from "./Router.tsx";
 
-function App() 
+function AppContent() 
 {
     const location = useLocation();
-    const isLandingPage = location.pathname === '/';
-    const isHomePage = location.pathname === '/home';
+    const { checkLoginStatus } = useAuth();
+
+    useEffect(() => 
+    {
+        checkLoginStatus();
+    }, [location]);
+
+    const isBorderLessFullScreen = location.pathname === '/' || location.pathname === '/pricing';
+    const isFullScreenPage = location.pathname === '/home' || location.pathname === '/admin';
 
     return (
-        <ChakraProvider theme={theme}>
-            {!isLandingPage && !isHomePage && <Navbar isHomePage={isHomePage} />}
-            {isLandingPage ? (
+        <>
+            {!isBorderLessFullScreen && !isFullScreenPage && <Navbar isHomePage={false} />}
+            {isBorderLessFullScreen || isFullScreenPage ? (
                 <Router />
             ) : (
-                <PageWrapper showBackground={isHomePage}>
-                    <Box maxWidth={isHomePage ? "100%" : "container.xl"} margin="0 auto">
+                <PageWrapper showBackground={false}>
+                    <Box maxWidth="container.xl" margin="0 auto">
                         <Router />
                     </Box>
                 </PageWrapper>
             )}
-            {!isLandingPage && !isHomePage && <Footer />}
+            {!isBorderLessFullScreen && !isFullScreenPage && <Footer />}
+        </>
+    );
+}
+
+function App() 
+{
+    return (
+        <ChakraProvider theme={theme}>
+            <AppContent />
         </ChakraProvider>
     );
 }

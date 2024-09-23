@@ -2,6 +2,7 @@ fastapi==0.110.3
 kairyou==1.6.5
 uvicorn==0.30.0
 easytl==0.4.9
+aiofiles==23.2.1
 httpx==0.25.1
 elucidate==0.0.2
 passlib==1.7.4
@@ -12,3 +13,4 @@ python-gnupg==0.5.2
 apscheduler==3.10.4
 pyjwt==2.8.0
 python-multipart==0.0.9
+werkzeug==3.0.4
