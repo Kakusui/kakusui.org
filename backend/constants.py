@@ -77,4 +77,6 @@ __all__ = ["TURNSTILE_SECRET_KEY",
            "BACKUP_LOGS_DIR", 
            "VERIFICATION_DATA_DIR", 
            "RATE_LIMIT_DATA_DIR",
-           "OPENAI_API_KEY"]
+           "OPENAI_API_KEY",
+           "ANTHROPIC_API_KEY",
+           "GEMINI_API_KEY"]

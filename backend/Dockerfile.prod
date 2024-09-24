@@ -27,7 +27,7 @@ RUN sed -i 's/\r$//' entrypoint_prod.sh && \
     chmod +x entrypoint_prod.sh
 
 ## Remove unnecessary files
-RUN rm -rf __pycache__ Dockerfile.prod entrypoint_dev.sh setup.py requirements.txt Dockerfile.dev .env
+RUN rm -rf __pycache__ Dockerfile.prod entrypoint_dev.sh setup.py requirements.txt Dockerfile.dev .env fly.toml
 
 ENV PYTHONPATH=/app
 
