@@ -6,6 +6,7 @@
 
 // react
 import React from 'react';
+import { Link as RouterLink } from 'react-router-dom';
 
 // chakra-ui
 import {
@@ -14,7 +15,6 @@ import {
     Image,
     Divider,
     Link,
-    Text,
 } from '@chakra-ui/react';
 
 // logos and images
@@ -57,9 +57,9 @@ const HomeHeader: React.FC = () =>
                     </Flex>
                     <Flex align="center">
                         {!isLoading && isLoggedIn && userEmail && (
-                            <Text fontSize="sm" fontWeight="medium" color="orange.400" mr={4}>
+                            <Link as={RouterLink} to="/profile" fontSize="sm" fontWeight="medium" color="orange.400" mr={4}>
                                 {userEmail}
-                            </Text>
+                            </Link>
                         )}
                         <Login />
                     </Flex>

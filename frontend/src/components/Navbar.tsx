@@ -13,7 +13,6 @@ import {
     Image,
     useDisclosure,
     Link,
-    Text,
 } from '@chakra-ui/react';
 
 import { CloseIcon, HamburgerIcon } from '@chakra-ui/icons';
@@ -26,6 +25,7 @@ import { DesktopNav, MobileNav, NAV_ITEMS } from './NavItems';
 import Login from './Login';
 
 import { useAuth } from '../contexts/AuthContext';
+import { Link as RouterLink } from 'react-router-dom';
 
 interface NavbarProps 
 {
@@ -88,7 +88,9 @@ export default function Navbar({ isHomePage }: NavbarProps)
                     </Flex>
                     <Flex align="center">
                         {!isLoading && isLoggedIn && userEmail && (
-                            <Text mr={4} fontSize="sm" fontWeight="medium" color="orange.400">{userEmail}</Text>
+                            <Link as={RouterLink} to="/profile" mr={4} fontSize="sm" fontWeight="medium" color="orange.400">
+                                {userEmail}
+                            </Link>
                         )}
                         <Login />
                     </Flex>

@@ -50,6 +50,8 @@ import PrivacyPolicyPage from './pages/PrivacyPolicyPage.tsx';
 
 import PricingPage from './pages/PricingPage';
 
+import ProfilePage from './pages/ProfilePage';
+
 const ProtectedAdminRoute = ({ children }: { children: ReactNode }) => 
 {
     const { isLoggedIn, isLoading } = useAuth();
@@ -154,6 +156,7 @@ function Router()
             />
             <Route path="/tos" element={<TosPage />} />
             <Route path="/privacy" element={<PrivacyPolicyPage />} />
+            <Route path="/profile" element={<ProfilePage />} />
         </Routes>
     );
 }
