@@ -231,7 +231,7 @@ async def get_verification_data(email:str) -> dict | None:
 
 async def remove_verification_data(email:str) -> None:
     try:
-        secure_email = get_secure_filename(email)
+        secure_email = await get_secure_filename(email)
         async with asyncio.Lock():
             await asyncio.to_thread(os.remove, f"{VERIFICATION_DATA_DIR}/{secure_email}.json")
     except FileNotFoundError:
