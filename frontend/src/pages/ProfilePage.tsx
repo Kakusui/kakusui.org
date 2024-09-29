@@ -142,7 +142,7 @@ const ProfilePage: React.FC = () =>
                         </Box>
                         <Divider />
                         <Box>
-                            <Text fontWeight="bold" mb={1}>Credits (soon to be implemented)</Text>
+                            <Text fontWeight="bold" mb={1}>Credits</Text>
                             <Text>{userInfo?.credits}</Text>
                         </Box>
                         <Divider />

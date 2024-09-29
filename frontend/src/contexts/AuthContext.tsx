@@ -12,13 +12,14 @@ import { getURL } from '../utils';
 
 interface AuthContextType 
 {
-    isLoggedIn:boolean;
-    userEmail:string | null;
-    isPrivilegedUser:boolean;
-    login:(access_token:string) => void;
-    logout:() => void;
-    checkLoginStatus:() => Promise<void>;
-    isLoading:boolean;
+    isLoggedIn: boolean;
+    userEmail: string | null;
+    isPrivilegedUser: boolean;
+    credits: number;
+    login: (access_token: string) => void;
+    logout: () => void;
+    checkLoginStatus: () => Promise<void>;
+    isLoading: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -28,6 +29,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false);
     const [userEmail, setUserEmail] = useState<string | null>(null);
     const [isPrivilegedUser, setIsPrivilegedUser] = useState<boolean>(false);
+    const [credits, setCredits] = useState<number>(0);
     const [isLoading, setIsLoading] = useState<boolean>(true);
     const [lastFullCheck, setLastFullCheck] = useState<number>(0);
 
@@ -78,9 +80,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         {
             try 
             {
-                const response = await fetch(getURL('/auth/verify-token'), 
+                // Fetch user info including credits
+                const response = await fetch(getURL('/user/info'), 
                 {
-                    method: 'POST',
+                    method: 'GET',
                     headers: 
                     {
                         'Authorization': `Bearer ${access_token}`,
@@ -91,25 +94,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 if(response.ok) 
                 {
                     const data = await response.json();
-                    if(data.valid) 
-                    {
-                        setIsLoggedIn(true);
-                        setUserEmail(data.email);
-                        setIsPrivilegedUser(data.email === 'kbilyeu@kakusui.org');
-                    } 
-                    else 
-                    {
-                        throw new Error('Token invalid');
-                    }
+                    setIsLoggedIn(true);
+                    setUserEmail(data.email);
+                    setCredits(data.credits); // Set credits
+                    setIsPrivilegedUser(data.email === 'kbilyeu@kakusui.org');
                 } 
                 else 
                 {
-                    throw new Error('Failed to verify token');
+                    throw new Error('Failed to fetch user info');
                 }
             } 
             catch (error) 
             {
-                console.error('Error verifying token:', error);
+                console.error('Error fetching user info:', error);
                 logout();
             }
         } 
@@ -118,6 +115,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             setIsLoggedIn(false);
             setUserEmail(null);
             setIsPrivilegedUser(false);
+            setCredits(0); 
         }
     };
 
@@ -139,11 +137,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setIsLoggedIn(false);
         setUserEmail(null);
         setIsPrivilegedUser(false);
+        setCredits(0);
         setLastFullCheck(0);
     };
 
     return (
-        <AuthContext.Provider value={{ isLoggedIn, userEmail, isPrivilegedUser, login, logout, checkLoginStatus, isLoading }}>
+        <AuthContext.Provider value={{ isLoggedIn, userEmail, isPrivilegedUser, credits, login, logout, checkLoginStatus, isLoading }}>
             {children}
         </AuthContext.Provider>
     );

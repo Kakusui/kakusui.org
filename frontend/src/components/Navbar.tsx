@@ -13,6 +13,7 @@ import {
     Image,
     useDisclosure,
     Link,
+    Text,
 } from '@chakra-ui/react';
 
 import { CloseIcon, HamburgerIcon } from '@chakra-ui/icons';
@@ -35,7 +36,7 @@ interface NavbarProps
 export default function Navbar({ isHomePage }: NavbarProps) 
 {
     const { isOpen, onToggle } = useDisclosure();
-    const { isLoggedIn, userEmail, isLoading, isPrivilegedUser } = useAuth();
+    const { isLoggedIn, userEmail, credits, isPrivilegedUser, isLoading } = useAuth();
 
     const navItems = isPrivilegedUser ? [...NAV_ITEMS, { label: 'Admin', href: '/admin' }] : NAV_ITEMS;
 
@@ -88,9 +89,12 @@ export default function Navbar({ isHomePage }: NavbarProps)
                     </Flex>
                     <Flex align="center">
                         {!isLoading && isLoggedIn && userEmail && (
-                            <Link as={RouterLink} to="/profile" mr={4} fontSize="sm" fontWeight="medium" color="orange.400">
-                                {userEmail}
-                            </Link>
+                            <Flex align="center">
+                                <Text fontSize="sm" fontWeight="medium" mr={2}>{credits} Credits</Text>
+                                <Link as={RouterLink} to="/profile" fontSize="sm" fontWeight="medium" color="orange.400" mr={4}>
+                                    {userEmail}
+                                </Link>
+                            </Flex>
                         )}
                         <Login />
                     </Flex>

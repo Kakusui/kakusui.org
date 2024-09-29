@@ -7,7 +7,7 @@ from uuid import uuid4
 from datetime import datetime, timezone
 
 ## third-party imports
-from sqlalchemy import Column, Integer, String, DateTime
+from sqlalchemy import Column, Integer, String, DateTime, Boolean
 from sqlalchemy.dialects.postgresql import UUID as modelUUID
 
 ## custom imports
@@ -24,3 +24,4 @@ class User(Base):
     id = Column(modelUUID(as_uuid=True), primary_key=True, index=True, default=uuid4)
     email = Column(String, unique=True, index=True)
     credits = Column(Integer, default=0)
+    is_active = Column(Boolean, default=True)
