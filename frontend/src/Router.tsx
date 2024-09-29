@@ -52,6 +52,8 @@ import PricingPage from './pages/PricingPage';
 
 import ProfilePage from './pages/ProfilePage';
 
+import CharToTokenPage from './pages/CharToTokenPage';
+
 const ProtectedAdminRoute = ({ children }: { children: ReactNode }) => 
 {
     const { isLoggedIn, isLoading } = useAuth();
@@ -157,7 +159,8 @@ function Router()
             <Route path="/tos" element={<TosPage />} />
             <Route path="/privacy" element={<PrivacyPolicyPage />} />
             <Route path="/profile" element={<ProfilePage />} />
-        </Routes>
+            <Route path="/pricing/credits" element={<CharToTokenPage />} />
+            </Routes>
     );
 }
 

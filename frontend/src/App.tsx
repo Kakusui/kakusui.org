@@ -29,7 +29,7 @@ function AppContent()
         checkLoginStatus();
     }, [location]);
 
-    const isBorderLessFullScreen = location.pathname === '/' || location.pathname === '/pricing';
+    const isBorderLessFullScreen = location.pathname === '/' || location.pathname === '/pricing' || location.pathname === '/pricing/credits';
     const isFullScreenPage = location.pathname === '/home' || location.pathname === '/admin';
 
     return (
