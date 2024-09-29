@@ -26,7 +26,9 @@ import {
   Box,
   Flex,
   Text,
-  Collapse
+  Collapse,
+  Radio,
+  RadioGroup
 } from "@chakra-ui/react";
 
 import { ViewIcon, ViewOffIcon, ChevronDownIcon, ChevronUpIcon, ArrowUpDownIcon } from "@chakra-ui/icons";
@@ -50,6 +52,7 @@ type FormInput =
   tone: string,
   additional_instructions: string,
   easytlCustomInstructionFormat: string,
+  paymentMethod: string,
 };
 
 type ResponseValues = 
@@ -69,6 +72,7 @@ function EasyTLPage()
       tone: "Formal; Polite",
       llmType: "OpenAI",
       model: "gpt-4o-mini",
+      paymentMethod: "credits",
       easytlCustomInstructionFormat: `You are a professional translator, please translate the text given to you following the below instructions. Do not use quotations or say anything else aside from the translation in your response.
 Language: {{language}}
 Tone: {{tone}}
@@ -128,6 +132,7 @@ Additional instructions:
 
   const selectedLLM = watch("llmType");
   const selectedModel = watch("model");
+  const selectedPaymentMethod = watch("paymentMethod");
 
   useEffect(() => {
     const updateModelOptions = () => {
@@ -252,8 +257,9 @@ Additional instructions:
         textToTranslate: data.textToTranslate,
         translationInstructions,
         llmType: data.llmType.toLowerCase(),
-        userAPIKey: isPrivilegedUser ? "" : data.userAPIKey,
-        model: data.model
+        userAPIKey: isPrivilegedUser || data.paymentMethod === "credits" ? "" : data.userAPIKey,
+        model: data.model,
+        paymentMethod: data.paymentMethod
       };
 
       const response = await fetch(getURL("/proxy/easytl"), 
@@ -341,7 +347,7 @@ Additional instructions:
             />
           </FormControl>
 
-          <HStack spacing={4}>
+          <HStack spacing={4} align="flex-start">
             <FormControl isInvalid={!!errors.llmType} flex={1}>
               <FormLabel>LLM</FormLabel>
               <Select {...register("llmType", { required: true })}>
@@ -360,12 +366,12 @@ Additional instructions:
               </Select>
             </FormControl>
 
-            {!isPrivilegedUser && (
+            {(selectedPaymentMethod === "api_key" || isPrivilegedUser) && (
               <FormControl isInvalid={!!errors.userAPIKey} flex={1}>
                 <FormLabel>API Key</FormLabel>
                 <InputGroup>
                   <Input
-                    {...register("userAPIKey", { required: !isPrivilegedUser })}
+                    {...register("userAPIKey", { required: selectedPaymentMethod === "api_key" })}
                     type={showApiKey ? "text" : "password"}
                     placeholder="Enter API key"
                   />
@@ -381,6 +387,16 @@ Additional instructions:
               </FormControl>
             )}
           </HStack>
+
+          <FormControl as="fieldset">
+            <FormLabel as="legend">Payment Method</FormLabel>
+            <RadioGroup defaultValue="credits">
+              <HStack spacing="24px">
+                <Radio {...register("paymentMethod")} value="credits">Credits</Radio>
+                <Radio {...register("paymentMethod")} value="api_key">API Key</Radio>
+              </HStack>
+            </RadioGroup>
+          </FormControl>
 
           <Box width="100%">
             <Button 
@@ -458,7 +474,8 @@ Additional instructions:
           "Specify the language and tone for the translation.",
           "Include optional additional instructions.",
           "Select the LLM and model you want to use.",
-          "Provide your API key.",
+          "Choose your payment method (Credits or API Key).",
+          "If using API Key, provide your API key.",
           "Click 'Submit' to get the translated text.",
           "Review the translated text and download or copy if necessary.",
           "(For custom format specifiers click the dropdown)"
