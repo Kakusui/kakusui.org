@@ -278,6 +278,7 @@ function LandingPage()
                 onClose={() => setIsModalOpen(false)}
                 isCentered
                 motionPreset="slideInBottom"
+                closeOnOverlayClick={false}
             >
                 <ModalOverlay bg="blackAlpha.300" backdropFilter="blur(10px)" />
                 <ModalContent

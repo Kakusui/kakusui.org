@@ -225,7 +225,13 @@ const Login: React.FC = () =>
                     )}
                 </Button>
             </motion.div>
-            <Modal isOpen={isOpen} onClose={handleClose} isCentered motionPreset="slideInBottom">
+            <Modal 
+                isOpen={isOpen} 
+                onClose={handleClose} 
+                isCentered 
+                motionPreset="slideInBottom"
+                closeOnOverlayClick={false}
+            >
                 <ModalOverlay bg="blackAlpha.300" backdropFilter="blur(10px)" />
                 <ModalContent
                     bg="rgba(20, 25, 43, 0.95)"
