@@ -58,6 +58,7 @@ type FormInput =
 type ResponseValues = 
 {
   translatedText: string;
+  credits?: number;
 };
 
 function EasyTLPage()  
@@ -92,9 +93,13 @@ Additional instructions:
   const [modelOptions, setModelOptions] = useState<string[]>([]);
   const [isAdvancedSettingsVisible, setAdvancedSettingsVisible] = useState(false);
   const toast = useToast();
-  const { isPrivilegedUser } = useAuth();
+  const { isPrivilegedUser, credits, updateCredits, isLoggedIn } = useAuth();
 
   const access_token = localStorage.getItem('access_token');
+
+  const selectedLLM = watch("llmType");
+  const selectedModel = watch("model");
+  const selectedPaymentMethod = watch("paymentMethod");
 
   useEffect(() => 
   {
@@ -129,10 +134,6 @@ Additional instructions:
     if (savedEasytlCustomInstructionFormat) setValue('easytlCustomInstructionFormat', savedEasytlCustomInstructionFormat);
     if (savedAdditionalInstructions) setValue('additional_instructions', savedAdditionalInstructions);
   }, [setValue]);
-
-  const selectedLLM = watch("llmType");
-  const selectedModel = watch("model");
-  const selectedPaymentMethod = watch("paymentMethod");
 
   useEffect(() => {
     const updateModelOptions = () => {
@@ -206,6 +207,54 @@ Additional instructions:
     return requiredPlaceholders.every(placeholder => instructions.includes(placeholder));
   };
 
+  const calculateTokenCost = async (data: FormInput) => 
+  {
+    try 
+    {
+      let translationInstructions = data.easytlCustomInstructionFormat
+        .replace("{{language}}", data.language)
+        .replace("{{tone}}", data.tone);
+
+      if (data.additional_instructions) 
+      {
+        translationInstructions = translationInstructions.replace("{{#if additional_instructions}}\nAdditional instructions:\n{{additional_instructions}}\n{{/if}}", `Additional instructions:\n${data.additional_instructions}`);
+      } 
+      else 
+      {
+        translationInstructions = translationInstructions.replace("{{#if additional_instructions}}\nAdditional instructions:\n{{additional_instructions}}\n{{/if}}", '');
+      }
+
+      const response = await fetch(getURL("/proxy/calculate-token-cost"), 
+      {
+        method: "POST",
+        headers: 
+        { 
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${access_token}` 
+        },
+        body: JSON.stringify({
+          text_to_translate: data.textToTranslate,
+          translation_instructions: translationInstructions,
+          model: data.model
+        }),
+      });
+
+      if (!response.ok) 
+      {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const result = await response.json();
+      return result.cost;
+    } 
+    catch (error) 
+    {
+      console.error("Error calculating token cost:", error);
+      showToast("Error", "Failed to calculate token cost", "error");
+      return null;
+    }
+  };
+
   const onSubmit = async (data: FormInput) => 
   {
     setResetTurnstile(false);
@@ -222,7 +271,8 @@ Additional instructions:
       return;
     }
 
-    if (!validateInstructions(data.easytlCustomInstructionFormat)) {
+    if (!validateInstructions(data.easytlCustomInstructionFormat)) 
+    {
       showToast("Invalid Instructions", "Instructions must include {{language}} and {{tone}} placeholders.", "error");
       return;
     }
@@ -232,6 +282,23 @@ Additional instructions:
       if(window.location.hostname === "kakusui.org" && !(await handleVerification()))
       {
         throw new Error("Turnstile verification failed. Please try again.");
+      }
+
+      const estimatedCost = await calculateTokenCost(data);
+      
+      if (data.paymentMethod === "credits") 
+      {
+        if (!isLoggedIn) 
+        {
+          showToast("Authentication Required", "Please log in to use credits for translation.", "error");
+          return;
+        }
+        
+        if (estimatedCost && estimatedCost > credits) 
+        {
+          showToast("Insufficient Credits", "You don't have enough credits for this translation.", "error");
+          return;
+        }
       }
 
       localStorage.setItem(`easytl_${data.llmType.toLowerCase()}_apiKey`, data.userAPIKey);
@@ -259,7 +326,7 @@ Additional instructions:
         llmType: data.llmType.toLowerCase(),
         userAPIKey: isPrivilegedUser || data.paymentMethod === "credits" ? "" : data.userAPIKey,
         model: data.model,
-        paymentMethod: data.paymentMethod
+        using_credits: data.paymentMethod === "credits"
       };
 
       const response = await fetch(getURL("/proxy/easytl"), 
@@ -273,7 +340,8 @@ Additional instructions:
         body: JSON.stringify(requestBody),
       });
 
-      if (!response.ok) {
+      if (!response.ok) 
+      {
         const errorText = await response.text();
         console.error(`Error response: ${response.status} ${response.statusText}`);
         console.error(`Error details: ${errorText}`);
@@ -282,6 +350,11 @@ Additional instructions:
 
       const result = await response.json();
       setResponse(result);
+
+      if (data.paymentMethod === "credits") 
+      {
+        updateCredits(result.credits);
+      }
     } 
     catch (error) 
     {
@@ -366,7 +439,7 @@ Additional instructions:
               </Select>
             </FormControl>
 
-            {(selectedPaymentMethod === "api_key" || isPrivilegedUser) && (
+            {(selectedPaymentMethod === "api_key") && (
               <FormControl isInvalid={!!errors.userAPIKey} flex={1}>
                 <FormLabel>API Key</FormLabel>
                 <InputGroup>

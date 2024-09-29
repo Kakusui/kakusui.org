@@ -183,23 +183,28 @@ async def run_query(
         if(sql_query.lower() in ["force absolute reset"]):
 
             db.execute(text("DROP TABLE IF EXISTS users;"))
+
             db.execute(text("DROP TABLE IF EXISTS email_alerts;"))
 
             result = {"result": "Database reset successfully"}
 
         else:
-
+            
             if(sql_query.lower() in ["tables", "show tables"]):
                 sql_query = "SELECT name FROM sqlite_master WHERE type='table';"
 
             result = db.execute(text(sql_query))
-            columns = result.keys()
-            rows = [dict(zip(columns, row)) for row in result.fetchall()]
-
-            result = {"result": rows}
+            db.commit()
+            
+            if(result.returns_rows): # type: ignore
+                columns = result.keys()
+                rows = [dict(zip(columns, row)) for row in result.fetchall()]
+                result = {"result": rows}
+            else:
+                affected_rows = result.rowcount # type: ignore
+                result = {"result": f"Query executed successfully. Affected rows: {affected_rows}"}
 
         return JSONResponse(content=result)
-
 
     except ValueError as ve:
         return JSONResponse(

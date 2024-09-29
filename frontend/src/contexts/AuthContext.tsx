@@ -20,6 +20,7 @@ interface AuthContextType
     logout: () => void;
     checkLoginStatus: () => Promise<void>;
     isLoading: boolean;
+    updateCredits: (newCredits: number) => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -141,8 +142,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setLastFullCheck(0);
     };
 
+    const updateCredits = (newCredits: number) => 
+    {
+        setCredits(newCredits);
+    };
+
     return (
-        <AuthContext.Provider value={{ isLoggedIn, userEmail, isPrivilegedUser, credits, login, logout, checkLoginStatus, isLoading }}>
+        <AuthContext.Provider value={{ isLoggedIn, userEmail, isPrivilegedUser, credits, login, logout, checkLoginStatus, isLoading, updateCredits }}>
             {children}
         </AuthContext.Provider>
     );

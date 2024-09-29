@@ -17,18 +17,18 @@ import landingPageBg from '../assets/images/landing_page.webp';
 
 // Define the model costs
 const modelCosts = {
-    'gpt-3.5-turbo': 0.1,
-    'gpt-4': 2.0,
-    'gpt-4-turbo': 2.0,
-    'gpt-4o': 0.625,
-    'gpt-4o-mini': 0.0375,
-    'gemini-1.0-pro': 0.1,
-    'gemini-1.5-pro': 0.3125,
-    'gemini-1.5-flash': 0.01875,
-    'claude-3-haiku': 0.075,
-    'claude-3-sonnet': 0.9,
-    'claude-3-5-sonnet': 0.9,
-    'claude-3-opus': 4.5
+    'gpt-3.5-turbo': 0.040,
+    'gpt-4': 0.700,
+    'gpt-4-turbo': 0.700,
+    'gpt-4o': 0.250,
+    'gpt-4o-mini': 0.015,
+    'gemini-1.0-pro': 0.040,
+    'gemini-1.5-pro': 0.130,
+    'gemini-1.5-flash': 0.009,
+    'claude-3-haiku': 0.030,
+    'claude-3-sonnet': 0.332,
+    'claude-3-5-sonnet': 0.332,
+    'claude-3-opus': 1.660
 };
 
 function CharToTokenPage()

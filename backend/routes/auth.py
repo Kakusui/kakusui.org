@@ -112,7 +112,8 @@ async def signup(data:LoginModel, request:Request, db:Session = Depends(get_db))
         if(existing_user):
             return JSONResponse(status_code=status.HTTP_400_BAD_REQUEST, content={"message": "Email already registered."})
 
-        if(not await verify_verification_code(data.email, data.verification_code)):
+        verification_result = await verify_verification_code(data.email, data.verification_code)
+        if(not verification_result):
             return JSONResponse(status_code=status.HTTP_401_UNAUTHORIZED, content={"message": "Invalid email or verification code"})
 
         new_user = User(email=data.email)

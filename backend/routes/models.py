@@ -38,6 +38,7 @@ class EasyTLRequest(BaseModel):
     llmType:str
     userAPIKey:str
     model:str
+    using_credits:bool
 
 class ElucidateRequest(BaseModel):
     textToEvaluate:str
@@ -56,3 +57,8 @@ class EmailRequest(BaseModel):
 class FeedbackEmailRequest(BaseModel):
     email: EmailStr
     text: str
+
+class TokenCostRequest(BaseModel):
+    text_to_translate: str
+    translation_instructions: str
+    model: str
