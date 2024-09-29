@@ -10,7 +10,7 @@ from fastapi import APIRouter, Request, status, Depends
 from fastapi.responses import JSONResponse
 
 ## custom imports
-from routes.models import EmailRequest
+from routes.models import EmailRequest, FeedbackEmailRequest
 
 from auth.util import check_internal_request
 from auth.func import check_if_admin_user
@@ -55,6 +55,35 @@ async def send_email_to_all(request: Request, email_request: EmailRequest, db: S
         await asyncio.gather(*tasks)
         
         return {"message": "Emails sent to all users successfully."}
+    
+    except Exception as e:
+        return JSONResponse(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, content={"message": f"An error occurred: {str(e)}"})
+
+@router.post("/send-feedback-email")
+async def send_feedback_email(request: Request, feedback: FeedbackEmailRequest):
+    origin = request.headers.get('origin')
+    await check_internal_request(origin)
+    
+    try:
+        smtp_envs = await get_smtp_envs()
+        _, SMTP_SERVER, SMTP_PORT, SMTP_USER, SMTP_PASSWORD, FROM_EMAIL, _ = smtp_envs
+        
+        subject = "Feedback from Kakusui User"
+        body = f"User Email: {feedback.email}\n\nFeedback: {feedback.text}"
+        
+        await send_email(
+            subject=subject,
+            body=body,
+            to_email="support@kakusui.org",
+            attachment_path=None,
+            from_email=FROM_EMAIL,
+            smtp_server=SMTP_SERVER,
+            smtp_port=SMTP_PORT,
+            smtp_user=SMTP_USER,
+            smtp_password=SMTP_PASSWORD
+        )
+        
+        return {"message": "Feedback email sent successfully."}
     
     except Exception as e:
         return JSONResponse(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, content={"message": f"An error occurred: {str(e)}"})

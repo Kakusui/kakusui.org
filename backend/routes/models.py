@@ -3,7 +3,7 @@
 ## license that can be found in the LICENSE file.
 
 ## third-party imports
-from pydantic import BaseModel
+from pydantic import BaseModel, EmailStr
 
 class LoginModel(BaseModel):
     email:str
@@ -52,3 +52,7 @@ class VerifyTurnstileRequest(BaseModel):
 class EmailRequest(BaseModel):
     subject:str
     body:str
+
+class FeedbackEmailRequest(BaseModel):
+    email: EmailStr
+    text: str
