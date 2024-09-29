@@ -19,6 +19,9 @@ import PageWrapper from "./components/PageWrapper.tsx";
 import theme from "./theme.ts";
 import Router from "./Router.tsx";
 
+// google oauth
+import { GoogleOAuthProvider } from '@react-oauth/google';
+
 function AppContent() 
 {
     const location = useLocation();
@@ -52,9 +55,11 @@ function AppContent()
 function App() 
 {
     return (
-        <ChakraProvider theme={theme}>
-            <AppContent />
-        </ChakraProvider>
+        <GoogleOAuthProvider clientId="951070461527-dhsteb0ro97qrq4d2e7cq2mr9ehichol.apps.googleusercontent.com">
+            <ChakraProvider theme={theme}>
+                <AppContent />
+            </ChakraProvider>
+        </GoogleOAuthProvider>
     );
 }
 

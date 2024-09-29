@@ -8,7 +8,7 @@
 import { useState, useEffect } from 'react';
 
 // chakra-ui
-import { Box, Button, Input, Modal, ModalOverlay, ModalContent, ModalHeader, ModalFooter, ModalBody, ModalCloseButton, Text, useDisclosure, Spinner, Flex, useToast } from "@chakra-ui/react";
+import { Box, Button, Input, Modal, ModalOverlay, ModalContent, ModalHeader, ModalFooter, ModalBody, ModalCloseButton, Text, useDisclosure, Spinner, Flex, useToast, Divider } from "@chakra-ui/react";
 
 // util
 import { getURL } from '../utils';
@@ -21,6 +21,9 @@ import { buttonVariants } from '../animations/commonAnimations';
 
 // auth
 import { useAuth } from '../contexts/AuthContext';
+
+// google oauth
+import { GoogleLogin } from '@react-oauth/google';
 
 const Login: React.FC = () => 
 {
@@ -205,6 +208,46 @@ const Login: React.FC = () =>
         }
     };
 
+    const handleGoogleLogin = async (credentialResponse: any) =>
+    {
+        try
+        {
+            const response = await fetch(getURL('/auth/google-login'), 
+            {
+                method: 'POST',
+                headers: 
+                {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ token: credentialResponse.credential })
+            });
+
+            if (response.ok)
+            {
+                const data = await response.json();
+                if (data.access_token)
+                {
+                    await login(data.access_token);
+                    handleClose();
+                    showToast("Success", "Successfully logged in with Google", "success");
+                }
+                else
+                {
+                    showToast("Error", "Failed to log in with Google", "error");
+                }
+            }
+            else
+            {
+                const errorData = await response.json();
+                showToast("Error", errorData.message || 'Failed to log in with Google', "error");
+            }
+        }
+        catch (error)
+        {
+            showToast("Error", "An error occurred during Google login. Please try again.", "error");
+        }
+    };
+
     return (
         <>
             <motion.div whileHover="hover" variants={buttonVariants}>
@@ -269,6 +312,14 @@ const Login: React.FC = () =>
                                     />
                                 </>
                             )}
+                            <Divider my={4} />
+                            <Text textAlign="center">Or</Text>
+                            <Box textAlign="center">
+                                <GoogleLogin
+                                    onSuccess={handleGoogleLogin}
+                                    onError={() => showToast("Error", "Google login failed", "error")}
+                                />
+                            </Box>
                         </Flex>
                     </ModalBody>
                     <ModalFooter>
