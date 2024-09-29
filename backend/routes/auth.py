@@ -76,7 +76,7 @@ async def login(data:LoginModel, request:Request, db:Session = Depends(get_db)) 
                 headers={"WWW-Authenticate": "Bearer"},
             )
 
-        if(not verify_verification_code(data.email, data.verification_code)):
+        if(not await verify_verification_code(data.email, data.verification_code)):
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Invalid email or verification code",

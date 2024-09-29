@@ -24,32 +24,28 @@ def migrate_database(engine:Engine) -> None:
     ## Migration 1 (2024-09-05) (Addition of users table)
     try:
         if(not inspector.has_table('users')):
-            print("users table not found. Attempting to create it.")
             User.__table__.create(engine)
-            print("Created users table")
+            print("[Migration 1] [Passed] Created users table")
         else:
-            print("users table already exists")
+            print("[Migration 1] [Skipped] users table already exists")
 
         inspector.clear_cache()
 
     except Exception as e:
-        print(f"Error during migration 1: {str(e)}")
+        print(f"[Migration 1] [Failed] {str(e)}")
 
     ## Migration 2 (2024-09-05) (Addition of is_active column to users table)
     try:
-        if(inspector.has_table('users')):
-            columns = [c['name'] for c in inspector.get_columns('users')]
-            if('is_active' not in columns):
-                print("Adding is_active column to users table")
-                with engine.begin() as connection:
-                    connection.execute(text('ALTER TABLE users ADD COLUMN is_active BOOLEAN DEFAULT TRUE'))
-                print("Added is_active column to users table")
-            else:
-                print("is_active column already exists in users table")
+
+        columns = [c['name'] for c in inspector.get_columns('users')]
+        if('is_active' not in columns):
+            with engine.begin() as connection:
+                connection.execute(text('ALTER TABLE users ADD COLUMN is_active BOOLEAN DEFAULT TRUE'))
+            print("[Migration 2] [Passed] Added is_active column to users table")
         else:
-            print("users table not found. Skipping is_active column addition.")
-        
+            print("[Migration 2] [Skipped] is_active column already exists in users table")
+
         inspector.clear_cache()
-        
+
     except Exception as e:
-        print(f"Error during migration 2: {str(e)}")
+        print(f"[Migration 2] [Failed] {str(e)}")
