@@ -33,6 +33,7 @@ from routes.elucidate import router as elucidate_router
 from routes.auth import router as auth_router
 from routes.turnstile import router as turnstile_router
 from routes.db import router as db_router
+
 ##-----------------------------------------start-of-main----------------------------------------------------------------------------------------------------------------------------------------------------------
 
 if(not os.path.exists("database") and ACCESS_TOKEN_SECRET == "secret"):
@@ -74,10 +75,9 @@ migrate_database(engine)
 app = FastAPI()
 
 ## CORS setup
-allowed_origins = ["*"]
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=allowed_origins,
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -89,9 +89,19 @@ async def maintenance_middleware(request:Request, call_next):
     with maintenance_lock:
         if(maintenance_mode):
             return JSONResponse(status_code=503, content={"message": "Server is in maintenance mode"})
-    
+        
     response = await call_next(request)
-    
+    return response
+
+@app.middleware("http")
+async def dynamic_cors(request: Request, call_next):
+    origin = request.headers.get("Origin")
+    response = await call_next(request)
+    if(origin):
+        response.headers["Access-Control-Allow-Origin"] = origin
+    response.headers["Access-Control-Allow-Credentials"] = "true"
+    response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, OPTIONS"
+    response.headers["Access-Control-Allow-Headers"] = "Authorization, Content-Type"
     return response
 
 app.include_router(warmups_router)
@@ -110,5 +120,5 @@ async def startup_event():
 @app.on_event("shutdown")
 async def shutdown_event():
     scheduler = app.state.scheduler
-    if(scheduler):
+    if scheduler:
         scheduler.shutdown(wait=False)

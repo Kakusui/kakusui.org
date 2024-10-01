@@ -9,13 +9,15 @@ from datetime import timedelta, datetime
 from fastapi import APIRouter, HTTPException, Request, status, Cookie, Depends
 from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
+from google.oauth2 import id_token
+from google.auth.transport import requests
 
 ## custom imports
 from db.base import get_db
 from db.models import User, EmailAlertModel
 
 
-from routes.models import LoginModel, LoginToken, RegisterForEmailAlert, SendVerificationEmailRequest, VerifyEmailCodeRequest
+from routes.models import LoginModel, LoginToken, RegisterForEmailAlert, SendVerificationEmailRequest, VerifyEmailCodeRequest, GoogleLoginRequest
 
 from auth.func import verify_verification_code, create_access_token, create_refresh_token, func_verify_token, generate_verification_code, save_verification_data, send_verification_email, get_current_user
 from auth.util import check_internal_request
@@ -29,6 +31,49 @@ from constants import TOKEN_EXPIRE_MINUTES, ADMIN_USER
 import typing
 
 router = APIRouter()
+
+GOOGLE_CLIENT_ID = "951070461527-dhsteb0ro97qrq4d2e7cq2mr9ehichol.apps.googleusercontent.com"
+
+@router.post('/auth/google-login')
+async def google_login(request: GoogleLoginRequest, db: Session = Depends(get_db)):
+    try:
+        idinfo = id_token.verify_oauth2_token(request.token, requests.Request(), GOOGLE_CLIENT_ID)
+
+        if(idinfo['iss'] not in ['accounts.google.com', 'https://accounts.google.com']):
+            raise ValueError('Wrong issuer.')
+
+        email = idinfo['email']
+        
+        user = db.query(User).filter(User.email == email).first()
+        if(not user):
+            user = User(email=email)
+            db.add(user)
+            db.commit()
+
+        access_token_expires = timedelta(minutes=TOKEN_EXPIRE_MINUTES)
+        access_token = await create_access_token(
+            data={"sub": email}, expires_delta=access_token_expires
+        )
+        refresh_token_expires = timedelta(minutes=TOKEN_EXPIRE_MINUTES)
+        refresh_token = await create_refresh_token(
+            data={"sub": email}, expires_delta=refresh_token_expires
+        )
+
+        response = JSONResponse({"access_token": access_token, "token_type": "bearer"})
+        response.set_cookie(
+            key="refresh_token",
+            value=refresh_token,
+            httponly=True,
+            secure=True,
+            samesite="strict",
+            max_age=TOKEN_EXPIRE_MINUTES * 60
+        )
+        return response
+
+    except ValueError:
+        raise HTTPException(status_code=400, detail='Invalid token')
+    finally:
+        db.close()
 
 @router.post('/auth/check-email-registration')
 async def check_email_registration(data:RegisterForEmailAlert, request:Request, db:Session = Depends(get_db)):

@@ -62,3 +62,6 @@ class TokenCostRequest(BaseModel):
     text_to_translate: str
     translation_instructions: str
     model: str
+
+class GoogleLoginRequest(BaseModel):
+    token: str

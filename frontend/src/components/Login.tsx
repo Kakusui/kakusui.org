@@ -93,7 +93,8 @@ const Login: React.FC = () =>
                 {
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify({ email, clientID: clientId })
+                body: JSON.stringify({ email, clientID: clientId }),
+                credentials: 'include'
             });
 
             if(checkUserResponse.ok) 
@@ -121,7 +122,8 @@ const Login: React.FC = () =>
                     {
                         'Content-Type': 'application/json'
                     },
-                    body: JSON.stringify({ email, clientID: clientId })
+                    body: JSON.stringify({ email, clientID: clientId }),
+                    credentials: 'include'
                 });
 
                 if(!response.ok) 
@@ -156,7 +158,8 @@ const Login: React.FC = () =>
                 {
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify({ email, verification_code: loginCode })
+                body: JSON.stringify({ email, verification_code: loginCode }),
+                credentials: 'include'
             });
 
             if (response.ok) 
@@ -219,7 +222,8 @@ const Login: React.FC = () =>
                 {
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify({ token: credentialResponse.credential })
+                body: JSON.stringify({ token: credentialResponse.credential }),
+                credentials: 'include'
             });
 
             if (response.ok)

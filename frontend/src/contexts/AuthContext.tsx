@@ -48,6 +48,34 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         return false;
     };
 
+    const refreshAccessToken = async () => 
+    {
+        try 
+        {
+            const response = await fetch(getURL('/auth/refresh-access-token'), 
+            {
+                method: 'POST',
+                credentials: 'include',
+            });
+
+            if(response.ok) 
+            {
+                const data = await response.json();
+                if(data.access_token) 
+                {
+                    localStorage.setItem('access_token', data.access_token);
+                    return true;
+                }
+            }
+            return false;
+        } 
+        catch (error) 
+        {
+            console.error('Error refreshing access token:', error);
+            return false;
+        }
+    };
+
     const checkLoginStatus = async (forceFullCheck = false) => 
     {
         setIsLoading(true);
@@ -67,8 +95,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             } 
             else 
             {
-                await performFullCheck();
-                setLastFullCheck(currentTime);
+                const refreshed = await refreshAccessToken();
+                if(refreshed) 
+                {
+                    await performFullCheck();
+                    setLastFullCheck(currentTime);
+                }
+                else 
+                {
+                    logout();
+                }
             }
         }
         setIsLoading(false);
@@ -89,7 +125,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                     {
                         'Authorization': `Bearer ${access_token}`,
                         'Content-Type': 'application/json'
-                    }
+                    },
+                    credentials: 'include'
                 });
 
                 if(response.ok) 
@@ -108,7 +145,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             catch (error) 
             {
                 console.error('Error fetching user info:', error);
-                logout();
+                await refreshAccessToken();
             }
         } 
         else 
@@ -134,7 +171,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const logout = async () => 
     {
         localStorage.removeItem('access_token');
-        document.cookie = 'refresh_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; secure; HttpOnly';
+        document.cookie = 'refresh_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; secure; HttpOnly; SameSite=Strict';
         setIsLoggedIn(false);
         setUserEmail(null);
         setIsPrivilegedUser(false);
