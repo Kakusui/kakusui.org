@@ -12,10 +12,11 @@ from sqlalchemy.orm import Session
 from google.oauth2 import id_token
 from google.auth.transport import requests
 
+import stripe
+
 ## custom imports
 from db.base import get_db
 from db.models import User, EmailAlertModel
-
 
 from routes.models import LoginModel, LoginToken, RegisterForEmailAlert, SendVerificationEmailRequest, VerifyEmailCodeRequest, GoogleLoginRequest
 
@@ -26,7 +27,11 @@ from email_util.verification import get_verification_data, remove_verification_d
 
 from rate_limit.func import rate_limit
 
-from constants import TOKEN_EXPIRE_MINUTES, ADMIN_USER
+from util import get_frontend_url
+
+from constants import TOKEN_EXPIRE_MINUTES, ADMIN_USER, STRIPE_API_KEY
+
+stripe.api_key = STRIPE_API_KEY
 
 import typing
 
@@ -334,3 +339,56 @@ async def landing_verify_code_endpoint(request_data:VerifyEmailCodeRequest, requ
         db.rollback()
         print(f"Error verifying landing page email code: {str(e)}")
         return JSONResponse(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, content={"message": "An error occurred while verifying the email code."})
+    
+@router.post("/stripe/create-checkout-session")
+async def create_checkout_session(request: Request, current_user: str = Depends(get_current_user)):
+    FRONTEND_URL = await get_frontend_url()
+
+    if not current_user:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="User not logged in")
+
+    try:
+        checkout_session = stripe.checkout.Session.create(
+            payment_method_types=['card'],
+            line_items=[
+                {
+                    'price_data': {
+                        'currency': 'usd',
+                        'unit_amount': 500,
+                        'product_data': {
+                            'name': '50,000 Kakusui Credits',
+                            'description': 'Credits for use with Kakusui services',
+                        },
+                    },
+                    'quantity': 1,
+                },
+            ],
+            mode='payment',
+            success_url=f'{FRONTEND_URL}/success?session_id={{CHECKOUT_SESSION_ID}}',
+            cancel_url=f'{FRONTEND_URL}/pricing',
+            client_reference_id=current_user,
+        )
+        return {"id": checkout_session.id}
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+@router.post("/stripe/verify-payment")
+async def verify_payment(request: Request, db: Session = Depends(get_db), current_user: str = Depends(get_current_user)):
+    try:
+        data = await request.json()
+        session_id = data.get('session_id')
+        
+        session = stripe.checkout.Session.retrieve(session_id)
+        
+        if(session.payment_status == 'paid' and session.client_reference_id == current_user):
+            user = db.query(User).filter(User.email == current_user).first()
+            if(user):
+                user.credits += 50000
+                db.commit()
+                return {"success": True, "message": "Payment verified and credits added."}
+            else:
+                return {"success": False, "message": "User not found."}
+        else:
+            return {"success": False, "message": "Payment not completed or user mismatch."}
+    except Exception as e:
+        return {"success": False, "message": str(e)}

@@ -9,18 +9,75 @@ import { useEffect } from 'react';
 import { Link as RouterLink } from 'react-router-dom';
 
 // chakra-ui
-import { Box, Heading, Text, VStack, List, ListItem, ListIcon, Button, Flex, IconButton, Link } from '@chakra-ui/react';
+import { Box, Heading, Text, VStack, List, ListItem, ListIcon, Button, Flex, IconButton, Link, useToast } from '@chakra-ui/react';
 import { CheckIcon, ArrowBackIcon } from '@chakra-ui/icons';
 
 // images
 import landingPageBg from '../assets/images/landing_page.webp';
 
+// utils
+import { getURL } from '../utils';
+
+// stripe
+import { loadStripe } from '@stripe/stripe-js';
+
+const stripePromise = loadStripe('pk_test_51Q3AYgDZ2ylTjcD0zUGifpIuZ5ydLy8zoU3BHfZt8sdDceeI8DeQ8NRZBzayf1U3hzc16JbDKZWtDQ2Dd1QNlRjW00tUWF4h84');
+
 function PricingPage()
 {
+    const toast = useToast();
+
     useEffect(() =>
     {
         document.title = 'Kakusui | Pricing';
     }, []);
+
+    const handleBuyNow = async () =>
+    {
+        try
+        {
+            const stripe = await stripePromise;
+            if (!stripe)
+            {
+                throw new Error('Stripe failed to load');
+            }
+
+            const response = await fetch(getURL('/stripe/create-checkout-session'), {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${localStorage.getItem('access_token')}`
+                },
+            });
+
+            if (!response.ok)
+            {
+                throw new Error('Failed to create checkout session');
+            }
+
+            const session = await response.json();
+
+            const result = await stripe.redirectToCheckout({
+                sessionId: session.id
+            });
+
+            if (result.error)
+            {
+                throw new Error(result.error.message);
+            }
+        }
+        catch (error)
+        {
+            console.error('Error creating checkout session:', error);
+            toast({
+                title: 'Error',
+                description: 'Failed to start checkout process. Please try again.',
+                status: 'error',
+                duration: 5000,
+                isClosable: true,
+            });
+        }
+    };
 
     return (
         <Box
@@ -98,11 +155,11 @@ function PricingPage()
                         </List>
                         
                         <Button
-                            colorScheme="gray"
+                            onClick={handleBuyNow}
+                            colorScheme="orange"
                             size="lg"
-                            isDisabled={true}
                         >
-                            Coming Soon
+                            Buy Now
                         </Button>
                         
                         <Text fontSize="sm" textAlign="center">

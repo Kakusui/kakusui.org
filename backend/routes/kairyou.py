@@ -21,7 +21,7 @@ from constants import V1_KAIRYOU_ROOT_KEY
 
 from auth.util import check_internal_request
 
-from util import get_url
+from util import get_backend_url
 
 router = APIRouter()
 
@@ -89,6 +89,6 @@ async def proxy_kairyou(request_data:KairyouRequest, request:Request):
             "Content-Type": "application/json",
             "X-API-Key": V1_KAIRYOU_ROOT_KEY
         }
-        response = await client.post(f"{await get_url()}/v1/kairyou", json=request_data.model_dump(), headers=headers)
+        response = await client.post(f"{await get_backend_url()}/v1/kairyou", json=request_data.model_dump(), headers=headers)
 
         return JSONResponse(status_code=response.status_code, content=response.json())

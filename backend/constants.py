@@ -46,6 +46,8 @@ OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY")
 ANTHROPIC_API_KEY = os.environ.get("ANTHROPIC_API_KEY")
 GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY")
 
+STRIPE_API_KEY = os.environ.get("STRIPE_API_KEY")
+
 DATABASE_URL:str = "sqlite:///./database/kakusui.db"
 DATABASE_PATH:str = "database/kakusui.db"
 BACKUP_LOGS_DIR = 'database/logs'
@@ -79,4 +81,5 @@ __all__ = ["TURNSTILE_SECRET_KEY",
            "RATE_LIMIT_DATA_DIR",
            "OPENAI_API_KEY",
            "ANTHROPIC_API_KEY",
-           "GEMINI_API_KEY"]
+           "GEMINI_API_KEY",
+           "STRIPE_API_KEY"]

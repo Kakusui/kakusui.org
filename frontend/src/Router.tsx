@@ -6,37 +6,36 @@
 
 // react
 import { Routes, Route, Navigate } from 'react-router-dom';
-import { useState, useEffect } from 'react';
-import { ReactNode } from 'react';
+import { useState, useEffect, ReactNode } from 'react';
 
 // chakra-ui
 import { Spinner, Center } from "@chakra-ui/react";
 
 // pages
 import HomePage from "./pages/HomePage.tsx";
-
 import LandingPage from "./pages/LandingPage.tsx";
-
 import ElucidatePage from './pages/ElucidatePage.tsx';
 import ElucidateTermsOfServicePage from './pages/elucidate_mds/ElucidateTosPage.tsx';
 import ElucidatePrivacyPolicyPage from './pages/elucidate_mds/ElucidatePrivacyPolicyPage.tsx';
 import ElucidateLicensePage from './pages/elucidate_mds/ElucidateLicensePage.tsx';
-
 import EasyTLPage from './pages/EasyTLPage.tsx';
 import EasyTLTermsOfServicePage from './pages/easytl_mds/EasyTLTosPage.tsx';
 import EasyTLPrivacyPolicyPage from './pages/easytl_mds/EasyTLPrivacyPolicyPage.tsx';
 import EasyTLLicensePage from './pages/easytl_mds/EasyTLLicensePage.tsx';
-
 import KairyouPage from "./pages/KairyouPage.tsx";
 import KairyouTermsOfServicePage from './pages/kairyou_mds/KairyouTosPage.tsx';
 import KairyouPrivacyPolicyPage from './pages/kairyou_mds/KairyouPrivacyPolicyPage.tsx';
 import KairyouLicensePage from './pages/kairyou_mds/KairyouLicensePage.tsx';
-
 import NotFoundPage from './pages/error_pages/404.tsx';
 import ForbiddenPage from './pages/error_pages/403.tsx';
 import InternalErrorPage from './pages/error_pages/500.tsx';
-
 import AdminPanel from './pages/AdminPanel.tsx';
+import SuccessPage from './pages/SuccessPage';
+import TosPage from './pages/TosPage.tsx';
+import PrivacyPolicyPage from './pages/PrivacyPolicyPage.tsx';
+import PricingPage from './pages/PricingPage';
+import ProfilePage from './pages/ProfilePage';
+import CharToTokenPage from './pages/CharToTokenPage';
 
 // auth
 import { useAuth } from './contexts/AuthContext';
@@ -44,22 +43,13 @@ import { useAuth } from './contexts/AuthContext';
 // util
 import { getURL } from './utils';
 
-import TosPage from './pages/TosPage.tsx';
-
-import PrivacyPolicyPage from './pages/PrivacyPolicyPage.tsx';
-
-import PricingPage from './pages/PricingPage';
-
-import ProfilePage from './pages/ProfilePage';
-
-import CharToTokenPage from './pages/CharToTokenPage';
-
 const ProtectedAdminRoute = ({ children }: { children: ReactNode }) => 
 {
     const { isLoggedIn, isLoading } = useAuth();
     const [isAdmin, setIsAdmin] = useState<boolean | null>(null);
 
-    useEffect(() => {
+    useEffect(() => 
+    {
         const checkAdminStatus = async () => 
         {
             if (isLoading) 
@@ -147,7 +137,12 @@ function Router()
             <Route path="/404" element={<NotFoundPage />} />
             <Route path="/403" element={<ForbiddenPage />} />
             <Route path="/500" element={<InternalErrorPage />} />
-            <Route path="*" element={<NotFoundPage />} />
+            <Route path="/tos" element={<TosPage />} />
+            <Route path="/privacy" element={<PrivacyPolicyPage />} />
+            <Route path="/profile" element={<ProfilePage />} />
+            <Route path="/pricing/credits" element={<CharToTokenPage />} />
+            <Route path="/success" element={<SuccessPage />} />
+            
             <Route 
                 path="/admin" 
                 element={
@@ -156,11 +151,9 @@ function Router()
                     </ProtectedAdminRoute>
                 } 
             />
-            <Route path="/tos" element={<TosPage />} />
-            <Route path="/privacy" element={<PrivacyPolicyPage />} />
-            <Route path="/profile" element={<ProfilePage />} />
-            <Route path="/pricing/credits" element={<CharToTokenPage />} />
-            </Routes>
+
+            <Route path="*" element={<NotFoundPage />} />
+        </Routes>
     );
 }
 

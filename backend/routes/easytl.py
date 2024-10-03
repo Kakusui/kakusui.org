@@ -19,7 +19,7 @@ from constants import V1_EASYTL_ROOT_KEY, V1_EASYTL_PUBLIC_API_KEY
 from auth.util import check_internal_request
 from auth.func import get_admin_api_key, check_if_admin_user, get_current_user
 
-from util import get_url
+from util import get_backend_url
 
 from sqlalchemy.orm import Session
 from sqlalchemy import update
@@ -176,7 +176,7 @@ async def proxy_calculate_token_cost(request_data: TokenCostRequest, request: Re
             "X-API-Key": V1_EASYTL_ROOT_KEY,
             "Authorization": request.headers.get("Authorization")
         }
-        response = await client.post(f"{await get_url()}/v1/calculate-token-cost", json=request_data.model_dump(), headers=headers)
+        response = await client.post(f"{await get_backend_url()}/v1/calculate-token-cost", json=request_data.model_dump(), headers=headers)
 
         return JSONResponse(status_code=response.status_code, content=response.json())
     
@@ -192,6 +192,6 @@ async def proxy_easytl(request_data:EasyTLRequest, request:Request):
             "X-API-Key": V1_EASYTL_ROOT_KEY,
             "Authorization": request.headers.get("Authorization")
         }
-        response = await client.post(f"{await get_url()}/v1/easytl", json=request_data.model_dump(), headers=headers)
+        response = await client.post(f"{await get_backend_url()}/v1/easytl", json=request_data.model_dump(), headers=headers)
 
         return JSONResponse(status_code=response.status_code, content=response.json())

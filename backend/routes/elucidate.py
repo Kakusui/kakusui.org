@@ -19,7 +19,7 @@ from constants import V1_ELUCIDATE_ROOT_KEY
 
 from auth.util import check_internal_request
 
-from util import get_url
+from util import get_backend_url
 
 router = APIRouter()
 
@@ -105,6 +105,6 @@ async def proxy_elucidate(request_data:ElucidateRequest, request:Request):
             "Content-Type": "application/json",
             "X-API-Key": V1_ELUCIDATE_ROOT_KEY
         }
-        response = await client.post(f"{await get_url()}/v1/elucidate", json=request_data.model_dump(), headers=headers)
+        response = await client.post(f"{await get_backend_url()}/v1/elucidate", json=request_data.model_dump(), headers=headers)
 
         return JSONResponse(status_code=response.status_code, content=response.json())

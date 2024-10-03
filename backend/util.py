@@ -4,7 +4,7 @@
 
 from constants import ENVIRONMENT
 
-async def get_url() -> str:
+async def get_backend_url() -> str:
 
     """
     Returns the URL of the API based on the environment.
@@ -14,3 +14,14 @@ async def get_url() -> str:
         return "http://api.localhost:5000"
     
     return "https://api.kakusui.org"
+
+async def get_frontend_url() -> str:
+
+    """
+    Returns the URL of the frontend based on the environment.
+    """
+
+    if(ENVIRONMENT == "development"):
+        return "http://localhost:5173"
+    
+    return "https://kakusui.org"
