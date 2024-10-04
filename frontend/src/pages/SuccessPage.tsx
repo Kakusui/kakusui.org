@@ -13,6 +13,7 @@ import { useAuth } from '../contexts/AuthContext';
 function SuccessPage()
 {
     const [verificationStatus, setVerificationStatus] = useState('verifying');
+    const [isVerified, setIsVerified] = useState(false);
     const location = useLocation();
     const navigate = useNavigate();
     const { isLoggedIn, checkLoginStatus } = useAuth();
@@ -21,6 +22,11 @@ function SuccessPage()
     {
         const verifyPayment = async () =>
         {
+            if (isVerified)
+            {
+                return;
+            }
+
             const params = new URLSearchParams(location.search);
             const sessionId = params.get('session_id');
 
@@ -58,6 +64,7 @@ function SuccessPage()
                 if (response.ok && data.success)
                 {
                     setVerificationStatus('success');
+                    setIsVerified(true);
                     await checkLoginStatus(true); // Refresh user info including credits
                 }
                 else
@@ -73,7 +80,7 @@ function SuccessPage()
         };
 
         verifyPayment();
-    }, [location, isLoggedIn, checkLoginStatus]);
+    }, [location, isLoggedIn, checkLoginStatus, isVerified]);
 
     return (
         <Center minHeight="100vh">
