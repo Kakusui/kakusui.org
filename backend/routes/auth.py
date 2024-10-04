@@ -367,6 +367,9 @@ async def create_checkout_session(request: Request, current_user: str = Depends(
             success_url=f'{FRONTEND_URL}/success?session_id={{CHECKOUT_SESSION_ID}}',
             cancel_url=f'{FRONTEND_URL}/pricing',
             client_reference_id=current_user,
+            metadata={
+                'credits_to_add': '50000'
+            }
         )
         return {"id": checkout_session.id}
     except Exception as e:
@@ -380,12 +383,25 @@ async def verify_payment(request: Request, db: Session = Depends(get_db), curren
         
         session = stripe.checkout.Session.retrieve(session_id)
         
-        if(session.payment_status == 'paid' and session.client_reference_id == current_user):
+        if session.payment_status == 'paid' and session.client_reference_id == current_user:
             user = db.query(User).filter(User.email == current_user).first()
-            if(user):
-                user.credits += 50000
-                db.commit()
-                return {"success": True, "message": "Payment verified and credits added."}
+            if user:
+                # Check if this payment has already been processed
+                payment_intent = stripe.PaymentIntent.retrieve(session.payment_intent)
+                if not payment_intent.metadata.get('processed'):
+                    credits_to_add = int(session.metadata.get('credits_to_add', 0))
+                    user.credits += credits_to_add
+                    db.commit()
+
+                    # Mark the payment as processed
+                    stripe.PaymentIntent.modify(
+                        session.payment_intent,
+                        metadata={'processed': 'true'}
+                    )
+
+                    return {"success": True, "message": f"Payment verified and {credits_to_add} credits added."}
+                else:
+                    return {"success": True, "message": "Payment already processed."}
             else:
                 return {"success": False, "message": "User not found."}
         else:

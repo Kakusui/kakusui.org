@@ -16,12 +16,12 @@ import { CheckIcon, ArrowBackIcon } from '@chakra-ui/icons';
 import landingPageBg from '../assets/images/landing_page.webp';
 
 // utils
-import { getURL } from '../utils';
+import { getURL, getPublishableStripeKey } from '../utils';
 
 // stripe
 import { loadStripe } from '@stripe/stripe-js';
 
-const stripePromise = loadStripe('pk_test_51Q3AYgDZ2ylTjcD0zUGifpIuZ5ydLy8zoU3BHfZt8sdDceeI8DeQ8NRZBzayf1U3hzc16JbDKZWtDQ2Dd1QNlRjW00tUWF4h84');
+const stripePromise = loadStripe(getPublishableStripeKey());
 
 function PricingPage()
 {

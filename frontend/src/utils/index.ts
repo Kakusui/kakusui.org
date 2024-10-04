@@ -20,4 +20,17 @@ const getURL = (path: string) =>
     return url + path;
 }
 
-export {getURL};
+// Yes I'm hardcoding these they're meant for client side, no amount of env bullshit can stop a determined bad actor and these are meant for client side code
+const getPublishableStripeKey = () => 
+{
+    if(process.env.NODE_ENV === "production") 
+    {
+        return "pk_live_51Q3AYgDZ2ylTjcD0ZFhLKsEf5823gU7V9iPkMnJKdSuU7UykedTVWIKyNBO2J8JiI7W02FJUpMtRLFBosN8wL9j600lOZIB17M"
+    } 
+
+
+    return "pk_test_51Q3AYgDZ2ylTjcD0zUGifpIuZ5ydLy8zoU3BHfZt8sdDceeI8DeQ8NRZBzayf1U3hzc16JbDKZWtDQ2Dd1QNlRjW00tUWF4h84"
+    
+}
+
+export {getURL, getPublishableStripeKey};
