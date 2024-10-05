@@ -265,7 +265,7 @@ Additional instructions:
       return;
     }
 
-    if(!turnstileToken && window.location.hostname === "kakusui.org")
+    if(selectedPaymentMethod !== "credits" && window.location.hostname === "kakusui.org" && !turnstileToken)
     {
       showToast("Verification failed", "Please complete the verification", "error");
       return;
@@ -279,7 +279,7 @@ Additional instructions:
 
     try 
     {
-      if(window.location.hostname === "kakusui.org" && !(await handleVerification()))
+      if(window.location.hostname === "kakusui.org" && selectedPaymentMethod !== "credits" && !(await handleVerification()))
       {
         throw new Error("Turnstile verification failed. Please try again.");
       }
@@ -512,7 +512,7 @@ Additional instructions:
           </Button>
         </VStack>
 
-        {!isBlacklistedDomain && (
+        {selectedPaymentMethod !== "credits" && !isBlacklistedDomain && (
           <Center mt={4}>
             {memoizedTurnstile}
           </Center>
