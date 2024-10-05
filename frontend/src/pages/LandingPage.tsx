@@ -9,7 +9,7 @@ import { useState, useEffect } from 'react';
 import { Link as RouterLink } from 'react-router-dom';
 
 // chakra-ui
-import { Box, Button, Flex, Heading, Text, Input, useToast, Modal, ModalOverlay, ModalContent, ModalHeader, ModalFooter, ModalBody, ModalCloseButton } from "@chakra-ui/react";
+import { Box, Button, Flex, Heading, Text, Input, useToast, Modal, ModalOverlay, ModalContent, ModalHeader, ModalFooter, ModalBody, ModalCloseButton, Link, HStack } from "@chakra-ui/react";
 
 // icons
 import { IconBrandGithub } from '@tabler/icons-react';
@@ -262,7 +262,7 @@ function LandingPage()
                 </Flex>
                 <Text
                     position="absolute"
-                    bottom="6"
+                    bottom="10"
                     left="0"
                     right="0"
                     textAlign="center"
@@ -271,6 +271,17 @@ function LandingPage()
                 >
                     © Copyright 2024 Kakusui LLC
                 </Text>
+                <HStack
+                    position="absolute"
+                    bottom="2"
+                    left="0"
+                    right="0"
+                    justifyContent="center"
+                    spacing={4}
+                >
+                    <Link href="/tos" fontSize="sm" color="orange.400">Terms of Service</Link>
+                    <Link href="/privacy" fontSize="sm" color="orange.400">Privacy Policy</Link>
+                </HStack>
             </Flex>
 
             <Modal 
