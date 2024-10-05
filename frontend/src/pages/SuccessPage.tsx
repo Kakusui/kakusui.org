@@ -4,7 +4,7 @@
 
 // maintain allman bracket style for consistency
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { Box, Heading, Text, VStack, Button, Spinner, Center } from '@chakra-ui/react';
 import { getURL } from '../utils';
@@ -18,69 +18,72 @@ function SuccessPage()
     const navigate = useNavigate();
     const { isLoggedIn, checkLoginStatus } = useAuth();
 
+    const verifyPayment = useCallback(async () =>
+    {
+        if(isVerified)
+        {
+            return;
+        }
+
+        const params = new URLSearchParams(location.search);
+        const sessionId = params.get('session_id');
+
+        if(!sessionId)
+        {
+            setVerificationStatus('error');
+            return;
+        }
+
+        if(!isLoggedIn)
+        {
+            await checkLoginStatus();
+        }
+
+        try
+        {
+            const accessToken = localStorage.getItem('access_token');
+            if(!accessToken)
+            {
+                throw new Error('No access token found');
+            }
+
+            const response = await fetch(getURL('/stripe/verify-payment'), 
+            {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${accessToken}`
+                },
+                body: JSON.stringify({ session_id: sessionId })
+            });
+
+            const data = await response.json();
+
+            if(response.ok && data.success)
+            {
+                setVerificationStatus('success');
+                setIsVerified(true);
+                await checkLoginStatus(true); // Refresh user info including credits
+            }
+            else
+            {
+                setVerificationStatus('error');
+            }
+        }
+        catch (error)
+        {
+            console.error('Error verifying payment:', error);
+            setVerificationStatus('error');
+        }
+    }, [location, isLoggedIn, checkLoginStatus, isVerified]);
+
     useEffect(() =>
     {
-        const verifyPayment = async () =>
+        if(!isVerified)
         {
-            if (isVerified)
-            {
-                return;
-            }
-
-            const params = new URLSearchParams(location.search);
-            const sessionId = params.get('session_id');
-
-            if (!sessionId)
-            {
-                setVerificationStatus('error');
-                return;
-            }
-
-            if (!isLoggedIn)
-            {
-                await checkLoginStatus();
-            }
-
-            try
-            {
-                const accessToken = localStorage.getItem('access_token');
-                if (!accessToken)
-                {
-                    throw new Error('No access token found');
-                }
-
-                const response = await fetch(getURL('/stripe/verify-payment'), 
-                {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${accessToken}`
-                    },
-                    body: JSON.stringify({ session_id: sessionId })
-                });
-
-                const data = await response.json();
-
-                if (response.ok && data.success)
-                {
-                    setVerificationStatus('success');
-                    setIsVerified(true);
-                    await checkLoginStatus(true); // Refresh user info including credits
-                }
-                else
-                {
-                    setVerificationStatus('error');
-                }
-            }
-            catch (error)
-            {
-                console.error('Error verifying payment:', error);
-                setVerificationStatus('error');
-            }
-        };
-
-        verifyPayment();
-    }, [location, isLoggedIn, checkLoginStatus, isVerified]);
+            verifyPayment();
+        }
+    }, [verifyPayment, isVerified]);
 
     return (
         <Center minHeight="100vh">
@@ -102,7 +105,7 @@ function SuccessPage()
                             Payment successful! Credits have been added to your account.
                         </Text>
                         <Button colorScheme="orange" onClick={() => navigate('/home')}>
-                            Go to Dashboard
+                            Go to Home
                         </Button>
                     </>
                 )}
@@ -110,10 +113,10 @@ function SuccessPage()
                 {verificationStatus === 'error' && (
                     <>
                         <Text fontSize="xl" color="red.500" textAlign="center">
-                            There was an error verifying your payment. Please contact support.
+                            There was an error verifying your payment. Please contact support at support@kakusui.org.
                         </Text>
                         <Button colorScheme="orange" onClick={() => navigate('/home')}>
-                            Go to Dashboard
+                            Go to Home
                         </Button>
                     </>
                 )}

@@ -55,13 +55,13 @@ class EmailRequest(BaseModel):
     body:str
 
 class FeedbackEmailRequest(BaseModel):
-    email: EmailStr
-    text: str
+    email:EmailStr
+    text:str
 
 class TokenCostRequest(BaseModel):
-    text_to_translate: str
-    translation_instructions: str
-    model: str
+    text_to_translate:str
+    translation_instructions:str
+    model:str
 
 class GoogleLoginRequest(BaseModel):
-    token: str
+    token:str

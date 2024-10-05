@@ -82,7 +82,11 @@ def setup_local_environment() -> None:
         "V1_EASYTL_PUBLIC_API_KEY": "test",
         "V1_ELUCIDATE_ROOT_KEY": "test",
         "TURNSTILE_SECRET_KEY": "test",
-        "NODE_ENV": "development"
+        "NODE_ENV": "development",
+        "OPENAI_API_KEY": "test",
+        "ANTHROPIC_API_KEY": "test",
+        "GEMINI_API_KEY": "test",
+        "STRIPE_API_KEY": "test"
     }
 
     try:
@@ -111,6 +115,10 @@ def setup_local_environment() -> None:
                 f"V1_EASYTL_PUBLIC_API_KEY={env_to_key_local['V1_EASYTL_PUBLIC_API_KEY']}\n"
                 f"V1_ELUCIDATE_ROOT_KEY={env_to_key_local['V1_ELUCIDATE_ROOT_KEY']}\n"
                 f"TURNSTILE_SECRET_KEY={env_to_key_local['TURNSTILE_SECRET_KEY']}\n"
+                f"OPENAI_API_KEY={env_to_key_local['OPENAI_API_KEY']}\n"
+                f"ANTHROPIC_API_KEY={env_to_key_local['ANTHROPIC_API_KEY']}\n"
+                f"GEMINI_API_KEY={env_to_key_local['GEMINI_API_KEY']}\n"
+                f"STRIPE_API_KEY={env_to_key_local['STRIPE_API_KEY']}\n"
             )
         else:
 

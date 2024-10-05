@@ -5,11 +5,11 @@
 // maintain allman bracket style for consistency
 
 // react
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Link as RouterLink } from 'react-router-dom';
 
 // chakra-ui
-import { Box, Heading, Text, VStack, List, ListItem, ListIcon, Button, Flex, IconButton, Link, useToast } from '@chakra-ui/react';
+import { Box, Heading, Text, VStack, List, ListItem, ListIcon, Button, Flex, IconButton, Link, useToast, Spinner } from '@chakra-ui/react';
 import { CheckIcon, ArrowBackIcon } from '@chakra-ui/icons';
 
 // images
@@ -26,6 +26,7 @@ const stripePromise = loadStripe(getPublishableStripeKey());
 function PricingPage()
 {
     const toast = useToast();
+    const [isLoading, setIsLoading] = useState(false);
 
     useEffect(() =>
     {
@@ -34,6 +35,7 @@ function PricingPage()
 
     const handleBuyNow = async () =>
     {
+        setIsLoading(true);
         try
         {
             const stripe = await stripePromise;
@@ -76,6 +78,10 @@ function PricingPage()
                 duration: 5000,
                 isClosable: true,
             });
+        }
+        finally
+        {
+            setIsLoading(false);
         }
     };
 
@@ -158,8 +164,12 @@ function PricingPage()
                             onClick={handleBuyNow}
                             colorScheme="orange"
                             size="lg"
+                            isLoading={isLoading}
+                            loadingText="Processing"
+                            spinner={<Spinner color="white" />}
+                            disabled={isLoading}
                         >
-                            Buy Now
+                            {isLoading ? 'Processing' : 'Buy Now'}
                         </Button>
                         
                         <Text fontSize="sm" textAlign="center">

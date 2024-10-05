@@ -33,6 +33,7 @@ from routes.elucidate import router as elucidate_router
 from routes.auth import router as auth_router
 from routes.turnstile import router as turnstile_router
 from routes.db import router as db_router
+from routes.financial import router as financial_router
 
 ##-----------------------------------------start-of-main----------------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -60,7 +61,8 @@ envs = {
     "V1_ELUCIDATE_ROOT_KEY": V1_ELUCIDATE_ROOT_KEY,
     "OPENAI_API_KEY": OPENAI_API_KEY,
     "ANTHROPIC_API_KEY": ANTHROPIC_API_KEY,
-    "GEMINI_API_KEY": GEMINI_API_KEY
+    "GEMINI_API_KEY": GEMINI_API_KEY,
+    "STRIPE_API_KEY": STRIPE_API_KEY,
 }
 
 for key, value in envs.items():
@@ -111,7 +113,7 @@ app.include_router(auth_router)
 app.include_router(elucidate_router)
 app.include_router(turnstile_router)
 app.include_router(db_router)
-
+app.include_router(financial_router)
 @app.on_event("startup")
 async def startup_event():
     db = SessionLocal()

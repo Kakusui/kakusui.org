@@ -18,7 +18,7 @@ interface AuthContextType
     credits: number;
     login: (access_token: string) => void;
     logout: () => void;
-    checkLoginStatus: () => Promise<void>;
+    checkLoginStatus: (forceFullCheck?: boolean) => Promise<void>;
     isLoading: boolean;
     updateCredits: (newCredits: number) => void;
 }
