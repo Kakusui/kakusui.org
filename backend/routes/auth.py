@@ -158,7 +158,6 @@ async def signup(data:LoginModel, request:Request, db:Session = Depends(get_db))
 
         existing_user = db.query(User).filter(User.email == data.email).first()
 
-
         if(existing_user):
             return JSONResponse(status_code=status.HTTP_400_BAD_REQUEST, content={"message": "Email already registered."})
 
@@ -296,7 +295,7 @@ async def check_admin(request: Request, current_user:str = Depends(get_current_u
 
     await check_internal_request(origin)
 
-    is_admin = current_user == ADMIN_USER
+    is_admin = (current_user == ADMIN_USER)
 
     return JSONResponse(status_code=status.HTTP_200_OK, content={"result": is_admin})
 
@@ -344,7 +343,7 @@ async def landing_verify_code_endpoint(request_data:VerifyEmailCodeRequest, requ
 async def create_checkout_session(request: Request, current_user: str = Depends(get_current_user)):
     FRONTEND_URL = await get_frontend_url()
 
-    if not current_user:
+    if(not current_user):
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="User not logged in")
 
     try:
@@ -369,7 +368,8 @@ async def create_checkout_session(request: Request, current_user: str = Depends(
             client_reference_id=current_user,
             metadata={
                 'credits_to_add': '50000'
-            }
+            },
+            customer_email=current_user
         )
         return {"id": checkout_session.id}
     except Exception as e:
@@ -381,21 +381,27 @@ async def verify_payment(request: Request, db: Session = Depends(get_db), curren
         data = await request.json()
         session_id = data.get('session_id')
         
+        if(not session_id):
+            return {"success": False, "message": "No session ID provided."}
+
         session = stripe.checkout.Session.retrieve(session_id)
-        
-        if session.payment_status == 'paid' and session.client_reference_id == current_user:
+
+        if(session.payment_status == 'paid' and session.client_reference_id == current_user):
             user = db.query(User).filter(User.email == current_user).first()
-            if user:
-                # Check if this payment has already been processed
-                payment_intent = stripe.PaymentIntent.retrieve(session.payment_intent)
-                if not payment_intent.metadata.get('processed'):
+            if(user):
+                payment_intent_id = session.payment_intent
+                if(not payment_intent_id):
+                    return {"success": False, "message": "No payment intent found."}
+
+                payment_intent = stripe.PaymentIntent.retrieve(payment_intent_id)
+
+                if(not payment_intent.metadata.get('processed')):
                     credits_to_add = int(session.metadata.get('credits_to_add', 0))
-                    user.credits += credits_to_add
+                    user.credits = user.credits + credits_to_add
                     db.commit()
 
-                    # Mark the payment as processed
                     stripe.PaymentIntent.modify(
-                        session.payment_intent,
+                        payment_intent_id,
                         metadata={'processed': 'true'}
                     )
 
