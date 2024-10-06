@@ -24,6 +24,7 @@ const KairyouTermsOfServicePage: React.FC = () => {
             <Heading as="h2" size="md" mt={4} mb={2}>1. Introduction</Heading>
             <Text mb={4}>
                 Welcome to Kairyou! By using our software, you agree to be bound by these Terms of Service and all terms incorporated by reference. Please read these terms carefully before using our services.
+                This service is subject to Kakusui's general <Link href="/tos" color="orange.400">Terms of Service</Link> and <Link href="/privacy" color="orange.400">Privacy Policy</Link>. Please review these documents for important information about your rights and responsibilities when using our services.
             </Text>
 
             <Heading as="h2" size="md" mt={4} mb={2}>2. Eligibility</Heading>
@@ -76,11 +77,12 @@ const KairyouTermsOfServicePage: React.FC = () => {
             </Text>
 
             <Text mt={4} fontSize="sm" color="gray.500">
-                Last updated: 2024-07-15
+                Last updated: 2024-10-05
             </Text>
 
             <Text mt={4} fontSize="sm" color="gray.500">
                 Changelog: <br />
+                2024-10-05: Various changes to the TOS to reflect new services, account details, credits, and other changes. <br />
                 2024-07-15: Switched to AGPLv3 for the API and website. <br />
                 2024-06-01: Initial version.
             </Text>

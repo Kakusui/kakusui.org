@@ -62,7 +62,7 @@ const FooterContent = ({ color = "gray.300" }) =>
                         <Text textAlign="center">© 2024 Kakusui LLC. All rights reserved</Text>
                         <HStack spacing={4} mt={1}>
                             <Link href="/tos" fontSize="sm" color="orange.400">Terms of Service</Link>
-                            <Link href="/privacy-policy" fontSize="sm" color="orange.400">Privacy Policy</Link>
+                            <Link href="/privacy" fontSize="sm" color="orange.400">Privacy Policy</Link>
                             <Link onClick={onOpen} fontSize="sm" color="orange.400">Send Feedback</Link>
                         </HStack>
                     </Flex>
