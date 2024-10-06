@@ -12,20 +12,14 @@ import asyncio
 import logging
 
 ## third-party libraries
-from fastapi import FastAPI, Request
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
-from pydantic import BaseModel
-from fastapi_csrf_protect import CsrfProtect
-from fastapi_csrf_protect.exceptions import CsrfProtectError
 from starlette.middleware.sessions import SessionMiddleware
 
 ## custom modules
 from middleware import (
     SecurityHeadersMiddleware,
     MaintenanceMiddleware,
-    DynamicCorsMiddleware,
-    CsrfMiddleware,
 )
 
 from middleware import maintenance_mode, maintenance_lock
@@ -100,32 +94,17 @@ logger.info("Database migration completed")
 app = FastAPI()
 logger.info("FastAPI application initialized")
 
-app.add_middleware(SessionMiddleware, secret_key=ACCESS_TOKEN_SECRET)
+app.add_middleware(SessionMiddleware, secret_key=ACCESS_TOKEN_SECRET) # type: ignore
 app.add_middleware(SecurityHeadersMiddleware)
 app.add_middleware(MaintenanceMiddleware)
-app.add_middleware(DynamicCorsMiddleware)
-app.add_middleware(CsrfMiddleware)
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173"],  # Add your frontend URL
+    allow_origins=["https://*.kakusui.org", "https://localhost:5173"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
-class CsrfSettings(BaseModel):
-  secret_key:str = CSRF_SECRET_KEY
-  cookie_samesite:str = "none" if(ENVIRONMENT == "production") else "lax"
-  cookie_secure:bool = (ENVIRONMENT == "production")
-
-@CsrfProtect.load_config
-def get_csrf_config():
-    return CsrfSettings()
-
-@app.exception_handler(CsrfProtectError)
-def csrf_protect_exception_handler(request: Request, exc: CsrfProtectError):
-    return JSONResponse(status_code=exc.status_code, content={"detail": exc.message})
 
 app.include_router(warmups_router)
 app.include_router(kairyou_router)

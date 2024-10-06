@@ -8,7 +8,7 @@
 import React, { createContext, useState, useContext, useEffect } from 'react';
 
 // custom
-import { getURL, fetchWithCsrf } from '../utils';
+import { getURL} from '../utils';
 
 interface AuthContextType 
 {
@@ -137,20 +137,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
     };
 
-    const fetchCsrfToken = async () => {
-        try {
-            await fetchWithCsrf(getURL('/auth/csrf-token'), {
-                method: 'GET',
-            });
-            console.log('CSRF token fetched successfully');
-        } catch (error) {
-            console.error('Error fetching CSRF token:', error);
-        }
-    };
-
     useEffect(() => 
     {
-        fetchCsrfToken();
         checkLoginStatus(true);
     }, []);
 

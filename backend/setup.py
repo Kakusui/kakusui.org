@@ -104,6 +104,7 @@ def setup_local_environment() -> None:
                 f"ENVIRONMENT={env_to_key_local['ENVIRONMENT']}\n"
                 f"ACCESS_TOKEN_SECRET={env_to_key_local['ACCESS_TOKEN_SECRET']}\n"
                 f"REFRESH_TOKEN_SECRET={env_to_key_local['REFRESH_TOKEN_SECRET']}\n"
+                f"CSRF_SECRET_KEY={env_to_key_local['CSRF_SECRET_KEY']}\n"
                 f"ENCRYPTION_KEY={env_to_key_local['ENCRYPTION_KEY']}\n"
                 f"SMTP_SERVER={env_to_key_local['SMTP_SERVER']}\n"
                 f"SMTP_PORT={env_to_key_local['SMTP_PORT']}\n"

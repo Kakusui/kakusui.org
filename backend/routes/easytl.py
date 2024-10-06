@@ -9,8 +9,6 @@ import logging
 
 from easytl import EasyTL
 
-from fastapi_csrf_protect import CsrfProtect
-
 import httpx
 
 ## custom imports
@@ -50,7 +48,7 @@ MODEL_COSTS = {
 }
 
 @router.post("/v1/easytl")
-async def easytl(request_data:EasyTLRequest, request:Request, is_admin:bool = Depends(check_if_admin_user), db: Session = Depends(get_db), current_user: str = Depends(get_current_user), csrf_protect:CsrfProtect = Depends()):
+async def easytl(request_data:EasyTLRequest, request:Request, is_admin:bool = Depends(check_if_admin_user), db: Session = Depends(get_db), current_user: str = Depends(get_current_user)):
 
     text_to_translate = request_data.textToTranslate
     translation_instructions = request_data.translationInstructions
@@ -61,8 +59,6 @@ async def easytl(request_data:EasyTLRequest, request:Request, is_admin:bool = De
 
     api_key = request.headers.get("X-API-Key")
  
-    csrf_protect.verify_csrf_token(request)
-
     admin_api_key = await get_admin_api_key(llm_type)
 
     MAX_TEXT_LENGTH = 100000
@@ -164,7 +160,6 @@ async def easytl(request_data:EasyTLRequest, request:Request, is_admin:bool = De
 async def calculate_token_cost(request_data: TokenCostRequest):
     total_chars = len(request_data.text_to_translate) + len(request_data.translation_instructions)
 
-
     if(request_data.model not in MODEL_COSTS):
         return JSONResponse(status_code=status.HTTP_400_BAD_REQUEST, content={"message": "Invalid model"})
     
@@ -174,8 +169,8 @@ async def calculate_token_cost(request_data: TokenCostRequest):
 
 @router.post("/proxy/calculate-token-cost")
 async def proxy_calculate_token_cost(request_data: TokenCostRequest, request: Request):
-    origin = request.headers.get('origin')
-    await check_internal_request(origin)
+
+    await check_internal_request(request)
 
     async with httpx.AsyncClient(timeout=None) as client:
         headers = {
@@ -189,9 +184,8 @@ async def proxy_calculate_token_cost(request_data: TokenCostRequest, request: Re
     
 @router.post("/proxy/easytl")
 async def proxy_easytl(request_data:EasyTLRequest, request:Request):
-    origin = request.headers.get('origin')
 
-    await check_internal_request(origin)
+    await check_internal_request(request)
 
     async with httpx.AsyncClient(timeout=None) as client:
         headers = {

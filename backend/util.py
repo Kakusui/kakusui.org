@@ -11,7 +11,7 @@ async def get_backend_url() -> str:
     """
 
     if(ENVIRONMENT == "development"):
-        return "http://api.localhost:5000"
+        return "https://api.localhost:5000"
     
     return "https://api.kakusui.org"
 
@@ -22,6 +22,6 @@ async def get_frontend_url() -> str:
     """
 
     if(ENVIRONMENT == "development"):
-        return "http://localhost:5173"
+        return "https://localhost:5173"
     
     return "https://kakusui.org"

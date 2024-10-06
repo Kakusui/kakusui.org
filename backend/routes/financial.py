@@ -7,9 +7,6 @@ from fastapi import APIRouter, Depends, HTTPException, Request, status
 from sqlalchemy.orm import Session
 import stripe
 
-## third-party imports
-from fastapi_csrf_protect import CsrfProtect
-
 ## custom modules
 from db.base import get_db
 from db.models import User
@@ -20,13 +17,9 @@ from util import get_frontend_url
 router = APIRouter()
 
 @router.post("/stripe/create-checkout-session")
-async def create_checkout_session(request: Request, current_user: str = Depends(get_current_user), csrf_protect:CsrfProtect = Depends()):
-    
-    origin = request.headers.get('origin')
+async def create_checkout_session(request: Request, current_user: str = Depends(get_current_user)):
 
-    await check_internal_request(origin)
-
-    csrf_protect.verify_csrf_token(request)
+    await check_internal_request(request)
 
     FRONTEND_URL = await get_frontend_url()
 
@@ -63,13 +56,9 @@ async def create_checkout_session(request: Request, current_user: str = Depends(
         raise HTTPException(status_code=400, detail=str(e))
 
 @router.post("/stripe/verify-payment")
-async def verify_payment(request: Request, db: Session = Depends(get_db), current_user: str = Depends(get_current_user), csrf_protect:CsrfProtect = Depends()):
+async def verify_payment(request: Request, db: Session = Depends(get_db), current_user: str = Depends(get_current_user)):
 
-    origin = request.headers.get('origin')
-
-    await check_internal_request(origin)
-
-    csrf_protect.verify_csrf_token(request)
+    await check_internal_request(request)
 
     try:
         data = await request.json()

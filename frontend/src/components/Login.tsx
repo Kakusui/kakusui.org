@@ -11,7 +11,7 @@ import { useState, useEffect } from 'react';
 import { Box, Button, Input, Modal, ModalOverlay, ModalContent, ModalHeader, ModalFooter, ModalBody, ModalCloseButton, Text, useDisclosure, Spinner, Flex, useToast, Divider } from "@chakra-ui/react";
 
 // util
-import { fetchWithCsrf, getURL } from '../utils';
+import { getURL } from '../utils';
 
 // motion
 import { motion } from 'framer-motion';
@@ -86,10 +86,14 @@ const Login: React.FC = () =>
 
         try 
         {
-            const checkUserResponse = await fetchWithCsrf(getURL('/auth/check-email-registration'), 
+            const checkUserResponse = await fetch(getURL('/auth/check-email-registration'), 
             {
                 method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
                 body: JSON.stringify({ email, clientID: clientId }),
+                credentials: 'include'
             });
 
             if(checkUserResponse.ok) 
@@ -110,10 +114,14 @@ const Login: React.FC = () =>
 
                 setIsLoginStep(true);
 
-                const response = await fetchWithCsrf(getURL('/auth/send-verification-email'), 
+                const response = await fetch(getURL('/auth/send-verification-email'), 
                 {
                     method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
                     body: JSON.stringify({ email, clientID: clientId }),
+                    credentials: 'include'
                 });
 
                 if(!response.ok) 
@@ -141,7 +149,7 @@ const Login: React.FC = () =>
         try 
         {
             const endpoint = isSignUp ? '/auth/signup' : '/auth/login';
-            const response = await fetchWithCsrf(getURL(endpoint), 
+            const response = await fetch(getURL(endpoint), 
             {
                 method: 'POST',
                 headers: 
@@ -205,7 +213,7 @@ const Login: React.FC = () =>
     {
         try
         {
-            const response = await fetchWithCsrf(getURL('/auth/google-login'), 
+            const response = await fetch(getURL('/auth/google-login'), 
             {
                 method: 'POST',
                 headers: 

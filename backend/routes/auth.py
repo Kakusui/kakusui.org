@@ -12,7 +12,6 @@ from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
 from google.oauth2 import id_token
 from google.auth.transport import requests
-from fastapi_csrf_protect import CsrfProtect
 
 ## custom imports
 from db.base import get_db
@@ -27,16 +26,41 @@ from email_util.verification import remove_verification_data
 
 from rate_limit.func import rate_limit
 
-from constants import REFRESH_TOKEN_EXPIRE_MINUTES, ADMIN_USER, ACCESS_TOKEN_EXPIRE_MINUTES, GOOGLE_CLIENT_ID, CSRF_SECRET_KEY
+from constants import REFRESH_TOKEN_EXPIRE_MINUTES, ADMIN_USER, ACCESS_TOKEN_EXPIRE_MINUTES, GOOGLE_CLIENT_ID, CSRF_SECRET_KEY, ENVIRONMENT
 
 logger = logging.getLogger(__name__)
+
+def get_cookie_settings(cookie_name:str | None = None):
+    base_settings = {
+        'httponly': True,
+        'secure': True,
+        'samesite': 'strict',
+        'domain': '.kakusui.org'
+    }
+    
+    if(ENVIRONMENT == 'development'):
+        base_settings.update({
+            'samesite': 'lax',
+            'domain': None
+        })
+    else:
+        base_settings.update({
+            'samesite': 'strict',
+            'domain': '.kakusui.org'
+        })
+    
+    if(cookie_name == 'access_token'):
+        base_settings['max_age'] = ACCESS_TOKEN_EXPIRE_MINUTES
+    elif(cookie_name == 'refresh_token'):
+        base_settings['max_age'] = REFRESH_TOKEN_EXPIRE_MINUTES
+    
+    return base_settings
 
 router = APIRouter()
 
 @router.post('/auth/google-login')
-async def google_login(request: GoogleLoginRequest, db: Session = Depends(get_db), csrf_protect:CsrfProtect = Depends()):
+async def google_login(request: GoogleLoginRequest, db: Session = Depends(get_db)):
     try:
-        csrf_protect.verify_csrf_token(request)
         idinfo = id_token.verify_oauth2_token(request.token, requests.Request(), GOOGLE_CLIENT_ID)
 
         if(idinfo['iss'] not in ['accounts.google.com', 'https://accounts.google.com']):
@@ -63,10 +87,7 @@ async def google_login(request: GoogleLoginRequest, db: Session = Depends(get_db
         response.set_cookie(
             key="refresh_token",
             value=refresh_token,
-            httponly=True,
-            secure=True,
-            samesite="strict",
-            max_age=REFRESH_TOKEN_EXPIRE_MINUTES * 60
+            **get_cookie_settings('refresh_token')
         )
         return response
 
@@ -76,11 +97,10 @@ async def google_login(request: GoogleLoginRequest, db: Session = Depends(get_db
         db.close()
 
 @router.post('/auth/check-email-registration')
-async def check_email_registration(data:RegisterForEmailAlert, request:Request, db:Session = Depends(get_db), csrf_protect:CsrfProtect = Depends()):
-    csrf_protect.validate_csrf_in_cookies(request)
+async def check_email_registration(data:RegisterForEmailAlert, request:Request, db:Session = Depends(get_db)):
     origin = request.headers.get('origin')
 
-    await check_internal_request(origin)
+    await check_internal_request(request)
 
     try:
         existing_user = db.query(User).filter(User.email == data.email).first()
@@ -93,17 +113,8 @@ async def check_email_registration(data:RegisterForEmailAlert, request:Request, 
     finally:
         db.close()
 
-# Add this decorator to the routes you want to protect with CSRF
-def log_csrf_token(func):
-    async def wrapper(request: Request, *args, **kwargs):
-        csrf_token = request.headers.get('X-CSRF-TOKEN')
-        logger.info(f"Received CSRF token in header: {csrf_token}")
-        return await func(request, *args, **kwargs)
-    return wrapper
-
 @router.post("/auth/login", response_model=LoginToken)
-@log_csrf_token
-async def login(data: LoginModel, request: Request, response: Response, db: Session = Depends(get_db), csrf_protect:CsrfProtect = Depends()):
+async def login(data: LoginModel, request: Request, response: Response, db: Session = Depends(get_db)):
     
     """
     
@@ -119,9 +130,7 @@ async def login(data: LoginModel, request: Request, response: Response, db: Sess
 
     origin = request.headers.get('origin')
 
-    await check_internal_request(origin)
-
-    csrf_protect.verify_csrf_token(request)
+    await check_internal_request(request)
 
     try:
         existing_user = db.query(User).filter(User.email == data.email).first()
@@ -151,25 +160,26 @@ async def login(data: LoginModel, request: Request, response: Response, db: Sess
         response.set_cookie(
             key="access_token",
             value=access_token,
-            httponly=True,
-            secure=True,
-            samesite="lax",
-            max_age=ACCESS_TOKEN_EXPIRE_MINUTES * 60
+            **get_cookie_settings('access_token')
         )
-
-        return {"token_type": "bearer", "refresh_token": refresh_token}
+        
+        response.set_cookie(
+            key="refresh_token",
+            value=refresh_token,
+            **get_cookie_settings('refresh_token')
+        )
+        
+        return {"token_type": "bearer"}
 
     finally:
         db.close()
 
 @router.post("/auth/signup")
-async def signup(data:LoginModel, request:Request, db:Session = Depends(get_db), csrf_protect:CsrfProtect = Depends()) -> JSONResponse:
+async def signup(data:LoginModel, request:Request, db:Session = Depends(get_db)) -> JSONResponse:
 
     origin = request.headers.get('origin')
 
-    await check_internal_request(origin)
-
-    csrf_protect.verify_csrf_token(request)
+    await check_internal_request(request)
 
     try:
 
@@ -210,7 +220,7 @@ async def signup(data:LoginModel, request:Request, db:Session = Depends(get_db),
         db.close()
 
 @router.post("/auth/refresh-access-token", response_model=LoginToken)
-async def refresh_token(request:Request, refresh_token: str = Cookie(None), csrf_protect:CsrfProtect = Depends()) -> JSONResponse:
+async def refresh_token(request:Request, refresh_token: str = Cookie(None)) -> JSONResponse:
     
     """
 
@@ -226,9 +236,7 @@ async def refresh_token(request:Request, refresh_token: str = Cookie(None), csrf
 
     origin = request.headers.get('origin')
 
-    await check_internal_request(origin)
-
-    csrf_protect.verify_csrf_token(request)
+    await check_internal_request(request)
 
     if(refresh_token is None):
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="No refresh token provided")
@@ -247,22 +255,16 @@ async def refresh_token(request:Request, refresh_token: str = Cookie(None), csrf
     response.set_cookie(
         key="refresh_token",
         value=new_refresh_token,
-        httponly=True,
-        secure=True,
-        samesite="strict",
-        max_age=REFRESH_TOKEN_EXPIRE_MINUTES
+        **get_cookie_settings('refresh_token')
     )
     return response
     
 
 @router.post("/auth/send-verification-email")
-async def send_verification_email_endpoint(request_data: SendVerificationEmailRequest, request: Request, db: Session = Depends(get_db), csrf_protect: CsrfProtect = Depends()):
-    csrf_protect.validate_csrf_in_cookies(request)
+async def send_verification_email_endpoint(request_data: SendVerificationEmailRequest, request: Request, db: Session = Depends(get_db)):
     origin = request.headers.get('origin')
 
-    await check_internal_request(origin)
-
-    csrf_protect.verify_csrf_token(request)
+    await check_internal_request(request)
 
     email = request_data.email
     client_id = request_data.clientID
@@ -290,13 +292,11 @@ async def send_verification_email_endpoint(request_data: SendVerificationEmailRe
         return JSONResponse(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, content={"message": "An error occurred while sending the verification email."})
 
 @router.post("/auth/verify-token")
-async def verify_token_endpoint(request: Request, csrf_protect:CsrfProtect = Depends()):
+async def verify_token_endpoint(request: Request):
 
     origin = request.headers.get('origin')
 
-    await check_internal_request(origin)
-
-    csrf_protect.verify_csrf_token(request)
+    await check_internal_request(request)
 
     auth_header = request.headers.get("Authorization")
     
@@ -313,24 +313,20 @@ async def verify_token_endpoint(request: Request, csrf_protect:CsrfProtect = Dep
         return {"valid": False, "detail": str(e.detail)}
 
 @router.post("/auth/check-if-admin-user")
-async def check_admin(request: Request, current_user:str = Depends(get_current_user), csrf_protect:CsrfProtect = Depends()):
+async def check_admin(request: Request, current_user:str = Depends(get_current_user)):
     origin = request.headers.get('origin')
 
-    await check_internal_request(origin)
-
-    csrf_protect.verify_csrf_token(request)
+    await check_internal_request(request)
 
     is_admin = (current_user == ADMIN_USER)
 
     return JSONResponse(status_code=status.HTTP_200_OK, content={"result": is_admin})
 
 @router.post("/auth/landing-verify-code", response_model=LoginToken)
-async def landing_verify_code_endpoint(request_data:VerifyEmailCodeRequest, request:Request, db: Session = Depends(get_db), csrf_protect:CsrfProtect = Depends()):
+async def landing_verify_code_endpoint(request_data:VerifyEmailCodeRequest, request:Request, db: Session = Depends(get_db)):
     origin = request.headers.get('origin')
 
-    await check_internal_request(origin)
-
-    csrf_protect.verify_csrf_token(request)
+    await check_internal_request(request)
 
     email = request_data.email
     submitted_code = request_data.code
@@ -356,15 +352,13 @@ async def landing_verify_code_endpoint(request_data:VerifyEmailCodeRequest, requ
         return JSONResponse(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, content={"message": "An error occurred while verifying the email code."})
 
 @router.post("/auth/logout")
-async def logout(response:Response, request:Request, csrf_protect:CsrfProtect = Depends()):
-    csrf_protect.verify_csrf_token(request)
-    response.delete_cookie(key="access_token")
-    response.delete_cookie(key="refresh_token")
+async def logout(response:Response, request:Request):
+    response.delete_cookie(key="access_token", **get_cookie_settings('access_token'))
+    response.delete_cookie(key="refresh_token", **get_cookie_settings('refresh_token'))
     return {"message": "Successfully logged out"}
 
 @router.get("/auth/check-token")
-async def check_token(request: Request, csrf_protect:CsrfProtect = Depends()):
-    csrf_protect.verify_csrf_token(request)
+async def check_token(request: Request):
     token = request.cookies.get("access_token")
     if not token:
         raise HTTPException(status_code=401, detail="Not authenticated")
@@ -373,16 +367,3 @@ async def check_token(request: Request, csrf_protect:CsrfProtect = Depends()):
         return {"valid": True}
     except HTTPException:
         return {"valid": False}
-
-@router.get("/auth/csrf-token")
-async def get_csrf_token(request: Request, response: Response, csrf_protect: CsrfProtect = Depends()):
-    csrf_token = csrf_protect.generate_csrf()
-    response.set_cookie(
-        key="fastapi-csrf-token",
-        value=csrf_token,
-        httponly=True,
-        samesite="Lax",
-        secure=False  # Set to True in production
-    )
-    logger.info(f"Generated CSRF token: {csrf_token}")
-    return JSONResponse(content={"csrf_token": csrf_token})

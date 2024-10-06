@@ -96,9 +96,8 @@ async def elucidate(request_data:ElucidateRequest, request:Request):
     
 @router.post("/proxy/elucidate")
 async def proxy_elucidate(request_data:ElucidateRequest, request:Request):
-    origin = request.headers.get('origin')
 
-    await check_internal_request(origin)
+    await check_internal_request(request)
 
     async with httpx.AsyncClient(timeout=None) as client:
         headers = {

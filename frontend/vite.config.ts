@@ -6,6 +6,7 @@
 
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react-swc'
+import fs from 'fs';
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => 
@@ -26,7 +27,12 @@ export default defineConfig(({ mode }) =>
       sourcemap: true, // Enable source maps
     },
     server: {
-      port: 5173, // Make sure this matches your development server port
+      https: {
+        key: fs.readFileSync('localhost.key'),
+        cert: fs.readFileSync('localhost.crt'),
+      },
+      host: 'localhost',
+      port: 5173,
     },
   }
 })

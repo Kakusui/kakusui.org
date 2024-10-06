@@ -39,3 +39,7 @@ database/
 .cursorrules
 
 .venv/
+
+## certs
+*.crt
+*.key

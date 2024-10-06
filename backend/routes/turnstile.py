@@ -19,9 +19,7 @@ router = APIRouter()
 @router.post("/auth/verify-turnstile")
 async def verify_turnstile(request_data:VerifyTurnstileRequest, request:Request):
 
-    origin = request.headers.get('origin')
-
-    await check_internal_request(origin)
+    await check_internal_request(request)
 
     try:
         url = "https://challenges.cloudflare.com/turnstile/v0/siteverify"
