@@ -55,6 +55,8 @@ function AppContent()
 function App() 
 {
     return (
+        // This is the Google OAuth client ID for Kakusui's Google API Console project.
+        // I should be fine hardcoding this. As it's meant for client-side (right?)
         <GoogleOAuthProvider clientId="951070461527-dhsteb0ro97qrq4d2e7cq2mr9ehichol.apps.googleusercontent.com">
             <ChakraProvider theme={theme}>
                 <AppContent />

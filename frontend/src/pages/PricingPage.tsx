@@ -158,6 +158,10 @@ function PricingPage()
                                 <ListIcon as={CheckIcon} color="green.500" />
                                 Priority support
                             </ListItem>
+                            <ListItem>
+                                <ListIcon as={CheckIcon} color="green.500" />
+                                No Captchas
+                            </ListItem>
                         </List>
                         
                         <Button

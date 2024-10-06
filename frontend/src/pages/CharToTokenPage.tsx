@@ -93,6 +93,9 @@ function CharToTokenPage()
                         <Text fontSize="lg" textAlign="center">
                             Credit costs per character for each model
                         </Text>
+                        <Text fontSize="sm" textAlign="center">
+                            These may change at any time, although it's more likely from them to go down than up.
+                        </Text>
                         
                         <Table variant="simple" size="sm">
                             <Thead>
@@ -114,7 +117,7 @@ function CharToTokenPage()
                 </Box>
                 <Text
                     position="absolute"
-                    bottom="6"
+                    bottom="5"
                     left="0"
                     right="0"
                     textAlign="center"

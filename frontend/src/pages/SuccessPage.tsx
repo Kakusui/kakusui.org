@@ -4,10 +4,17 @@
 
 // maintain allman bracket style for consistency
 
+// react
 import { useEffect, useState, useCallback } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
+
+// chakra-ui
 import { Box, Heading, Text, VStack, Button, Spinner, Center } from '@chakra-ui/react';
+
+// utils
 import { getURL } from '../utils';
+
+// contexts
 import { useAuth } from '../contexts/AuthContext';
 
 function SuccessPage()
