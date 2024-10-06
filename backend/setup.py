@@ -69,6 +69,7 @@ def setup_local_environment() -> None:
         "TOTP_SECRET": "JBSWY3DPEHPK3PXP",
         "ACCESS_TOKEN_SECRET": "secret",
         "REFRESH_TOKEN_SECRET": "secret",
+        "CSRF_SECRET_KEY": "secret",
         "ENVIRONMENT": "development",
         "ENCRYPTION_KEY": "password",
         "SMTP_SERVER": "none",

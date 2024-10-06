@@ -363,13 +363,7 @@ async def check_token(request: Request, csrf_protect:CsrfProtect = Depends()):
         return {"valid": False}
 
 @router.get("/auth/csrf-token")
-async def get_csrf_token(request: Request, csrf_protect: CsrfProtect = Depends()):
-    response = JSONResponse(content={"detail": "CSRF cookie set"})
-    csrf_protect.set_csrf_cookie(response)
-    return response
-
-@router.get('/csrf-token')
-async def get_csrf_token(csrf_protect: CsrfProtect = Depends()):
-    response = JSONResponse(status_code=status.HTTP_200_OK, content={'detail': 'CSRF cookie set'})
-    csrf_protect.set_csrf_cookie(response)
-    return response
+async def get_csrf_token(request: Request, response: Response, csrf_protect: CsrfProtect = Depends()):
+    csrf_token = csrf_protect.generate_csrf()
+    csrf_protect.set_csrf_cookie(csrf_token, response)
+    return JSONResponse(content={"csrf_token": csrf_token})

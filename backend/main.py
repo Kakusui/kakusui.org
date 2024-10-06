@@ -15,7 +15,7 @@ import logging
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
-
+from pydantic import BaseModel
 from fastapi_csrf_protect import CsrfProtect
 from fastapi_csrf_protect.exceptions import CsrfProtectError
 from starlette.middleware.sessions import SessionMiddleware
@@ -79,6 +79,7 @@ envs = {
     "ANTHROPIC_API_KEY": ANTHROPIC_API_KEY,
     "GEMINI_API_KEY": GEMINI_API_KEY,
     "STRIPE_API_KEY": STRIPE_API_KEY,
+    "CSRF_SECRET_KEY": CSRF_SECRET_KEY,
 }
 
 for key, value in envs.items():
@@ -114,6 +115,15 @@ app.add_middleware(SecurityHeadersMiddleware)
 app.add_middleware(MaintenanceMiddleware)
 app.add_middleware(DynamicCorsMiddleware)
 app.add_middleware(CsrfMiddleware)
+
+class CsrfSettings(BaseModel):
+  secret_key:str = CSRF_SECRET_KEY
+  cookie_samesite:str = "none"
+  cookie_secure:bool = True
+
+@CsrfProtect.load_config
+def get_csrf_config():
+  return CsrfSettings()
 
 @app.exception_handler(CsrfProtectError)
 def csrf_protect_exception_handler(request: Request, exc: CsrfProtectError):

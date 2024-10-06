@@ -36,10 +36,8 @@ const getPublishableStripeKey = () =>
 const fetchWithCsrf = async (url: string, options: RequestInit = {}) => 
 {
     const csrfToken = getCookie('csrf_token');
-    const headers = {
-        ...options.headers,
-        'X-CSRF-TOKEN': csrfToken || '',
-    };
+    const headers = new Headers(options.headers);
+    headers.set('X-CSRF-TOKEN', csrfToken || '');
     return fetch(url, { ...options, headers, credentials: 'include' });
 };
 
