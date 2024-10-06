@@ -106,7 +106,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     {
         try 
         {
-            // Fetch user info including credits
             const response = await fetch(getURL('/user/info'), 
             {
                 method: 'GET',
@@ -118,8 +117,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 const data = await response.json();
                 setIsLoggedIn(true);
                 setUserEmail(data.email);
-                setCredits(data.credits); // Set credits
-                // backend will verify this too
+                setCredits(data.credits);
                 setIsPrivilegedUser(data.email === 'kbilyeu@kakusui.org');
             } 
             else 

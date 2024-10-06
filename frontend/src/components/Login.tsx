@@ -163,7 +163,10 @@ const Login: React.FC = () =>
             if (response.ok) 
             {
                 const data = await response.json();
-                if (data.token_type === "bearer") 
+                console.log('Response data:', data);
+                console.log('Cookies:', document.cookie);
+
+                if (data.message === "Login successful" || data.message === "User successfully registered") 
                 {
                     await login();
                     handleClose();
@@ -177,11 +180,12 @@ const Login: React.FC = () =>
             else
             {
                 const errorData = await response.json();
-                showToast("Error", errorData.message || 'Invalid credentials', "error");
+                showToast("Error", errorData.detail || 'Invalid credentials', "error");
             }
         } 
         catch (error) 
         {
+            console.error('Error during login/signup:', error);
             showToast("Error", "An error occurred. Please try again.", "error");
         }
     };
@@ -227,16 +231,12 @@ const Login: React.FC = () =>
             if (response.ok)
             {
                 const data = await response.json();
-                if (data.access_token)
-                {
-                    await login();
-                    handleClose();
-                    showToast("Success", "Successfully logged in with Google", "success");
-                }
-                else
-                {
-                    showToast("Error", "Failed to log in with Google", "error");
-                }
+                console.log('Google login response:', data);
+                console.log('Cookies after Google login:', document.cookie);
+
+                await login();
+                handleClose();
+                showToast("Success", "Successfully logged in with Google", "success");
             }
             else
             {
@@ -246,6 +246,7 @@ const Login: React.FC = () =>
         }
         catch (error)
         {
+            console.error('Error during Google login:', error);
             showToast("Error", "An error occurred during Google login. Please try again.", "error");
         }
     };

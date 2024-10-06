@@ -30,32 +30,6 @@ from constants import REFRESH_TOKEN_EXPIRE_MINUTES, ADMIN_USER, ACCESS_TOKEN_EXP
 
 logger = logging.getLogger(__name__)
 
-def get_cookie_settings(cookie_name:str | None = None):
-    base_settings = {
-        'httponly': True,
-        'secure': True,
-        'samesite': 'strict',
-        'domain': '.kakusui.org'
-    }
-    
-    if(ENVIRONMENT == 'development'):
-        base_settings.update({
-            'samesite': 'lax',
-            'domain': None
-        })
-    else:
-        base_settings.update({
-            'samesite': 'strict',
-            'domain': '.kakusui.org'
-        })
-    
-    if(cookie_name == 'access_token'):
-        base_settings['max_age'] = ACCESS_TOKEN_EXPIRE_MINUTES
-    elif(cookie_name == 'refresh_token'):
-        base_settings['max_age'] = REFRESH_TOKEN_EXPIRE_MINUTES
-    
-    return base_settings
-
 router = APIRouter()
 
 @router.post('/auth/google-login')
@@ -83,16 +57,22 @@ async def google_login(request: GoogleLoginRequest, db: Session = Depends(get_db
             data={"sub": email}, expires_delta=refresh_token_expires
         )
 
-        response = JSONResponse({"access_token": access_token, "token_type": "bearer"})
+        response = JSONResponse(status_code=status.HTTP_200_OK, content={"message": "Login successful"})
+
         response.set_cookie(
             key="refresh_token",
             value=refresh_token,
-            **get_cookie_settings('refresh_token')
+            httponly=True,
+            secure=True,
+            samesite="strict" if ENVIRONMENT != 'development' else "none",
+            max_age=REFRESH_TOKEN_EXPIRE_MINUTES,
+            domain=".kakusui.org" if ENVIRONMENT != 'development' else None
         )
         return response
 
     except ValueError:
         raise HTTPException(status_code=400, detail='Invalid token')
+    
     finally:
         db.close()
 
@@ -113,8 +93,8 @@ async def check_email_registration(data:RegisterForEmailAlert, request:Request, 
     finally:
         db.close()
 
-@router.post("/auth/login", response_model=LoginToken)
-async def login(data: LoginModel, request: Request, response: Response, db: Session = Depends(get_db)):
+@router.post("/auth/login")
+async def login(data: LoginModel, request: Request, db: Session = Depends(get_db)):
     
     """
     
@@ -124,8 +104,8 @@ async def login(data: LoginModel, request: Request, response: Response, db: Sess
     data (LoginModel): The data required to login
 
     Returns:
-    typing.Dict[str, str]: The access token and token type
-
+    JSONResponse: A success message
+    
     """
 
     origin = request.headers.get('origin')
@@ -157,19 +137,29 @@ async def login(data: LoginModel, request: Request, response: Response, db: Sess
             data={"sub": data.email}, expires_delta=refresh_token_expires
         )
 
+        response = JSONResponse(status_code=status.HTTP_200_OK, content={"message": "Login successful"})
+
         response.set_cookie(
             key="access_token",
             value=access_token,
-            **get_cookie_settings('access_token')
+            httponly=True,
+            secure=True,
+            samesite="strict" if ENVIRONMENT != 'development' else "none",
+            max_age=int(ACCESS_TOKEN_EXPIRE_MINUTES * 60),
+            domain=None if ENVIRONMENT == 'development' else ".kakusui.org"
         )
         
         response.set_cookie(
             key="refresh_token",
             value=refresh_token,
-            **get_cookie_settings('refresh_token')
+            httponly=True,
+            secure=True,
+            samesite="strict" if ENVIRONMENT != 'development' else "none",
+            max_age=int(REFRESH_TOKEN_EXPIRE_MINUTES * 60),
+            domain=None if ENVIRONMENT == 'development' else ".kakusui.org"
         )
         
-        return {"token_type": "bearer"}
+        return response
 
     finally:
         db.close()
@@ -204,12 +194,29 @@ async def signup(data:LoginModel, request:Request, db:Session = Depends(get_db))
             data={"sub": data.email}, expires_delta=refresh_token_expires
         )
 
-        return JSONResponse(status_code=status.HTTP_200_OK, content={
-            "message": "User successfully registered.",
-            "access_token": access_token,
-            "token_type": "bearer",
-            "refresh_token": refresh_token
-        })
+        response = JSONResponse(status_code=status.HTTP_200_OK, content={"message": "User successfully registered."})
+
+        response.set_cookie(
+            key="access_token",
+            value=access_token,
+            httponly=True,
+            secure=True,
+            samesite="strict" if ENVIRONMENT != 'development' else "none",
+            max_age=ACCESS_TOKEN_EXPIRE_MINUTES,
+            domain=".kakusui.org" if ENVIRONMENT != 'development' else None
+        )
+        
+        response.set_cookie(
+            key="refresh_token",
+            value=refresh_token,
+            httponly=True,
+            secure=True,
+            samesite="strict" if ENVIRONMENT != 'development' else "none",
+            max_age=REFRESH_TOKEN_EXPIRE_MINUTES,
+            domain=".kakusui.org" if ENVIRONMENT != 'development' else None
+        )
+        
+        return response
 
     except Exception as e:
         db.rollback()
@@ -251,12 +258,28 @@ async def refresh_token(request:Request, refresh_token: str = Cookie(None)) -> J
         data={"sub": token_data.email}, expires_delta=refresh_token_expires
     )
 
-    response = JSONResponse(content={"access_token": access_token, "token_type": "bearer"})
+    response = JSONResponse(status_code=status.HTTP_200_OK, content={"message": "Token refreshed"})
+
     response.set_cookie(
         key="refresh_token",
         value=new_refresh_token,
-        **get_cookie_settings('refresh_token')
+        httponly=True,
+        secure=True,
+        samesite="strict" if ENVIRONMENT != 'development' else "none",
+        max_age=REFRESH_TOKEN_EXPIRE_MINUTES,
+        domain=".kakusui.org" if ENVIRONMENT != 'development' else None
     )
+
+    response.set_cookie(
+        key="access_token",
+        value=access_token,
+        httponly=True,
+        secure=True,
+        samesite="strict" if ENVIRONMENT != 'development' else "none",
+        max_age=ACCESS_TOKEN_EXPIRE_MINUTES,
+        domain=".kakusui.org" if ENVIRONMENT != 'development' else None
+    )
+
     return response
     
 
@@ -353,8 +376,8 @@ async def landing_verify_code_endpoint(request_data:VerifyEmailCodeRequest, requ
 
 @router.post("/auth/logout")
 async def logout(response:Response, request:Request):
-    response.delete_cookie(key="access_token", **get_cookie_settings('access_token'))
-    response.delete_cookie(key="refresh_token", **get_cookie_settings('refresh_token'))
+    response.delete_cookie(key="access_token", domain=".kakusui.org" if ENVIRONMENT != 'development' else None, samesite="strict" if ENVIRONMENT != 'development' else "none")
+    response.delete_cookie(key="refresh_token", domain=".kakusui.org" if ENVIRONMENT != 'development' else None, samesite="strict" if ENVIRONMENT != 'development' else "none")
     return {"message": "Successfully logged out"}
 
 @router.get("/auth/check-token")

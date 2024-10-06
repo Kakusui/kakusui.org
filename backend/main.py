@@ -100,7 +100,11 @@ app.add_middleware(MaintenanceMiddleware)
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["https://*.kakusui.org", "https://localhost:5173"],
+    allow_origins=[
+        "https://*.kakusui.org",
+        "https://localhost:5173",
+        "https://api.localhost:5000"
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
