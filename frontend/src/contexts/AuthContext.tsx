@@ -16,8 +16,8 @@ interface AuthContextType
     userEmail: string | null;
     isPrivilegedUser: boolean;
     credits: number;
-    login: (access_token: string) => void;
-    logout: () => void;
+    login: () => Promise<void>;
+    logout: () => Promise<void>;
     checkLoginStatus: (forceFullCheck?: boolean) => Promise<void>;
     isLoading: boolean;
     updateCredits: (newCredits: number) => void;
@@ -34,18 +34,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const [isLoading, setIsLoading] = useState<boolean>(true);
     const [lastFullCheck, setLastFullCheck] = useState<number>(0);
 
-    const checkTokenExpiration = () => 
+    const checkTokenExpiration = async () => 
     {
-        const token = localStorage.getItem('access_token');
-        if(token) 
-        {
-            const payload = JSON.parse(atob(token.split('.')[1]));
-            if(payload.exp * 1000 > Date.now()) 
-            {
-                return true;
-            }
+        try {
+            const response = await fetch(getURL('/auth/check-token'), {
+                method: 'GET',
+                credentials: 'include', 
+            });
+            const data = await response.json();
+            return data.valid;
+        } catch (error) {
+            console.error('Error checking token:', error);
+            return false;
         }
-        return false;
     };
 
     const refreshAccessToken = async () => 
@@ -58,16 +59,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 credentials: 'include',
             });
 
-            if(response.ok) 
-            {
-                const data = await response.json();
-                if(data.access_token) 
-                {
-                    localStorage.setItem('access_token', data.access_token);
-                    return true;
-                }
-            }
-            return false;
+            return response.ok;
         } 
         catch (error) 
         {
@@ -89,7 +81,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         } 
         else 
         {
-            if(checkTokenExpiration()) 
+            if(await checkTokenExpiration()) 
             {
                 setIsLoggedIn(true);
             } 
@@ -103,7 +95,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 }
                 else 
                 {
-                    logout();
+                    await logout();
                 }
             }
         }
@@ -112,66 +104,77 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     const performFullCheck = async () => 
     {
-        const access_token = localStorage.getItem('access_token');
-        if(access_token) 
+        try 
         {
-            try 
+            // Fetch user info including credits
+            const response = await fetch(getURL('/user/info'), 
             {
-                // Fetch user info including credits
-                const response = await fetch(getURL('/user/info'), 
-                {
-                    method: 'GET',
-                    headers: 
-                    {
-                        'Authorization': `Bearer ${access_token}`,
-                        'Content-Type': 'application/json'
-                    },
-                    credentials: 'include'
-                });
+                method: 'GET',
+                credentials: 'include'
+            });
 
-                if(response.ok) 
-                {
-                    const data = await response.json();
-                    setIsLoggedIn(true);
-                    setUserEmail(data.email);
-                    setCredits(data.credits); // Set credits
-                    setIsPrivilegedUser(data.email === 'kbilyeu@kakusui.org');
-                } 
-                else 
-                {
-                    throw new Error('Failed to fetch user info');
-                }
-            } 
-            catch (error) 
+            if(response.ok) 
             {
-                console.error('Error fetching user info:', error);
-                await refreshAccessToken();
+                const data = await response.json();
+                setIsLoggedIn(true);
+                setUserEmail(data.email);
+                setCredits(data.credits); // Set credits
+                // backend will verify this too
+                setIsPrivilegedUser(data.email === 'kbilyeu@kakusui.org');
+            } 
+            else 
+            {
+                throw new Error('Failed to fetch user info');
             }
         } 
-        else 
+        catch (error) 
         {
+            console.error('Error fetching user info:', error);
             setIsLoggedIn(false);
             setUserEmail(null);
             setIsPrivilegedUser(false);
-            setCredits(0); 
+            setCredits(0);
+        }
+    };
+
+    const fetchCsrfToken = async () => {
+        try {
+            const response = await fetch(getURL('/auth/csrf-token'), {
+                method: 'GET',
+                credentials: 'include',
+            });
+            if (response.ok) {
+                // The CSRF token is set as a cookie by the server
+                console.log('CSRF token fetched successfully');
+            } else {
+                console.error('Failed to fetch CSRF token');
+            }
+        } catch (error) {
+            console.error('Error fetching CSRF token:', error);
         }
     };
 
     useEffect(() => 
     {
+        fetchCsrfToken();
         checkLoginStatus(true);
     }, []);
 
-    const login = async (access_token: string) => 
+    const login = async () => 
     {
-        localStorage.setItem('access_token', access_token);
         await checkLoginStatus(true);
     };
 
     const logout = async () => 
     {
-        localStorage.removeItem('access_token');
-        document.cookie = 'refresh_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; secure; HttpOnly; SameSite=Strict';
+        try {
+            await fetch(getURL('/auth/logout'), {
+                method: 'POST',
+                credentials: 'include'
+            });
+        } catch (error) {
+            console.error('Error during logout:', error);
+        }
         setIsLoggedIn(false);
         setUserEmail(null);
         setIsPrivilegedUser(false);

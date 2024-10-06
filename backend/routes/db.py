@@ -12,6 +12,8 @@ import aiofiles
 from fastapi import APIRouter, Depends, UploadFile, File, HTTPException, Request, Body, status
 from fastapi.responses import JSONResponse
 
+from fastapi_csrf_protect import CsrfProtect
+
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy import text, select
@@ -32,13 +34,14 @@ from routes.models import EmailRequest
 
 from main import maintenance_mode, maintenance_lock
 
-
 router = APIRouter()
 
 @router.post("/admin/db/send-email")
-async def send_email_to_all(request: Request, email_request:EmailRequest, db: Session = Depends(get_db), is_admin:bool = Depends(check_if_admin_user)):
+async def send_email_to_all(request: Request, email_request:EmailRequest, db: Session = Depends(get_db), is_admin:bool = Depends(check_if_admin_user), csrf_protect:CsrfProtect = Depends()):
     origin = request.headers.get('origin')
     await check_internal_request(origin)
+
+    csrf_protect.verify_csrf_token(request)
 
     if(not is_admin):
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="You are not authorized to perform this action.")
@@ -71,7 +74,7 @@ async def send_email_to_all(request: Request, email_request:EmailRequest, db: Se
 
 
 @router.post('/admin/db/force-backup')
-async def force_backup(request:Request, db:Session = Depends(get_db), is_admin:bool = Depends(check_if_admin_user)):
+async def force_backup(request:Request, db:Session = Depends(get_db), is_admin:bool = Depends(check_if_admin_user), csrf_protect:CsrfProtect = Depends()):
 
     """
 
@@ -89,6 +92,8 @@ async def force_backup(request:Request, db:Session = Depends(get_db), is_admin:b
 
     await check_internal_request(origin)
 
+    csrf_protect.verify_csrf_token(request)
+
     if(not is_admin):
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="You are not authorized to perform this action.")
 
@@ -97,8 +102,7 @@ async def force_backup(request:Request, db:Session = Depends(get_db), is_admin:b
     return {"message": "Backup started"}
 
 @router.post("/admin/db/replace-database")
-async def upload_backup(request:Request, file: UploadFile = File(...), is_admin:bool = Depends(check_if_admin_user)) -> typing.Dict[str, str]:
-
+async def upload_backup(request:Request, file: UploadFile = File(...), is_admin:bool = Depends(check_if_admin_user), csrf_protect:CsrfProtect = Depends()):
 
     """
 
@@ -117,6 +121,8 @@ async def upload_backup(request:Request, file: UploadFile = File(...), is_admin:
     origin = request.headers.get('origin')
 
     await check_internal_request(origin)
+
+    csrf_protect.verify_csrf_token(request)
 
     if(not is_admin):
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="You are not authorized to perform this action.")
@@ -156,7 +162,8 @@ async def run_query(
     request:Request,
     sql_query:str = Body(..., embed=True),
     is_admin:bool = Depends(check_if_admin_user),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    csrf_protect:CsrfProtect = Depends()
 ) -> JSONResponse:
     """
     Execute an SQL query on the database and return the result as JSON
@@ -174,6 +181,8 @@ async def run_query(
     origin = request.headers.get('origin')
 
     await check_internal_request(origin)
+
+    csrf_protect.verify_csrf_token(request)
 
     if(not is_admin):
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="You are not authorized to perform this action.")
@@ -227,7 +236,8 @@ async def get_user_info(
     request: Request,
     fields: typing.Optional[typing.List[str]] = None,
     current_user: str = Depends(get_current_user),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    csrf_protect:CsrfProtect = Depends()
 ):
     """
     Get information about the current logged-in user.
@@ -244,6 +254,8 @@ async def get_user_info(
     
     origin = request.headers.get('origin')
     await check_internal_request(origin)
+
+    csrf_protect.verify_csrf_token(request)
 
     if(not current_user):
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authenticated")

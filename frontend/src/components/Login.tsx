@@ -11,7 +11,7 @@ import { useState, useEffect } from 'react';
 import { Box, Button, Input, Modal, ModalOverlay, ModalContent, ModalHeader, ModalFooter, ModalBody, ModalCloseButton, Text, useDisclosure, Spinner, Flex, useToast, Divider } from "@chakra-ui/react";
 
 // util
-import { getURL } from '../utils';
+import { fetchWithCsrf, getURL } from '../utils';
 
 // motion
 import { motion } from 'framer-motion';
@@ -86,7 +86,7 @@ const Login: React.FC = () =>
 
         try 
         {
-            const checkUserResponse = await fetch(getURL('/auth/check-email-registration'), 
+            const checkUserResponse = await fetchWithCsrf(getURL('/auth/check-email-registration'), 
             {
                 method: 'POST',
                 headers: 
@@ -115,7 +115,7 @@ const Login: React.FC = () =>
 
                 setIsLoginStep(true);
 
-                const response = await fetch(getURL('/auth/send-verification-email'), 
+                const response = await fetchWithCsrf(getURL('/auth/send-verification-email'), 
                 {
                     method: 'POST',
                     headers: 
@@ -151,7 +151,7 @@ const Login: React.FC = () =>
         try 
         {
             const endpoint = isSignUp ? '/auth/signup' : '/auth/login';
-            const response = await fetch(getURL(endpoint), 
+            const response = await fetchWithCsrf(getURL(endpoint), 
             {
                 method: 'POST',
                 headers: 
@@ -165,15 +165,15 @@ const Login: React.FC = () =>
             if (response.ok) 
             {
                 const data = await response.json();
-                if (data.access_token) 
+                if (data.token_type === "bearer") 
                 {
-                    await login(data.access_token);
+                    await login();
                     handleClose();
                     showToast("Success", `Successfully ${isSignUp ? "signed up" : "logged in"}`, "success");
                 } 
                 else 
                 {
-                    showToast("Error", "Invalid credentials", "error");
+                    showToast("Error", "Invalid response from server", "error");
                 }
             } 
             else
@@ -215,7 +215,7 @@ const Login: React.FC = () =>
     {
         try
         {
-            const response = await fetch(getURL('/auth/google-login'), 
+            const response = await fetchWithCsrf(getURL('/auth/google-login'), 
             {
                 method: 'POST',
                 headers: 
@@ -231,7 +231,7 @@ const Login: React.FC = () =>
                 const data = await response.json();
                 if (data.access_token)
                 {
-                    await login(data.access_token);
+                    await login();
                     handleClose();
                     showToast("Success", "Successfully logged in with Google", "success");
                 }

@@ -8,6 +8,7 @@ import asyncio
 ## third-party imports
 from fastapi import APIRouter, Request, status, Depends
 from fastapi.responses import JSONResponse
+from fastapi_csrf_protect import CsrfProtect
 
 ## custom imports
 from routes.models import EmailRequest, FeedbackEmailRequest
@@ -26,9 +27,11 @@ from db.base import get_db
 router = APIRouter()
 
 @router.post("/admin/send-email")
-async def send_email_to_all(request: Request, email_request: EmailRequest, db: Session = Depends(get_db), is_admin:bool = Depends(check_if_admin_user)):
+async def send_email_to_all(request: Request, email_request: EmailRequest, db: Session = Depends(get_db), is_admin:bool = Depends(check_if_admin_user), csrf_protect:CsrfProtect = Depends()):
     origin = request.headers.get('origin')
     await check_internal_request(origin)
+
+    csrf_protect.verify_csrf_token(request)
 
     if(not is_admin):
         return JSONResponse(status_code=status.HTTP_401_UNAUTHORIZED, content={"message": "You are not authorized to send emails."})

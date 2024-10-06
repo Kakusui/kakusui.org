@@ -4,7 +4,6 @@
 - [**Preface**](#preface)
 - [**Prerequisites**](#prerequisites)
 - [**Python Requirements**](#python-requirements)
-- [aiofiles==23.2.1](#aiofiles2321)
 - [**Node Requirements**](#node-requirements)
 - [**To build locally (Manual)**](#to-build-locally-manual)
   - [**Raw Docker Method**](#raw-docker-method)
@@ -47,6 +46,8 @@ uvicorn==0.30.0
 
 easytl==0.4.9
 
+aiofiles==23.2.1
+
 httpx==0.25.1
 
 elucidate==0.0.2
@@ -69,7 +70,10 @@ python-multipart==0.0.9
 
 werkzeug==3.0.4
 
-aiofiles==23.2.1
+stripe==10.12.0
+
+pydantic[email]
+
 --------------------------------------------------------------------------------------------------------------------------------------------------
 
 ## **Node Requirements**<a name="node-requirements"></a>
@@ -80,7 +84,7 @@ See `frontend/package.json` for a list of node requirements.
 ## **To build locally (Manual)**<a name="build-locally"></a>
 
 > [!TIP] 
-> This may not work on linux, if you are using linux, we reccomend using the docker method below.
+> This may not work on linux, if you are using linux, we recommend using the docker method below.
  
 1. Clone the repo, make sure you are using the correct branch (currently `production`)
 2. Navigate to the `backend` directory. `cd backend`. Inside is the python backend.
@@ -112,7 +116,6 @@ See `frontend/package.json` for a list of node requirements.
 > We are using docker compose v2 so `docker compose up --build` is the command we use, adjust as needed if you are using an older version of docker compose.
 
 Run `docker compose up --build` from the root directory.
-
 
 ## **For Production**<a name="for-production"></a>
 

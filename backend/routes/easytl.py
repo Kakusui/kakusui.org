@@ -9,6 +9,8 @@ import logging
 
 from easytl import EasyTL
 
+from fastapi_csrf_protect import CsrfProtect
+
 import httpx
 
 ## custom imports
@@ -48,7 +50,7 @@ MODEL_COSTS = {
 }
 
 @router.post("/v1/easytl")
-async def easytl(request_data:EasyTLRequest, request:Request, is_admin:bool = Depends(check_if_admin_user), db: Session = Depends(get_db), current_user: str = Depends(get_current_user)):
+async def easytl(request_data:EasyTLRequest, request:Request, is_admin:bool = Depends(check_if_admin_user), db: Session = Depends(get_db), current_user: str = Depends(get_current_user), csrf_protect:CsrfProtect = Depends()):
 
     text_to_translate = request_data.textToTranslate
     translation_instructions = request_data.translationInstructions
@@ -58,6 +60,10 @@ async def easytl(request_data:EasyTLRequest, request:Request, is_admin:bool = De
     using_credits = request_data.using_credits
 
     api_key = request.headers.get("X-API-Key")
+ 
+    csrf_protect.verify_csrf_token(request)
+
+    admin_api_key = await get_admin_api_key(llm_type)
 
     MAX_TEXT_LENGTH = 100000
     MAX_INSTRUCTIONS_LENGTH = 5000
@@ -108,10 +114,11 @@ async def easytl(request_data:EasyTLRequest, request:Request, is_admin:bool = De
 
         if(number_of_credits < number_of_characters): # type: ignore (IT'S FUCKING LYING)
             return JSONResponse(**ERRORS["not_enough_credits"])
+        
+        user_api_key = admin_api_key
 
     try:
         if(is_admin):
-            admin_api_key = await get_admin_api_key(llm_type)
             EasyTL.set_credentials(api_type=llm_type, credentials=admin_api_key) # type: ignore
         else:
             EasyTL.set_credentials(api_type=llm_type, credentials=user_api_key) # type: ignore

@@ -5,6 +5,7 @@
 ## built-in imports
 import json
 import asyncio
+
 ## third-party imports
 from fastapi import APIRouter, status, Request
 from fastapi.responses import JSONResponse
@@ -27,6 +28,7 @@ router = APIRouter()
 
 @router.post("/v1/kairyou")
 async def kairyou(request_data:KairyouRequest, request:Request):
+
     text_to_preprocess = request_data.textToPreprocess
     replacements_json = request_data.replacementsJson
     

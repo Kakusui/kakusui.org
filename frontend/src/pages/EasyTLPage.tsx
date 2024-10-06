@@ -39,7 +39,7 @@ import CopyButton from "../components/CopyButton";
 import DownloadButton from "../components/DownloadButton";
 import HowToUseSection from "../components/HowToUseSection";
 import LegalLinks from "../components/LegalLinks";
-import { getURL } from "../utils";
+import { getURL, fetchWithCsrf } from "../utils";
 import { useAuth } from "../contexts/AuthContext";
 
 type FormInput = 
@@ -329,7 +329,7 @@ Additional instructions:
         using_credits: data.paymentMethod === "credits"
       };
 
-      const response = await fetch(getURL("/proxy/easytl"), 
+      const response = await fetchWithCsrf(getURL("/proxy/easytl"), 
       {
         method: "POST",
         headers: 

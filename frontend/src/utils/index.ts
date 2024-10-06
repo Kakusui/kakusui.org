@@ -33,4 +33,23 @@ const getPublishableStripeKey = () =>
     
 }
 
-export {getURL, getPublishableStripeKey};
+const fetchWithCsrf = async (url: string, options: RequestInit = {}) => 
+{
+    const csrfToken = getCookie('csrf_token');
+    const headers = {
+        ...options.headers,
+        'X-CSRF-TOKEN': csrfToken || '',
+    };
+    return fetch(url, { ...options, headers, credentials: 'include' });
+};
+
+function getCookie(name: string): string | null 
+{
+    const value = `; ${document.cookie}`;
+    const parts = value.split(`; ${name}=`);
+    if (parts.length === 2) return parts.pop()?.split(';').shift() || null;
+    return null;
+}
+
+export {getURL, getPublishableStripeKey, fetchWithCsrf, getCookie};
+

@@ -2,7 +2,11 @@
 ## Use of this source code is governed by an GNU Affero General Public License v3.0
 ## license that can be found in the LICENSE file.
 
+## built-in imports
 import os
+
+## third-party imports
+import stripe
 
 def get_env_variables() -> None:
     """
@@ -30,12 +34,17 @@ TURNSTILE_SECRET_KEY = os.environ.get("TURNSTILE_SECRET_KEY")
 ENVIRONMENT = os.environ.get("ENVIRONMENT", "development")
 
 TOKEN_ALGORITHM = "HS256"
-TOKEN_EXPIRE_MINUTES = 43200 ## 30 days
+ACCESS_TOKEN_EXPIRE_MINUTES = 60
+REFRESH_TOKEN_EXPIRE_MINUTES = 43200 ## 5 days 
 VERIFICATION_EXPIRATION_MINUTES = 5
 MAX_REQUESTS = 5
 MAX_REQUESTS_PER_ID = 10
 MAX_REQUESTS_PER_EMAIL = 5
 RATE_LIMIT_WINDOW = 3600
+
+MAX_EMAIL_VERIFICATION_ATTEMPTS = 3
+
+GOOGLE_CLIENT_ID = "951070461527-dhsteb0ro97qrq4d2e7cq2mr9ehichol.apps.googleusercontent.com"
 
 V1_KAIRYOU_ROOT_KEY = os.environ.get("V1_KAIRYOU_ROOT_KEY")
 V1_EASYTL_ROOT_KEY = os.environ.get("V1_EASYTL_ROOT_KEY")
@@ -54,32 +63,38 @@ BACKUP_LOGS_DIR = 'database/logs'
 VERIFICATION_DATA_DIR = 'database/temp_verification'
 RATE_LIMIT_DATA_DIR = 'database/rate_limit'
 
-__all__ = ["TURNSTILE_SECRET_KEY", 
-           "ENCRYPTION_KEY", 
-           "ADMIN_USER", 
-           "ADMIN_PASS_HASH", 
-           "TOTP_SECRET", 
-           "ACCESS_TOKEN_SECRET", 
-           "REFRESH_TOKEN_SECRET", 
-           "TURNSTILE_SECRET_KEY", 
-           "ENVIRONMENT", 
-           "TOKEN_ALGORITHM", 
-           "TOKEN_EXPIRE_MINUTES", 
-           "VERIFICATION_EXPIRATION_MINUTES", 
-           "MAX_REQUESTS", 
-           "MAX_REQUESTS_PER_ID", 
-           "MAX_REQUESTS_PER_EMAIL", 
-           "RATE_LIMIT_WINDOW", 
-           "V1_KAIRYOU_ROOT_KEY", 
-           "V1_EASYTL_ROOT_KEY", 
-           "V1_EASYTL_PUBLIC_API_KEY", 
-           "V1_ELUCIDATE_ROOT_KEY", 
-           "DATABASE_URL", 
-           "DATABASE_PATH", 
-           "BACKUP_LOGS_DIR", 
-           "VERIFICATION_DATA_DIR", 
-           "RATE_LIMIT_DATA_DIR",
-           "OPENAI_API_KEY",
-           "ANTHROPIC_API_KEY",
-           "GEMINI_API_KEY",
-           "STRIPE_API_KEY"]
+stripe.api_key = STRIPE_API_KEY
+
+__all__ = [
+    "TURNSTILE_SECRET_KEY",
+    "ENCRYPTION_KEY",
+    "ADMIN_USER",
+    "ADMIN_PASS_HASH",
+    "TOTP_SECRET",
+    "ACCESS_TOKEN_SECRET",
+    "REFRESH_TOKEN_SECRET",
+    "ENVIRONMENT",
+    "TOKEN_ALGORITHM",
+    "ACCESS_TOKEN_EXPIRE_MINUTES",
+    "REFRESH_TOKEN_EXPIRE_MINUTES",
+    "VERIFICATION_EXPIRATION_MINUTES",
+    "MAX_REQUESTS",
+    "MAX_REQUESTS_PER_ID",
+    "MAX_REQUESTS_PER_EMAIL",
+    "RATE_LIMIT_WINDOW",
+    "MAX_EMAIL_VERIFICATION_ATTEMPTS",
+    "GOOGLE_CLIENT_ID",
+    "V1_KAIRYOU_ROOT_KEY",
+    "V1_EASYTL_ROOT_KEY",
+    "V1_EASYTL_PUBLIC_API_KEY",
+    "V1_ELUCIDATE_ROOT_KEY",
+    "OPENAI_API_KEY",
+    "ANTHROPIC_API_KEY",
+    "GEMINI_API_KEY",
+    "STRIPE_API_KEY",
+    "DATABASE_URL",
+    "DATABASE_PATH",
+    "BACKUP_LOGS_DIR",
+    "VERIFICATION_DATA_DIR",
+    "RATE_LIMIT_DATA_DIR"
+]

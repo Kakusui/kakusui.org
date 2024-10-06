@@ -2,24 +2,32 @@
 ## Use of this source code is governed by an GNU Affero General Public License v3.0
 ## license that can be found in the LICENSE file.
 
-## build-in imports
-import typing
-
 ## third-party imports
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from sqlalchemy.orm import Session
 import stripe
 
+## third-party imports
+from fastapi_csrf_protect import CsrfProtect
+
 ## custom modules
 from db.base import get_db
 from db.models import User
 from auth.func import get_current_user
+from auth.util import check_internal_request
 from util import get_frontend_url
 
 router = APIRouter()
 
 @router.post("/stripe/create-checkout-session")
-async def create_checkout_session(request: Request, current_user: str = Depends(get_current_user)):
+async def create_checkout_session(request: Request, current_user: str = Depends(get_current_user), csrf_protect:CsrfProtect = Depends()):
+    
+    origin = request.headers.get('origin')
+
+    await check_internal_request(origin)
+
+    csrf_protect.verify_csrf_token(request)
+
     FRONTEND_URL = await get_frontend_url()
 
     if(not current_user):
@@ -55,7 +63,14 @@ async def create_checkout_session(request: Request, current_user: str = Depends(
         raise HTTPException(status_code=400, detail=str(e))
 
 @router.post("/stripe/verify-payment")
-async def verify_payment(request: Request, db: Session = Depends(get_db), current_user: str = Depends(get_current_user)):
+async def verify_payment(request: Request, db: Session = Depends(get_db), current_user: str = Depends(get_current_user), csrf_protect:CsrfProtect = Depends()):
+
+    origin = request.headers.get('origin')
+
+    await check_internal_request(origin)
+
+    csrf_protect.verify_csrf_token(request)
+
     try:
         data = await request.json()
         session_id = data.get('session_id')
@@ -91,5 +106,6 @@ async def verify_payment(request: Request, db: Session = Depends(get_db), curren
                 return {"success": False, "message": "User not found."}
         else:
             return {"success": False, "message": "Payment not completed or user mismatch."}
+        
     except Exception as e:
         return {"success": False, "message": str(e)}
