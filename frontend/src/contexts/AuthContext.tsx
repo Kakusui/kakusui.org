@@ -8,7 +8,7 @@
 import React, { createContext, useState, useContext, useEffect } from 'react';
 
 // custom
-import { getURL } from '../utils';
+import { getURL, fetchWithCsrf } from '../utils';
 
 interface AuthContextType 
 {
@@ -139,16 +139,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     const fetchCsrfToken = async () => {
         try {
-            const response = await fetch(getURL('/auth/csrf-token'), {
+            await fetchWithCsrf(getURL('/auth/csrf-token'), {
                 method: 'GET',
-                credentials: 'include',
             });
-            if (response.ok) {
-                // The CSRF token is set as a cookie by the server
-                console.log('CSRF token fetched successfully');
-            } else {
-                console.error('Failed to fetch CSRF token');
-            }
+            console.log('CSRF token fetched successfully');
         } catch (error) {
             console.error('Error fetching CSRF token:', error);
         }

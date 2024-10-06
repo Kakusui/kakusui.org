@@ -4,7 +4,7 @@
 
 ## built-in libraries
 import threading
-
+import logging
 ## third-party libraries
 from fastapi import Request
 from starlette.middleware.base import BaseHTTPMiddleware
@@ -30,27 +30,40 @@ class MaintenanceMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next):
         global maintenance_mode, maintenance_lock
         with maintenance_lock:
-            if maintenance_mode:
+            if(maintenance_mode):
                 return JSONResponse(status_code=503, content={"message": "Server is in maintenance mode"})
         return await call_next(request)
 
 class DynamicCorsMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next):
-        response = await call_next(request)
         origin = request.headers.get("Origin")
-        if origin:
-            response.headers["Access-Control-Allow-Origin"] = origin
+        
+        if(request.method == "OPTIONS"):
+            response = JSONResponse(content={})
+        else:
+            response = await call_next(request)
+        
+        response.headers["Access-Control-Allow-Origin"] = origin
         response.headers["Access-Control-Allow-Credentials"] = "true"
         response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, OPTIONS"
-        response.headers["Access-Control-Allow-Headers"] = "Authorization, Content-Type"
+        response.headers["Access-Control-Allow-Headers"] = "Authorization, Content-Type, X-CSRF-TOKEN"
+        
+        if(request.method == "OPTIONS"):
+            response.headers["Access-Control-Max-Age"] = "600"
+        
         return response
 
 class CsrfMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next):
         if request.method not in ("GET", "HEAD", "OPTIONS"):
             csrf_protect = CsrfProtect()
-            await csrf_protect.validate_csrf(request)
-        return await call_next(request)
+            try:
+                await csrf_protect.validate_csrf(request)
+            except CsrfProtectError as e:
+                logging.error(f"CSRF validation failed: {str(e)}")
+                return JSONResponse(status_code=403, content={"detail": str(e)})
+        response = await call_next(request)
+        return response
 
 def csrf_protect_exception_handler(request: Request, exc: CsrfProtectError):
     return JSONResponse(status_code=exc.status_code, content={"detail": exc.message})

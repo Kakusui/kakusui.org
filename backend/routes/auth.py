@@ -4,6 +4,7 @@
 
 ## built-in imports
 from datetime import timedelta
+import logging
 
 ## third-party imports
 from fastapi import APIRouter, HTTPException, Request, status, Cookie, Depends, Response
@@ -26,7 +27,9 @@ from email_util.verification import remove_verification_data
 
 from rate_limit.func import rate_limit
 
-from constants import REFRESH_TOKEN_EXPIRE_MINUTES, ADMIN_USER, ACCESS_TOKEN_EXPIRE_MINUTES, GOOGLE_CLIENT_ID
+from constants import REFRESH_TOKEN_EXPIRE_MINUTES, ADMIN_USER, ACCESS_TOKEN_EXPIRE_MINUTES, GOOGLE_CLIENT_ID, CSRF_SECRET_KEY
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
@@ -74,11 +77,10 @@ async def google_login(request: GoogleLoginRequest, db: Session = Depends(get_db
 
 @router.post('/auth/check-email-registration')
 async def check_email_registration(data:RegisterForEmailAlert, request:Request, db:Session = Depends(get_db), csrf_protect:CsrfProtect = Depends()):
+    csrf_protect.validate_csrf_in_cookies(request)
     origin = request.headers.get('origin')
 
     await check_internal_request(origin)
-
-    csrf_protect.verify_csrf_token(request)
 
     try:
         existing_user = db.query(User).filter(User.email == data.email).first()
@@ -91,7 +93,16 @@ async def check_email_registration(data:RegisterForEmailAlert, request:Request, 
     finally:
         db.close()
 
+# Add this decorator to the routes you want to protect with CSRF
+def log_csrf_token(func):
+    async def wrapper(request: Request, *args, **kwargs):
+        csrf_token = request.headers.get('X-CSRF-TOKEN')
+        logger.info(f"Received CSRF token in header: {csrf_token}")
+        return await func(request, *args, **kwargs)
+    return wrapper
+
 @router.post("/auth/login", response_model=LoginToken)
+@log_csrf_token
 async def login(data: LoginModel, request: Request, response: Response, db: Session = Depends(get_db), csrf_protect:CsrfProtect = Depends()):
     
     """
@@ -245,7 +256,8 @@ async def refresh_token(request:Request, refresh_token: str = Cookie(None), csrf
     
 
 @router.post("/auth/send-verification-email")
-async def send_verification_email_endpoint(request_data: SendVerificationEmailRequest, request: Request, db: Session = Depends(get_db), csrf_protect:CsrfProtect = Depends()):
+async def send_verification_email_endpoint(request_data: SendVerificationEmailRequest, request: Request, db: Session = Depends(get_db), csrf_protect: CsrfProtect = Depends()):
+    csrf_protect.validate_csrf_in_cookies(request)
     origin = request.headers.get('origin')
 
     await check_internal_request(origin)
@@ -365,5 +377,12 @@ async def check_token(request: Request, csrf_protect:CsrfProtect = Depends()):
 @router.get("/auth/csrf-token")
 async def get_csrf_token(request: Request, response: Response, csrf_protect: CsrfProtect = Depends()):
     csrf_token = csrf_protect.generate_csrf()
-    csrf_protect.set_csrf_cookie(csrf_token, response)
+    response.set_cookie(
+        key="fastapi-csrf-token",
+        value=csrf_token,
+        httponly=True,
+        samesite="Lax",
+        secure=False  # Set to True in production
+    )
+    logger.info(f"Generated CSRF token: {csrf_token}")
     return JSONResponse(content={"csrf_token": csrf_token})

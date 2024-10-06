@@ -33,20 +33,56 @@ const getPublishableStripeKey = () =>
     
 }
 
-const fetchWithCsrf = async (url: string, options: RequestInit = {}) => 
-{
-    const csrfToken = getCookie('csrf_token');
+const fetchWithCsrf = async (url: string, options: RequestInit = {}) => {
+    // Fetch CSRF token if not already in cookie
+    if (!document.cookie.includes('fastapi-csrf-token')) {
+        console.log('CSRF token not found in cookie, fetching new token');
+        await fetch(`${getURL("/auth/csrf-token")}`, {
+            method: 'GET',
+            credentials: 'include',
+        });
+    }
+
+    // Read CSRF token from cookie
+    const csrfToken = getCookie('fastapi-csrf-token');
+    console.log('CSRF token from cookie:', csrfToken);
+
+    // Set headers
     const headers = new Headers(options.headers);
-    headers.set('X-CSRF-TOKEN', csrfToken || '');
-    return fetch(url, { ...options, headers, credentials: 'include' });
+    if (csrfToken) {
+        headers.set('X-CSRF-TOKEN', csrfToken);
+        console.log('Setting X-CSRF-TOKEN header:', csrfToken);
+    } else {
+        console.warn('No CSRF token available to set in header');
+    }
+    headers.set('Content-Type', 'application/json');
+
+    // Log all headers
+    console.log('All request headers:');
+    headers.forEach((value, key) => {
+        console.log(`${key}: ${value}`);
+    });
+
+    // Make the actual request
+    const response = await fetch(url, {
+        ...options,
+        headers,
+        credentials: 'include',
+    });
+
+    if (!response.ok) {
+        console.error('Request failed:', response.status, response.statusText);
+        throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    return response;
 };
 
-function getCookie(name: string): string | null 
-{
+function getCookie(name: string): string {
     const value = `; ${document.cookie}`;
     const parts = value.split(`; ${name}=`);
-    if (parts.length === 2) return parts.pop()?.split(';').shift() || null;
-    return null;
+    if (parts.length === 2) return parts.pop()?.split(';').shift() || '';
+    return '';
 }
 
 export {getURL, getPublishableStripeKey, fetchWithCsrf, getCookie};

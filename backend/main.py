@@ -100,30 +100,28 @@ logger.info("Database migration completed")
 app = FastAPI()
 logger.info("FastAPI application initialized")
 
-## CORS setup
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-logger.info("CORS middleware added")
-
 app.add_middleware(SessionMiddleware, secret_key=ACCESS_TOKEN_SECRET)
 app.add_middleware(SecurityHeadersMiddleware)
 app.add_middleware(MaintenanceMiddleware)
 app.add_middleware(DynamicCorsMiddleware)
 app.add_middleware(CsrfMiddleware)
 
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:5173"],  # Add your frontend URL
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 class CsrfSettings(BaseModel):
   secret_key:str = CSRF_SECRET_KEY
-  cookie_samesite:str = "none"
-  cookie_secure:bool = True
+  cookie_samesite:str = "none" if(ENVIRONMENT == "production") else "lax"
+  cookie_secure:bool = (ENVIRONMENT == "production")
 
 @CsrfProtect.load_config
 def get_csrf_config():
-  return CsrfSettings()
+    return CsrfSettings()
 
 @app.exception_handler(CsrfProtectError)
 def csrf_protect_exception_handler(request: Request, exc: CsrfProtectError):

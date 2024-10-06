@@ -89,12 +89,7 @@ const Login: React.FC = () =>
             const checkUserResponse = await fetchWithCsrf(getURL('/auth/check-email-registration'), 
             {
                 method: 'POST',
-                headers: 
-                {
-                    'Content-Type': 'application/json'
-                },
                 body: JSON.stringify({ email, clientID: clientId }),
-                credentials: 'include'
             });
 
             if(checkUserResponse.ok) 
@@ -118,12 +113,7 @@ const Login: React.FC = () =>
                 const response = await fetchWithCsrf(getURL('/auth/send-verification-email'), 
                 {
                     method: 'POST',
-                    headers: 
-                    {
-                        'Content-Type': 'application/json'
-                    },
                     body: JSON.stringify({ email, clientID: clientId }),
-                    credentials: 'include'
                 });
 
                 if(!response.ok) 
