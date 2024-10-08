@@ -310,11 +310,13 @@ async def landing_verify_code_endpoint(request_data:VerifyEmailCodeRequest, requ
 
         existing_email_alert = db.query(EmailAlertModel).filter(EmailAlertModel.email == email).first()
         if(existing_email_alert):
-            return JSONResponse(status_code=status.HTTP_400_BAD_REQUEST, content={"message": "Email already registered for alerts."})
+            pass
+            ## just don't register, but still return success
 
-        new_email_alert = EmailAlertModel(email=email)
-        db.add(new_email_alert)
-        db.commit()
+        else:
+            new_email_alert = EmailAlertModel(email=email)
+            db.add(new_email_alert)
+            db.commit()
         
         await remove_verification_data(email)
         return JSONResponse(status_code=status.HTTP_200_OK, content={"message": "Email successfully verified and registered for alerts.", "token_type": "bearer"})

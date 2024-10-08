@@ -36,9 +36,7 @@ async def check_internal_request(request:Request) -> None:
     }
 
     origin = request.headers.get('origin')
-
-    print(origin)
-
+    
     if(ENVIRONMENT == "development"):
         allowed_domains.add("http://localhost:5173")
 

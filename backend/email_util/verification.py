@@ -37,9 +37,6 @@ async def save_verification_data(email:str, code:str) -> None:
     file_path = Path(VERIFICATION_DATA_DIR) / f"{secure_email}.json"
     file_path = file_path.resolve()
 
-    if(not file_path.is_relative_to(Path(VERIFICATION_DATA_DIR))):
-        raise ValueError("Invalid email format")
-
     async with aiofiles.open(file_path, "w") as f:
         await f.write(json.dumps(data))
 
@@ -48,9 +45,6 @@ async def get_verification_data(email:str) -> dict | None:
         secure_email = await get_secure_filename(email)
         file_path = Path(VERIFICATION_DATA_DIR) / f"{secure_email}.json"
         file_path = file_path.resolve()
-
-        if(not file_path.is_relative_to(Path(VERIFICATION_DATA_DIR))):
-            raise ValueError("Invalid email format")
 
         async with aiofiles.open(file_path, "r") as f:
             data = json.loads(await f.read())
@@ -64,9 +58,6 @@ async def remove_verification_data(email:str) -> None:
         secure_email = await get_secure_filename(email)
         file_path = Path(VERIFICATION_DATA_DIR) / f"{secure_email}.json"
         file_path = file_path.resolve()
-
-        if(not file_path.is_relative_to(Path(VERIFICATION_DATA_DIR))):
-            raise ValueError("Invalid email format")
 
         ## Securely overwrite the file before deletion
         async with aiofiles.open(file_path, "wb") as f:
