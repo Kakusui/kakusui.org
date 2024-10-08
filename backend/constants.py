@@ -4,6 +4,8 @@
 
 import os
 
+import stripe
+
 def get_env_variables() -> None:
     """
     Only used in development. This function reads the .env file and sets the environment variables.
@@ -36,6 +38,7 @@ MAX_REQUESTS = 5
 MAX_REQUESTS_PER_ID = 10
 MAX_REQUESTS_PER_EMAIL = 5
 RATE_LIMIT_WINDOW = 3600
+MAX_EMAIL_VERIFICATION_ATTEMPTS = 3
 
 V1_KAIRYOU_ROOT_KEY = os.environ.get("V1_KAIRYOU_ROOT_KEY")
 V1_EASYTL_ROOT_KEY = os.environ.get("V1_EASYTL_ROOT_KEY")
@@ -54,6 +57,8 @@ BACKUP_LOGS_DIR = 'database/logs'
 VERIFICATION_DATA_DIR = 'database/temp_verification'
 RATE_LIMIT_DATA_DIR = 'database/rate_limit'
 
+stripe.api_key = STRIPE_API_KEY
+
 __all__ = ["TURNSTILE_SECRET_KEY", 
            "ENCRYPTION_KEY", 
            "ADMIN_USER", 
@@ -69,6 +74,7 @@ __all__ = ["TURNSTILE_SECRET_KEY",
            "MAX_REQUESTS", 
            "MAX_REQUESTS_PER_ID", 
            "MAX_REQUESTS_PER_EMAIL", 
+           "MAX_EMAIL_VERIFICATION_ATTEMPTS",
            "RATE_LIMIT_WINDOW", 
            "V1_KAIRYOU_ROOT_KEY", 
            "V1_EASYTL_ROOT_KEY", 

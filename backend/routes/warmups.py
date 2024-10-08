@@ -21,9 +21,7 @@ async def api_home():
 @router.get("/v1/kairyou", status_code=status.HTTP_200_OK)
 async def kairyou_warm_up(request:Request):
 
-    origin = request.headers.get('origin')
-
-    await check_internal_request(origin)
+    await check_internal_request(request)
 
     return JSONResponse(
         status_code=status.HTTP_200_OK,
@@ -31,11 +29,7 @@ async def kairyou_warm_up(request:Request):
     )
 
 @router.get("/v1/easytl", status_code=status.HTTP_200_OK)
-async def easytl_warm_up(request:Request):
-
-    origin = request.headers.get('origin')
-
-    await check_internal_request(origin)
+async def easytl_warm_up():
 
     return JSONResponse(
         status_code=status.HTTP_200_OK,
@@ -45,9 +39,7 @@ async def easytl_warm_up(request:Request):
 @router.get("/v1/elucidate", status_code=status.HTTP_200_OK)
 async def elucidate_warm_up(request:Request):
 
-    origin = request.headers.get('origin')
-
-    await check_internal_request(origin)
+    await check_internal_request(request)
 
     return JSONResponse(
         status_code=status.HTTP_200_OK,

@@ -2,9 +2,6 @@
 ## Use of this source code is governed by an GNU Affero General Public License v3.0
 ## license that can be found in the LICENSE file.
 
-## build-in imports
-import typing
-
 ## third-party imports
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from sqlalchemy.orm import Session
@@ -15,11 +12,14 @@ from db.base import get_db
 from db.models import User
 from auth.func import get_current_user
 from util import get_frontend_url
-
+from auth.util import check_internal_request
 router = APIRouter()
 
 @router.post("/stripe/create-checkout-session")
 async def create_checkout_session(request: Request, current_user: str = Depends(get_current_user)):
+    
+    await check_internal_request(request)
+
     FRONTEND_URL = await get_frontend_url()
 
     if(not current_user):
@@ -56,6 +56,9 @@ async def create_checkout_session(request: Request, current_user: str = Depends(
 
 @router.post("/stripe/verify-payment")
 async def verify_payment(request: Request, db: Session = Depends(get_db), current_user: str = Depends(get_current_user)):
+    
+    await check_internal_request(request)
+
     try:
         data = await request.json()
         session_id = data.get('session_id')

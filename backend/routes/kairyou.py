@@ -80,9 +80,8 @@ async def kairyou(request_data:KairyouRequest, request:Request):
     
 @router.post("/proxy/kairyou")
 async def proxy_kairyou(request_data:KairyouRequest, request:Request):
-    origin = request.headers.get('origin')
 
-    await check_internal_request(origin)
+    await check_internal_request(request)
 
     async with httpx.AsyncClient(timeout=None) as client:
         headers = {

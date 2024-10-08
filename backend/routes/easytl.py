@@ -57,6 +57,8 @@ async def easytl(request_data:EasyTLRequest, request:Request, is_admin:bool = De
     model = request_data.model
     using_credits = request_data.using_credits
 
+    admin_api_key = await get_admin_api_key(llm_type)
+
     api_key = request.headers.get("X-API-Key")
 
     MAX_TEXT_LENGTH = 100000
@@ -99,6 +101,9 @@ async def easytl(request_data:EasyTLRequest, request:Request, is_admin:bool = De
     number_of_characters = 0
     
     if(using_credits):
+
+        user_api_key = admin_api_key
+
         number_of_characters = len(text_to_translate) + len(translation_instructions)
         user = db.query(User).filter(User.email == current_user).first()
         if(not user):
@@ -111,7 +116,6 @@ async def easytl(request_data:EasyTLRequest, request:Request, is_admin:bool = De
 
     try:
         if(is_admin):
-            admin_api_key = await get_admin_api_key(llm_type)
             EasyTL.set_credentials(api_type=llm_type, credentials=admin_api_key) # type: ignore
         else:
             EasyTL.set_credentials(api_type=llm_type, credentials=user_api_key) # type: ignore
@@ -157,7 +161,6 @@ async def easytl(request_data:EasyTLRequest, request:Request, is_admin:bool = De
 async def calculate_token_cost(request_data: TokenCostRequest):
     total_chars = len(request_data.text_to_translate) + len(request_data.translation_instructions)
 
-
     if(request_data.model not in MODEL_COSTS):
         return JSONResponse(status_code=status.HTTP_400_BAD_REQUEST, content={"message": "Invalid model"})
     
@@ -167,8 +170,8 @@ async def calculate_token_cost(request_data: TokenCostRequest):
 
 @router.post("/proxy/calculate-token-cost")
 async def proxy_calculate_token_cost(request_data: TokenCostRequest, request: Request):
-    origin = request.headers.get('origin')
-    await check_internal_request(origin)
+
+    await check_internal_request(request)
 
     async with httpx.AsyncClient(timeout=None) as client:
         headers = {
@@ -182,9 +185,8 @@ async def proxy_calculate_token_cost(request_data: TokenCostRequest, request: Re
     
 @router.post("/proxy/easytl")
 async def proxy_easytl(request_data:EasyTLRequest, request:Request):
-    origin = request.headers.get('origin')
 
-    await check_internal_request(origin)
+    await check_internal_request(request)
 
     async with httpx.AsyncClient(timeout=None) as client:
         headers = {

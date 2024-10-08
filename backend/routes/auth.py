@@ -27,8 +27,6 @@ from email_util.verification import get_verification_data, remove_verification_d
 
 from rate_limit.func import rate_limit
 
-from util import get_frontend_url
-
 from constants import TOKEN_EXPIRE_MINUTES, ADMIN_USER, STRIPE_API_KEY
 
 stripe.api_key = STRIPE_API_KEY
@@ -82,9 +80,8 @@ async def google_login(request: GoogleLoginRequest, db: Session = Depends(get_db
 
 @router.post('/auth/check-email-registration')
 async def check_email_registration(data:RegisterForEmailAlert, request:Request, db:Session = Depends(get_db)):
-    origin = request.headers.get('origin')
 
-    await check_internal_request(origin)
+    await check_internal_request(request)
 
     try:
         existing_user = db.query(User).filter(User.email == data.email).first()
@@ -112,10 +109,7 @@ async def login(data:LoginModel, request:Request, db:Session = Depends(get_db)) 
 
     """
 
-    origin = request.headers.get('origin')
-
-    await check_internal_request(origin)
-
+    await check_internal_request(request)
 
     try:
         existing_user = db.query(User).filter(User.email == data.email).first()
@@ -150,9 +144,7 @@ async def login(data:LoginModel, request:Request, db:Session = Depends(get_db)) 
 @router.post("/auth/signup")
 async def signup(data:LoginModel, request:Request, db:Session = Depends(get_db)) -> JSONResponse:
 
-    origin = request.headers.get('origin')
-
-    await check_internal_request(origin)
+    await check_internal_request(request)
 
     try:
 
@@ -208,9 +200,7 @@ async def refresh_token(request:Request, refresh_token: str = Cookie(None)) -> J
 
     """
 
-    origin = request.headers.get('origin')
-
-    await check_internal_request(origin)
+    await check_internal_request(request)
 
     if(refresh_token is None):
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="No refresh token provided")
@@ -239,9 +229,8 @@ async def refresh_token(request:Request, refresh_token: str = Cookie(None)) -> J
 
 @router.post("/auth/send-verification-email")
 async def send_verification_email_endpoint(request_data: SendVerificationEmailRequest, request: Request, db: Session = Depends(get_db)):
-    origin = request.headers.get('origin')
 
-    await check_internal_request(origin)
+    await check_internal_request(request)
     
     email = request_data.email
     client_id = request_data.clientID
@@ -271,9 +260,7 @@ async def send_verification_email_endpoint(request_data: SendVerificationEmailRe
 @router.post("/auth/verify-token")
 async def verify_token_endpoint(request: Request):
 
-    origin = request.headers.get('origin')
-
-    await check_internal_request(origin)
+    await check_internal_request(request)
 
     auth_header = request.headers.get("Authorization")
     
@@ -291,9 +278,8 @@ async def verify_token_endpoint(request: Request):
 
 @router.post("/auth/check-if-admin-user")
 async def check_admin(request: Request, current_user:str = Depends(get_current_user)):
-    origin = request.headers.get('origin')
-
-    await check_internal_request(origin)
+    
+    await check_internal_request(request)
 
     is_admin = (current_user == ADMIN_USER)
 
@@ -301,9 +287,8 @@ async def check_admin(request: Request, current_user:str = Depends(get_current_u
 
 @router.post("/auth/landing-verify-code", response_model=LoginToken)
 async def landing_verify_code_endpoint(request_data:VerifyEmailCodeRequest, request:Request, db: Session = Depends(get_db)):
-    origin = request.headers.get('origin')
 
-    await check_internal_request(origin)
+    await check_internal_request(request)
 
     email = request_data.email
     submitted_code = request_data.code

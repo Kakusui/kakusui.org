@@ -27,8 +27,8 @@ router = APIRouter()
 
 @router.post("/admin/send-email")
 async def send_email_to_all(request: Request, email_request: EmailRequest, db: Session = Depends(get_db), is_admin:bool = Depends(check_if_admin_user)):
-    origin = request.headers.get('origin')
-    await check_internal_request(origin)
+
+    await check_internal_request(request)
 
     if(not is_admin):
         return JSONResponse(status_code=status.HTTP_401_UNAUTHORIZED, content={"message": "You are not authorized to send emails."})
@@ -60,9 +60,9 @@ async def send_email_to_all(request: Request, email_request: EmailRequest, db: S
         return JSONResponse(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, content={"message": f"An error occurred: {str(e)}"})
 
 @router.post("/send-feedback-email")
-async def send_feedback_email(request: Request, feedback: FeedbackEmailRequest):
-    origin = request.headers.get('origin')
-    await check_internal_request(origin)
+async def send_feedback_email(request: Request, feedback:FeedbackEmailRequest):
+
+    await check_internal_request(request)
     
     try:
         smtp_envs = await get_smtp_envs()

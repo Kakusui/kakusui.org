@@ -37,8 +37,8 @@ router = APIRouter()
 
 @router.post("/admin/db/send-email")
 async def send_email_to_all(request: Request, email_request:EmailRequest, db: Session = Depends(get_db), is_admin:bool = Depends(check_if_admin_user)):
-    origin = request.headers.get('origin')
-    await check_internal_request(origin)
+
+    await check_internal_request(request)
 
     if(not is_admin):
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="You are not authorized to perform this action.")
@@ -85,9 +85,7 @@ async def force_backup(request:Request, db:Session = Depends(get_db), is_admin:b
 
     """
 
-    origin = request.headers.get('origin')
-
-    await check_internal_request(origin)
+    await check_internal_request(request)
 
     if(not is_admin):
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="You are not authorized to perform this action.")
@@ -114,9 +112,7 @@ async def upload_backup(request:Request, file: UploadFile = File(...), is_admin:
 
     """
 
-    origin = request.headers.get('origin')
-
-    await check_internal_request(origin)
+    await check_internal_request(request)
 
     if(not is_admin):
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="You are not authorized to perform this action.")
@@ -171,9 +167,7 @@ async def run_query(
     JSONResponse: The result of the query in JSON format or an error message
     """
 
-    origin = request.headers.get('origin')
-
-    await check_internal_request(origin)
+    await check_internal_request(request)
 
     if(not is_admin):
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="You are not authorized to perform this action.")
@@ -242,8 +236,7 @@ async def get_user_info(
     dict: The user information
     """
     
-    origin = request.headers.get('origin')
-    await check_internal_request(origin)
+    await check_internal_request(request)
 
     if(not current_user):
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authenticated")

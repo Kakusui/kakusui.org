@@ -7,7 +7,7 @@ import os
 import asyncio
 
 ## third-party imports
-from fastapi import HTTPException
+from fastapi import HTTPException, Request
 
 from werkzeug.utils import secure_filename
 
@@ -21,8 +21,7 @@ async def get_secure_path(base_dir:str, filename:str) -> str:
 async def get_secure_filename(filename:str) -> str:
     return await asyncio.to_thread(secure_filename, filename)
 
-async def check_internal_request(origin:str | None) -> None:
-
+async def check_internal_request(request:Request) -> None:
     """
 
     Check if the request is from an internal source
@@ -31,15 +30,20 @@ async def check_internal_request(origin:str | None) -> None:
     origin (str): The origin of the request
 
     """
-
-    allowed_domains = [
+    allowed_domains = {
         "https://kakusui.org", 
-        "http://localhost:5173",
         ".kakusui-org.pages.dev"
-    ]
+    }
 
-    if(ENVIRONMENT != "development"):
-        allowed_domains.pop(allowed_domains.index("http://localhost:5173"))
+    origin = request.headers.get('origin')
+
+    print(origin)
+
+    if(ENVIRONMENT == "development"):
+        allowed_domains.add("http://localhost:5173")
 
     if(origin is None or (origin is not None and not any(origin.endswith(domain) for domain in allowed_domains))):
         raise HTTPException(status_code=403, detail="Forbidden")
+    
+async def is_safe_filename(filename:str) -> bool:
+    return await asyncio.to_thread(lambda: '..' not in filename and filename == os.path.basename(filename))
