@@ -110,7 +110,7 @@ async def cleanup_expired_codes() -> None:
 
             if(blocked_until and current_time.timestamp() > blocked_until):
                 os.remove(file_path)
-                print(f"Removed expired rate limit file for {filename}")
+                logging.info(f"Removed expired rate limit file for {filename}")
 
         except Exception as e:
-            print(f"Error processing {filename}: {str(e)}")
+            logging.error(f"Error processing {filename}: {str(e)}")

@@ -59,6 +59,9 @@ async def verify_payment(request: Request, db: Session = Depends(get_db), curren
     
     await check_internal_request(request)
 
+    if(not current_user):
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="User not logged in")
+
     try:
         data = await request.json()
         session_id = data.get('session_id')

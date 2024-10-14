@@ -4,7 +4,6 @@
 - [**Preface**](#preface)
 - [**Prerequisites**](#prerequisites)
 - [**Python Requirements**](#python-requirements)
-- [aiofiles==23.2.1](#aiofiles2321)
 - [**Node Requirements**](#node-requirements)
 - [**To build locally (Manual)**](#to-build-locally-manual)
   - [**Raw Docker Method**](#raw-docker-method)
@@ -47,6 +46,8 @@ uvicorn==0.30.0
 
 easytl==0.4.9
 
+aiofiles==23.2.1
+
 httpx==0.25.1
 
 elucidate==0.0.2
@@ -69,7 +70,7 @@ python-multipart==0.0.9
 
 werkzeug==3.0.4
 
-aiofiles==23.2.1
+stripe==10.12.0
 --------------------------------------------------------------------------------------------------------------------------------------------------
 
 ## **Node Requirements**<a name="node-requirements"></a>

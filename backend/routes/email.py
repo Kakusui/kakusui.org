@@ -86,4 +86,4 @@ async def send_feedback_email(request: Request, feedback:FeedbackEmailRequest):
         return {"message": "Feedback email sent successfully."}
     
     except Exception as e:
-        return JSONResponse(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, content={"message": f"An error occurred: {str(e)}"})
+        return JSONResponse(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, content={"message": f"An error occurred. Please contact support@kakusui.org directly."})

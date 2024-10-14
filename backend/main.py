@@ -7,8 +7,11 @@
 from constants import *
 
 ## built-in libraries
+import logging
 import os
 import threading
+
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
 maintenance_mode = False
 maintenance_lock = threading.Lock()

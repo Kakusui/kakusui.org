@@ -8,6 +8,7 @@ import json
 import time
 import aiofiles
 import asyncio
+import logging
 
 ## third-party imports
 from fastapi import HTTPException, status
@@ -27,7 +28,7 @@ async def cleanup_old_rate_limit_files():
                 try:
                     await asyncio.to_thread(os.remove, file_path)
                 except Exception as e:
-                    print(f"Error removing old rate limit file {file_path}: {e}")
+                    logging.error(f"Error removing old rate limit file {file_path}: {e}")
 
 
 async def rate_limit(email: str, id: str) -> None:

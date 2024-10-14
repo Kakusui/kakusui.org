@@ -8,7 +8,7 @@ import asyncio
 import typing
 import smtplib
 import aiofiles
-
+import logging
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from email.mime.base import MIMEBase
@@ -100,7 +100,7 @@ async def send_email(subject:str, body:str, to_email:str, attachment_path:str | 
         await asyncio.to_thread(send_email_sync, msg, smtp_server, smtp_port, smtp_user, smtp_password)
         
     except Exception as e:
-        print(f"Error: {e}")
+        logging.error(f"Error sending email: {e}")
 
 def send_email_sync(msg, smtp_server, smtp_port, smtp_user, smtp_password):
     with smtplib.SMTP(smtp_server, smtp_port) as server:

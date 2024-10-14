@@ -51,6 +51,8 @@ GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY")
 
 STRIPE_API_KEY = os.environ.get("STRIPE_API_KEY")
 
+GOOGLE_CLIENT_ID = "951070461527-dhsteb0ro97qrq4d2e7cq2mr9ehichol.apps.googleusercontent.com"
+
 DATABASE_URL:str = "sqlite:///./database/kakusui.db"
 DATABASE_PATH:str = "database/kakusui.db"
 BACKUP_LOGS_DIR = 'database/logs'
@@ -88,4 +90,5 @@ __all__ = ["TURNSTILE_SECRET_KEY",
            "OPENAI_API_KEY",
            "ANTHROPIC_API_KEY",
            "GEMINI_API_KEY",
-           "STRIPE_API_KEY"]
+           "STRIPE_API_KEY",
+           "GOOGLE_CLIENT_ID"]

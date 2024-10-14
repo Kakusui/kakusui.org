@@ -5,14 +5,14 @@
 ## built-in imports
 from datetime import timedelta, datetime
 
+import logging
+
 ## third-party imports
 from fastapi import APIRouter, HTTPException, Request, status, Cookie, Depends
 from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
 from google.oauth2 import id_token
 from google.auth.transport import requests
-
-import stripe
 
 ## custom imports
 from db.base import get_db
@@ -27,15 +27,11 @@ from email_util.verification import get_verification_data, remove_verification_d
 
 from rate_limit.func import rate_limit
 
-from constants import TOKEN_EXPIRE_MINUTES, ADMIN_USER, STRIPE_API_KEY
-
-stripe.api_key = STRIPE_API_KEY
+from constants import TOKEN_EXPIRE_MINUTES, ADMIN_USER, GOOGLE_CLIENT_ID
 
 import typing
 
 router = APIRouter()
-
-GOOGLE_CLIENT_ID = "951070461527-dhsteb0ro97qrq4d2e7cq2mr9ehichol.apps.googleusercontent.com"
 
 @router.post('/auth/google-login')
 async def google_login(request: GoogleLoginRequest, db: Session = Depends(get_db)):
@@ -179,7 +175,7 @@ async def signup(data:LoginModel, request:Request, db:Session = Depends(get_db))
 
     except Exception as e:
         db.rollback()
-        print(f"Error during signup: {str(e)}")
+        logging.error(f"Error during signup: {str(e)}")
         return JSONResponse(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, content={"message": "An error occurred during signup."})
 
     finally:
@@ -254,7 +250,7 @@ async def send_verification_email_endpoint(request_data: SendVerificationEmailRe
             return JSONResponse(status_code=status.HTTP_200_OK, content={"message": "Verification email sent successfully for signup."})
     
     except Exception as e:
-        print(f"Error sending verification email: {str(e)}")
+        logging.error(f"Error sending verification email: {str(e)}")
         return JSONResponse(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, content={"message": "An error occurred while sending the verification email."})
 
 @router.post("/auth/verify-token")
@@ -323,5 +319,5 @@ async def landing_verify_code_endpoint(request_data:VerifyEmailCodeRequest, requ
     
     except Exception as e:
         db.rollback()
-        print(f"Error verifying landing page email code: {str(e)}")
+        logging.error(f"Error verifying landing page email code: {str(e)}")
         return JSONResponse(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, content={"message": "An error occurred while verifying the email code."})
