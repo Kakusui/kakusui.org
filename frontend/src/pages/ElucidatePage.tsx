@@ -327,6 +327,7 @@ Evaluation Instructions:
   };
 
   const memoizedTurnstile = useMemo(() =>
+    // Meant for client side code
     <Turnstile siteKey="0x4AAAAAAAbu-SlGyNF03684" onVerify={setTurnstileToken} resetKey={resetTurnstile} />
     , [resetTurnstile]);
 

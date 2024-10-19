@@ -72,6 +72,6 @@ async def send_verification_email(email:str, code:str) -> None:
     _, SMTP_SERVER, SMTP_PORT, SMTP_USER, SMTP_PASSWORD, FROM_EMAIL, _ = await get_smtp_envs()
 
     subject = "Email Verification Code for https://kakusui.org"
-    body = f"Your verification code is {code}"
+    body = f"Your verification code is {code}. Note that this code will expire in {VERIFICATION_EXPIRATION_MINUTES} minutes. Do not share this code with others, No one from Kakusui LLC will ask you for this code."
 
     await send_email(subject=subject, body=body, to_email=email, attachment_path=None, from_email=FROM_EMAIL, smtp_server=SMTP_SERVER, smtp_port=SMTP_PORT, smtp_user=SMTP_USER, smtp_password=SMTP_PASSWORD)
