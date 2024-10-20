@@ -33,6 +33,8 @@ import Login from '../components/Login';
 // animations
 import { textVariants, containerVariants, imageVariants, buttonVariants, githubButtonVariants } from '../animations/commonAnimations';
 
+import { getURL } from '../utils';
+
 function HomePage() 
 {
     const { isOpen, onOpen, onClose } = useDisclosure();
@@ -57,16 +59,13 @@ function HomePage()
             onOpen();
         }
 
-        // Check for the query parameter
         const searchParams = new URLSearchParams(location.search);
         if (searchParams.get('openLoginModal') === 'true') {
             setIsLoginModalOpen(true);
-            // Remove the query parameter without reloading the page
-            navigate(location.pathname, { replace: true });
         }
 
         return () => window.removeEventListener('resize', checkMobile);
-    }, [onOpen, isMobile, location, navigate]);
+    }, [onOpen, isMobile, location]);
 
     const handleDoNotShowAgain = () => {
         localStorage.setItem('hideMobileModalWarningPersistent', 'true');
@@ -77,8 +76,40 @@ function HomePage()
         setIsLoginModalOpen(true);
     };
 
+    const checkLoginStatusAndRedirect = async () => {
+        try {
+            const response = await fetch(getURL('/auth/verify-token'), {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('access_token')}`
+                },
+            });
+            const data = await response.json();
+            
+            if (data.valid) 
+            {
+                const searchParams = new URLSearchParams(location.search);
+                const redirectPath = searchParams.get('redirect');
+                if (redirectPath) 
+                {
+                    navigate(redirectPath, { replace: true });
+                } else {
+                    navigate(location.pathname, { replace: true });
+                }
+            } 
+            else 
+            {
+                navigate(location.pathname, { replace: true });
+            }
+        } catch (error) {
+            navigate(location.pathname, { replace: true });
+        }
+    };
+
     const handleLoginModalClose = () => {
         setIsLoginModalOpen(false);
+        // Check login status and redirect after a short delay
+        setTimeout(checkLoginStatusAndRedirect, 500);
     };
 
     return (

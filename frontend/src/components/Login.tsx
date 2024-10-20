@@ -178,8 +178,8 @@ const Login: React.FC<LoginProps> = ({ isOpen: propIsOpen, onClose: propOnClose,
                 if (data.access_token) 
                 {
                     await login(data.access_token);
-                    handleClose();
                     showToast("Success", `Successfully ${isSignUp ? "signed up" : "logged in"}`, "success");
+                    if (onClose) onClose();
                 } 
                 else 
                 {
@@ -242,8 +242,8 @@ const Login: React.FC<LoginProps> = ({ isOpen: propIsOpen, onClose: propOnClose,
                 if (data.access_token)
                 {
                     await login(data.access_token);
-                    handleClose();
                     showToast("Success", "Successfully logged in with Google", "success");
+                    if (onClose) onClose();
                 }
                 else
                 {

@@ -43,8 +43,8 @@ function PricingPage()
     {
         if (!isLoggedIn)
         {
-            // Redirect to home page with a query parameter to open the login modal
-            navigate('/home?openLoginModal=true');
+            // Redirect to home page with query parameters to open the login modal and redirect back to pricing
+            navigate('/home?openLoginModal=true&redirect=/pricing');
             return;
         }
 
