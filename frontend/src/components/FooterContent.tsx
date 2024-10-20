@@ -32,6 +32,7 @@ const FooterContent = ({ color = "gray.300" }) =>
                 align="center"
                 color={color}
             >
+                {/* Mobile Layout */}
                 <Flex display={{ base: 'flex', md: 'none' }} width="100%" justify="space-between" align="center" flexDirection="column">
                     <Flex width="100%" justify="space-between" align="center" mb={2}>
                         <IconButton 
@@ -54,6 +55,8 @@ const FooterContent = ({ color = "gray.300" }) =>
                         <Link onClick={onOpen} fontSize="sm" color="orange.400">Send Feedback</Link>
                     </HStack>
                 </Flex>
+
+                {/* Desktop Layout */}
                 <Flex display={{ base: 'none', md: 'flex' }} width="100%" justify="space-between" align="center">
                     <Link href="/">
                         <Image src={logo} boxSize='30px' alt='Kakusui Logo' />
@@ -75,26 +78,6 @@ const FooterContent = ({ color = "gray.300" }) =>
                         bg="transparent"
                         _hover={{ bg: 'whiteAlpha.200' }}
                     />
-                    <Link href="/">
-                        <Image src={logo} boxSize='30px' alt='Kakusui Logo' />
-                    </Link>
-                </Flex>
-                <Text textAlign="center" mb={2}>© 2024 Kakusui LLC. All rights reserved</Text>
-                <HStack spacing={4} justify="center">
-                    <Link href="/tos" fontSize="sm" color="orange.400">Terms of Service</Link>
-                    <Link href="/privacy" fontSize="sm" color="orange.400">Privacy Policy</Link>
-                </HStack>
-            </Flex>
-            <Flex display={{ base: 'none', md: 'flex' }} width="100%" justify="space-between" align="center">
-                <Link href="/">
-                    <Image src={logo} boxSize='30px' alt='Kakusui Logo' />
-                </Link>
-                <Flex direction="column" align="center">
-                    <Text textAlign="center">© 2024 Kakusui LLC. All rights reserved</Text>
-                    <HStack spacing={4} mt={1}>
-                        <Link href="/tos" fontSize="sm" color="orange.400">Terms of Service</Link>
-                        <Link href="/privacy" fontSize="sm" color="orange.400">Privacy Policy</Link>
-                    </HStack>
                 </Flex>
             </Flex>
             <FeedbackModal isOpen={isOpen} onClose={onClose} />
