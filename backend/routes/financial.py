@@ -98,4 +98,4 @@ async def verify_payment(request: Request, db: Session = Depends(get_db), curren
         else:
             return {"success": False, "message": "Payment not completed or user mismatch."}
     except Exception as e:
-        return {"success": False, "message": str(e)}
+        return {"success": False, "message": f"An error occurred"}
