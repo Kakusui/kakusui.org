@@ -17,6 +17,9 @@ import { getURL } from '../utils';
 // contexts
 import { useAuth } from '../contexts/AuthContext';
 
+// lodash
+import debounce from 'lodash/debounce';
+
 function SuccessPage()
 {
     const [verificationStatus, setVerificationStatus] = useState('verifying');
@@ -25,64 +28,68 @@ function SuccessPage()
     const navigate = useNavigate();
     const { isLoggedIn, checkLoginStatus } = useAuth();
 
-    const verifyPayment = useCallback(async () =>
-    {
-        if(isVerified)
+    const verifyPayment = useCallback(
+        debounce(async () =>
         {
-            return;
-        }
-
-        const params = new URLSearchParams(location.search);
-        const sessionId = params.get('session_id');
-
-        if(!sessionId)
-        {
-            setVerificationStatus('error');
-            return;
-        }
-
-        if(!isLoggedIn)
-        {
-            await checkLoginStatus();
-        }
-
-        try
-        {
-            const accessToken = localStorage.getItem('access_token');
-            if(!accessToken)
+            if(isVerified)
             {
-                throw new Error('No access token found');
+                return;
             }
 
-            const response = await fetch(getURL('/stripe/verify-payment'), 
-            {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${accessToken}`
-                },
-                body: JSON.stringify({ session_id: sessionId })
-            });
+            const params = new URLSearchParams(location.search);
+            const sessionId = params.get('session_id');
 
-            const data = await response.json();
-
-            if(response.ok && data.success)
-            {
-                setVerificationStatus('success');
-                setIsVerified(true);
-                await checkLoginStatus(true); // Refresh user info including credits
-            }
-            else
+            if(!sessionId)
             {
                 setVerificationStatus('error');
+                return;
             }
-        }
-        catch (error)
-        {
-            console.error('Error verifying payment:', error);
-            setVerificationStatus('error');
-        }
-    }, [location, isLoggedIn, checkLoginStatus, isVerified]);
+
+            if(!isLoggedIn)
+            {
+                await checkLoginStatus();
+            }
+
+            try
+            {
+                const accessToken = localStorage.getItem('access_token');
+                if(!accessToken)
+                {
+                    throw new Error('No access token found');
+                }
+
+                const response = await fetch(getURL('/stripe/verify-payment'), 
+                {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${accessToken}`
+                    },
+                    body: JSON.stringify({ session_id: sessionId })
+                });
+
+                const data = await response.json();
+
+                if(response.ok && data.success)
+                {
+                    setVerificationStatus('success');
+                    setIsVerified(true);
+                    // Force a full login status check to update user info including credits
+                    await checkLoginStatus(true);
+                }
+                else
+                {
+                    setVerificationStatus('error');
+                }
+            }
+            catch (error)
+            {
+                console.error('Error verifying payment:', error);
+                setVerificationStatus('error');
+            }
+        }, 1000),
+        [location, isLoggedIn, checkLoginStatus, isVerified]
+    );
 
     useEffect(() =>
     {

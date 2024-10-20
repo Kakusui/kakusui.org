@@ -5,7 +5,7 @@
 // maintain allman bracket style for consistency
 
 // react
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { Link as RouterLink, useNavigate } from 'react-router-dom';
 
 // chakra-ui
@@ -24,6 +24,9 @@ import { loadStripe } from '@stripe/stripe-js';
 // auth context
 import { useAuth } from '../contexts/AuthContext';
 
+// lodash
+import debounce from 'lodash/debounce';
+
 const stripePromise = loadStripe(getPublishableStripeKey());
 
 function PricingPage()
@@ -32,6 +35,7 @@ function PricingPage()
     const [isProcessing, setIsProcessing] = useState(false);
     const { isLoggedIn, checkLoginStatus, isLoading } = useAuth();
     const navigate = useNavigate();
+    const [lastCheckoutAttempt, setLastCheckoutAttempt] = useState(0);
 
     useEffect(() =>
     {
@@ -39,63 +43,85 @@ function PricingPage()
         checkLoginStatus();
     }, [checkLoginStatus]);
 
-    const handleBuyNow = async () =>
-    {
-        if (!isLoggedIn)
+    const debouncedHandleBuyNow = useCallback(
+        debounce(async () =>
         {
-            // Redirect to home page with query parameters to open the login modal and redirect back to pricing
-            navigate('/home?openLoginModal=true&redirect=/pricing');
+            if (!isLoggedIn)
+            {
+                navigate('/home?openLoginModal=true&redirect=/pricing');
+                return;
+            }
+
+            setIsProcessing(true);
+            try
+            {
+                const stripe = await stripePromise;
+                if (!stripe)
+                {
+                    throw new Error('Stripe failed to load');
+                }
+
+                const response = await fetch(getURL('/stripe/create-checkout-session'), {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${localStorage.getItem('access_token')}`
+                    },
+                });
+
+                if (!response.ok)
+                {
+                    throw new Error('Failed to create checkout session');
+                }
+
+                const session = await response.json();
+
+                const result = await stripe.redirectToCheckout({
+                    sessionId: session.id
+                });
+
+                if (result.error)
+                {
+                    throw new Error(result.error.message);
+                }
+            }
+            catch (error)
+            {
+                console.error('Error creating checkout session:', error);
+                toast({
+                    title: 'Error',
+                    description: 'Failed to start checkout process. Please try again.',
+                    status: 'error',
+                    duration: 5000,
+                    isClosable: true,
+                });
+            }
+            finally
+            {
+                setIsProcessing(false);
+            }
+        }, 1000),
+        [isLoggedIn, navigate, toast]
+    );
+
+    const handleBuyNow = () =>
+    {
+        const now = Date.now();
+        if (now - lastCheckoutAttempt < 5000)
+        {
+            // If less than 5 seconds have passed since the last attempt, show a message
+            toast({
+                title: 'Please wait',
+                description: 'You can only initiate a checkout once every 5 seconds.',
+                status: 'warning',
+                duration: 3000,
+                isClosable: true,
+            });
             return;
         }
 
-        setIsProcessing(true);
-        try
-        {
-            const stripe = await stripePromise;
-            if (!stripe)
-            {
-                throw new Error('Stripe failed to load');
-            }
-
-            const response = await fetch(getURL('/stripe/create-checkout-session'), {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${localStorage.getItem('access_token')}`
-                },
-            });
-
-            if (!response.ok)
-            {
-                throw new Error('Failed to create checkout session');
-            }
-
-            const session = await response.json();
-
-            const result = await stripe.redirectToCheckout({
-                sessionId: session.id
-            });
-
-            if (result.error)
-            {
-                throw new Error(result.error.message);
-            }
-        }
-        catch (error)
-        {
-            console.error('Error creating checkout session:', error);
-            toast({
-                title: 'Error',
-                description: 'Failed to start checkout process. Please try again.',
-                status: 'error',
-                duration: 5000,
-                isClosable: true,
-            });
-        }
-        finally
-        {
-            setIsProcessing(false);
-        }
+        setLastCheckoutAttempt(now);
+        debouncedHandleBuyNow();
     };
 
     return (

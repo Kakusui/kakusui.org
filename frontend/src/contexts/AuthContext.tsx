@@ -5,7 +5,7 @@
 // maintain allman bracket style for consistency
 
 // react
-import React, { createContext, useState, useContext, useEffect } from 'react';
+import React, { createContext, useState, useContext, useEffect, useCallback, useRef } from 'react';
 
 // custom
 import { getURL } from '../utils';
@@ -32,7 +32,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const [isPrivilegedUser, setIsPrivilegedUser] = useState<boolean>(false);
     const [credits, setCredits] = useState<number>(0);
     const [isLoading, setIsLoading] = useState<boolean>(true);
-    const [lastFullCheck, setLastFullCheck] = useState<number>(0);
+    const lastFullCheckRef = useRef<number>(0);
 
     const checkTokenExpiration = () => 
     {
@@ -76,40 +76,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
     };
 
-    const checkLoginStatus = async (forceFullCheck = false) => 
-    {
-        setIsLoading(true);
-        const currentTime = Date.now();
-        const twoHours = 2 * 60 * 60 * 1000;
-
-        if(forceFullCheck || currentTime - lastFullCheck > twoHours) 
-        {
-            await performFullCheck();
-            setLastFullCheck(currentTime);
-        } 
-        else 
-        {
-            if(checkTokenExpiration()) 
-            {
-                setIsLoggedIn(true);
-            } 
-            else 
-            {
-                const refreshed = await refreshAccessToken();
-                if(refreshed) 
-                {
-                    await performFullCheck();
-                    setLastFullCheck(currentTime);
-                }
-                else 
-                {
-                    logout();
-                }
-            }
-        }
-        setIsLoading(false);
-    };
-
     const performFullCheck = async () => 
     {
         const access_token = localStorage.getItem('access_token');
@@ -134,8 +100,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                     const data = await response.json();
                     setIsLoggedIn(true);
                     setUserEmail(data.email);
-                    setCredits(data.credits); // Set credits
+                    setCredits(data.credits);
                     setIsPrivilegedUser(data.email === 'kbilyeu@kakusui.org');
+                    lastFullCheckRef.current = Date.now();
                 } 
                 else 
                 {
@@ -153,14 +120,48 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             setIsLoggedIn(false);
             setUserEmail(null);
             setIsPrivilegedUser(false);
-            setCredits(0); 
+            setCredits(0);
         }
     };
+
+    const checkLoginStatus = useCallback(async (forceFullCheck = false) => 
+    {
+        const currentTime = Date.now();
+        const thirtyMinutes = 30 * 60 * 1000;
+
+        if(forceFullCheck || currentTime - lastFullCheckRef.current > thirtyMinutes) 
+        {
+            setIsLoading(true);
+            await performFullCheck();
+            setIsLoading(false);
+        } 
+        else if(!isLoggedIn)
+        {
+            setIsLoading(true);
+            if(checkTokenExpiration()) 
+            {
+                setIsLoggedIn(true);
+            } 
+            else 
+            {
+                const refreshed = await refreshAccessToken();
+                if(refreshed) 
+                {
+                    await performFullCheck();
+                }
+                else 
+                {
+                    logout();
+                }
+            }
+            setIsLoading(false);
+        }
+    }, [isLoggedIn]);
 
     useEffect(() => 
     {
         checkLoginStatus(true);
-    }, []);
+    }, []); // Remove checkLoginStatus from the dependency array
 
     const login = async (access_token: string) => 
     {
@@ -168,7 +169,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         await checkLoginStatus(true);
     };
 
-    const logout = async () => 
+    const logout = () => 
     {
         localStorage.removeItem('access_token');
         document.cookie = 'refresh_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; secure; HttpOnly; SameSite=Strict';
@@ -176,7 +177,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setUserEmail(null);
         setIsPrivilegedUser(false);
         setCredits(0);
-        setLastFullCheck(0);
+        lastFullCheckRef.current = 0;
     };
 
     const updateCredits = (newCredits: number) => 
