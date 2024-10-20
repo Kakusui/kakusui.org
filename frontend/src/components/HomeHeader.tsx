@@ -32,7 +32,11 @@ import Login from './Login';
 
 import { useAuth } from '../contexts/AuthContext';
 
-const HomeHeader: React.FC = () => 
+interface HomeHeaderProps {
+    onLoginClick: () => void;
+}
+
+const HomeHeader: React.FC<HomeHeaderProps> = ({ onLoginClick }) => 
 {
     const { isOpen, onToggle } = useDisclosure();
     const { isLoggedIn, userEmail, credits, isLoading, isPrivilegedUser } = useAuth();
@@ -87,7 +91,7 @@ const HomeHeader: React.FC = () =>
                                 </Link>
                             </Flex>
                         )}
-                        <Login />
+                        <Login isOpen={false} onClose={onLoginClick} />
                     </Flex>
                 </Flex>
             </Flex>

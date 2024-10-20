@@ -6,6 +6,7 @@
 
 // react
 import { useEffect, useState } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 
 // motion
 import { motion } from 'framer-motion';
@@ -27,6 +28,7 @@ import ProductSection from "../components/ProductSection";
 import PageWrapper from "../components/PageWrapper";
 import HomeHeader from "../components/HomeHeader";
 import HomeFooter from "../components/HomeFooter";
+import Login from '../components/Login';
 
 // animations
 import { textVariants, containerVariants, imageVariants, buttonVariants, githubButtonVariants } from '../animations/commonAnimations';
@@ -35,6 +37,9 @@ function HomePage()
 {
     const { isOpen, onOpen, onClose } = useDisclosure();
     const [isMobile, setIsMobile] = useState(false);
+    const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
+    const location = useLocation();
+    const navigate = useNavigate();
 
     useEffect(() => 
     {
@@ -52,17 +57,33 @@ function HomePage()
             onOpen();
         }
 
+        // Check for the query parameter
+        const searchParams = new URLSearchParams(location.search);
+        if (searchParams.get('openLoginModal') === 'true') {
+            setIsLoginModalOpen(true);
+            // Remove the query parameter without reloading the page
+            navigate(location.pathname, { replace: true });
+        }
+
         return () => window.removeEventListener('resize', checkMobile);
-    }, [onOpen, isMobile]);
+    }, [onOpen, isMobile, location, navigate]);
 
     const handleDoNotShowAgain = () => {
         localStorage.setItem('hideMobileModalWarningPersistent', 'true');
         onClose();
     };
 
+    const handleLoginModalOpen = () => {
+        setIsLoginModalOpen(true);
+    };
+
+    const handleLoginModalClose = () => {
+        setIsLoginModalOpen(false);
+    };
+
     return (
         <PageWrapper showBackground={true}>
-            <HomeHeader />
+            <HomeHeader onLoginClick={handleLoginModalOpen} />
             <Box px={4} pt="60px" pb="100px">
                 <Kakusui />
                 <Box position="relative" padding="10">
@@ -146,6 +167,8 @@ function HomePage()
                     </Flex>
                 </ModalContent>
             </Modal>
+
+            <Login isOpen={isLoginModalOpen} onClose={handleLoginModalClose} />
         </PageWrapper>
     );
 }

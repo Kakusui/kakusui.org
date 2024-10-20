@@ -4,6 +4,8 @@
 
 // maintain allman bracket style for consistency
 
+import CryptoJS from 'crypto-js';
+
 const getURL = (path: string) => 
 {
     let url;
@@ -33,4 +35,16 @@ const getPublishableStripeKey = () =>
     
 }
 
-export {getURL, getPublishableStripeKey};
+const encryptWithAccessToken = (text: string, accessToken: string): string => 
+{
+  return CryptoJS.AES.encrypt(text, accessToken).toString();
+}
+
+const decryptWithAccessToken = (ciphertext: string, accessToken: string): string => 
+{
+  const bytes = CryptoJS.AES.decrypt(ciphertext, accessToken);
+  return bytes.toString(CryptoJS.enc.Utf8);
+}
+
+export {getURL, getPublishableStripeKey, encryptWithAccessToken, decryptWithAccessToken};
+

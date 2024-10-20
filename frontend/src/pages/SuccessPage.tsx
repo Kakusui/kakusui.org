@@ -120,7 +120,7 @@ function SuccessPage()
                 {verificationStatus === 'error' && (
                     <>
                         <Text fontSize="xl" color="red.500" textAlign="center">
-                            There was an error verifying your payment. Please contact support at support@kakusui.org.
+                            There was an error verifying your payment. Please contact support at support@kakusui.org if you believe this was an error.
                         </Text>
                         <Button colorScheme="orange" onClick={() => navigate('/home')}>
                             Go to Home

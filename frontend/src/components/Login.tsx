@@ -25,9 +25,14 @@ import { useAuth } from '../contexts/AuthContext';
 // google oauth
 import { GoogleLogin } from '@react-oauth/google';
 
-const Login: React.FC = () => 
+interface LoginProps {
+    isOpen?: boolean;
+    onClose?: () => void;
+}
+
+const Login: React.FC<LoginProps> = ({ isOpen: propIsOpen, onClose: propOnClose }) => 
 {
-    const { isOpen, onOpen, onClose } = useDisclosure();
+    const { isOpen: internalIsOpen, onOpen: internalOnOpen, onClose: internalOnClose } = useDisclosure();
     const [email, setEmail] = useState('');
     const [loginCode, setLoginCode] = useState('');
     const [isLoginStep, setIsLoginStep] = useState(false);
@@ -35,6 +40,10 @@ const Login: React.FC = () =>
     const [clientId, setClientId] = useState('');
     const toast = useToast();
     const { isLoggedIn, login, logout, isLoading } = useAuth();
+
+    const isControlled = propIsOpen !== undefined;
+    const isOpen = isControlled ? propIsOpen : internalIsOpen;
+    const onClose = isControlled ? propOnClose : internalOnClose;
 
     useEffect(() =>
     {
@@ -61,7 +70,7 @@ const Login: React.FC = () =>
         setEmail('');
         setLoginCode('');
         setIsLoginStep(false);
-        onClose();
+        if (onClose) onClose();
     };
 
     const showToast = (title: string, description: string, status: "error" | "info" | "warning" | "success") => 
@@ -256,7 +265,7 @@ const Login: React.FC = () =>
         <>
             <motion.div whileHover="hover" variants={buttonVariants}>
                 <Button 
-                    onClick={isLoggedIn ? async () => { await logout(); showToast("Success", "Successfully logged out", "success"); } : onOpen} 
+                    onClick={isLoggedIn ? async () => { await logout(); showToast("Success", "Successfully logged out", "success"); } : internalOnOpen} 
                     rounded="full"
                     bg="orange.400"
                     color="white"

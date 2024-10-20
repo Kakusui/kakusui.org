@@ -17,7 +17,9 @@
     "@react-oauth/google": "^0.12.1",
     "@stripe/stripe-js": "^4.6.0",
     "@tabler/icons-react": "^3.5.0",
+    "crypto-js": "^4.2.0",
     "framer-motion": "^11.2.6",
+    "js-cookie": "^3.0.5",
     "jwt-decode": "^4.0.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
@@ -25,6 +27,8 @@
     "react-router-dom": "^6.23.1"
   },
   "devDependencies": {
+    "@types/crypto-js": "^4.2.2",
+    "@types/js-cookie": "^3.0.6",
     "@types/node": "^18.0.0",
     "@types/react": "^18.2.66",
     "@types/react-dom": "^18.2.22",

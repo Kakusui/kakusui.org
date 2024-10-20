@@ -34,7 +34,7 @@ function LandingPage()
         document.title = 'Welcome to Kakusui';
         
         let storedClientId = localStorage.getItem('kakusui_client_id');
-        if (!storedClientId)
+        if(!storedClientId)
         {
             storedClientId = generateClientId();
             localStorage.setItem('kakusui_client_id', storedClientId);
@@ -44,11 +44,9 @@ function LandingPage()
 
     const generateClientId = () =>
     {
-        return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) 
-        {
-            var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
-            return v.toString(16);
-        });
+        const array = new Uint8Array(16);
+        crypto.getRandomValues(array);
+        return Array.from(array, (byte) => byte.toString(16).padStart(2, '0')).join('');
     };
 
     const handleSubscribeClick = () =>
@@ -86,7 +84,7 @@ function LandingPage()
 
             const data = await response.json();
 
-            if (response.ok)
+            if(response.ok)
             {
                 toast({
                     title: "Verification Email Sent",
@@ -121,7 +119,7 @@ function LandingPage()
 
     const handleVerificationSubmit = async () =>
     {
-        if (!verificationCode)
+        if(!verificationCode)
         {
             toast({
                 title: "Verification code is required",
@@ -144,7 +142,7 @@ function LandingPage()
 
             const data = await response.json();
 
-            if (response.ok)
+            if(response.ok)
             {
                 toast({
                     title: "Success",

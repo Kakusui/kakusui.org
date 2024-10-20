@@ -117,7 +117,7 @@ function CharToTokenPage()
                 </Box>
                 <Text
                     position="absolute"
-                    bottom="5"
+                    bottom="6"
                     left="0"
                     right="0"
                     textAlign="center"

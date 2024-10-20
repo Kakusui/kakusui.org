@@ -41,6 +41,8 @@ import HowToUseSection from "../components/HowToUseSection";
 import LegalLinks from "../components/LegalLinks";
 import { getURL } from "../utils";
 import { useAuth } from "../contexts/AuthContext";
+import { encryptWithAccessToken, decryptWithAccessToken } from "../utils";
+import Cookies from 'js-cookie';
 
 type FormInput = 
 {
@@ -95,6 +97,7 @@ Additional instructions:
   const toast = useToast();
   const { isPrivilegedUser, credits, updateCredits, isLoggedIn } = useAuth();
 
+  const [rememberApiKey, setRememberApiKey] = useState(false);
   const access_token = localStorage.getItem('access_token');
 
   const selectedLLM = watch("llmType");
@@ -145,13 +148,26 @@ Additional instructions:
     };
 
     const updateApiKey = () => {
-      const savedApiKey = localStorage.getItem(`easytl_${selectedLLM.toLowerCase()}_apiKey`);
-      setValue("userAPIKey", savedApiKey || "");
+      if (!access_token) return;
+
+      const encryptedApiKey = Cookies.get(`easytl_${selectedLLM.toLowerCase()}_apiKey`);
+      if (encryptedApiKey) {
+        try {
+          const decryptedApiKey = decryptWithAccessToken(encryptedApiKey, access_token);
+          setValue("userAPIKey", decryptedApiKey);
+          setRememberApiKey(true);
+        } catch (error) {
+          console.error("Failed to decrypt API key:", error);
+          Cookies.remove(`easytl_${selectedLLM.toLowerCase()}_apiKey`);
+        }
+      } else {
+        setValue("userAPIKey", "");
+      }
     };
 
     updateModelOptions();
     updateApiKey();
-  }, [selectedLLM, setValue, selectedModel]);
+  }, [selectedLLM, setValue, selectedModel, access_token]);
 
   const handleToggleShowApiKey = () => setShowApiKey(!showApiKey);
 
@@ -354,6 +370,17 @@ Additional instructions:
       if (data.paymentMethod === "credits") 
       {
         updateCredits(result.credits);
+      }
+
+      if (rememberApiKey && access_token) {
+        const encryptedApiKey = encryptWithAccessToken(data.userAPIKey, access_token);
+        Cookies.set(`easytl_${data.llmType.toLowerCase()}_apiKey`, encryptedApiKey, { 
+          secure: true, 
+          httpOnly: true,
+          sameSite: 'strict'
+        });
+      } else {
+        Cookies.remove(`easytl_${data.llmType.toLowerCase()}_apiKey`);
       }
     } 
     catch (error) 

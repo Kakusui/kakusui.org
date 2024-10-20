@@ -67,6 +67,16 @@ const FeedbackModal: React.FC<FeedbackModalProps> = ({ isOpen, onClose }) =>
             return;
         }
 
+        onClose();
+
+        const loadingToastId = toast({
+            title: "Sending feedback",
+            description: "Please wait...",
+            status: "info",
+            duration: null,
+            isClosable: false,
+        });
+
         try
         {
             const response = await fetch(getURL('/send-feedback-email'), {
@@ -80,7 +90,9 @@ const FeedbackModal: React.FC<FeedbackModalProps> = ({ isOpen, onClose }) =>
                 }),
             });
 
-            if (response.ok)
+            toast.close(loadingToastId);
+
+            if(response.ok)
             {
                 toast({
                     title: "Success",
@@ -89,7 +101,6 @@ const FeedbackModal: React.FC<FeedbackModalProps> = ({ isOpen, onClose }) =>
                     duration: 3000,
                     isClosable: true,
                 });
-                onClose();
             }
             else
             {
@@ -98,9 +109,11 @@ const FeedbackModal: React.FC<FeedbackModalProps> = ({ isOpen, onClose }) =>
         }
         catch (error)
         {
+            toast.close(loadingToastId);
+
             toast({
                 title: "Error",
-                description: "Failed to send feedback. Please try again.",
+                description: "Failed to send feedback. Please contact support@kakusui.org directly.",
                 status: "error",
                 duration: 3000,
                 isClosable: true,

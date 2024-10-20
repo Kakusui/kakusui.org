@@ -6,7 +6,7 @@
 
 // react
 import { useEffect, useState } from 'react';
-import { Link as RouterLink } from 'react-router-dom';
+import { Link as RouterLink, useNavigate } from 'react-router-dom';
 
 // chakra-ui
 import { Box, Heading, Text, VStack, List, ListItem, ListIcon, Button, Flex, IconButton, Link, useToast, Spinner } from '@chakra-ui/react';
@@ -21,20 +21,33 @@ import { getURL, getPublishableStripeKey } from '../utils';
 // stripe
 import { loadStripe } from '@stripe/stripe-js';
 
+// auth context
+import { useAuth } from '../contexts/AuthContext';
+
 const stripePromise = loadStripe(getPublishableStripeKey());
 
 function PricingPage()
 {
     const toast = useToast();
     const [isLoading, setIsLoading] = useState(false);
+    const { isLoggedIn, checkLoginStatus } = useAuth();
+    const navigate = useNavigate();
 
     useEffect(() =>
     {
         document.title = 'Kakusui | Pricing';
-    }, []);
+        checkLoginStatus();
+    }, [checkLoginStatus]);
 
     const handleBuyNow = async () =>
     {
+        if (!isLoggedIn)
+        {
+            // Redirect to home page with a query parameter to open the login modal
+            navigate('/home?openLoginModal=true');
+            return;
+        }
+
         setIsLoading(true);
         try
         {
@@ -173,7 +186,7 @@ function PricingPage()
                             spinner={<Spinner color="white" />}
                             disabled={isLoading}
                         >
-                            {isLoading ? 'Processing' : 'Buy Now'}
+                            {isLoading ? 'Processing' : (isLoggedIn ? 'Buy Now' : 'Login to Purchase')}
                         </Button>
                         
                         <Text fontSize="sm" textAlign="center">
