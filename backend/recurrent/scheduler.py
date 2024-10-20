@@ -79,7 +79,7 @@ async def cleanup_expired_codes() -> None:
     current_time = datetime.now()
 
     for filename in os.listdir(VERIFICATION_DATA_DIR):
-        if not is_safe_filename(filename):
+        if not await is_safe_filename(filename):
             logging.warning(f"Skipping potentially unsafe filename: {filename}")
             continue
 

@@ -1,5 +1,5 @@
 ## Copyright 2024 Kakusui LLC (https://kakusui.org) (https://github.com/Kakusui) (https://github.com/Kakusui/kakusui.org)
-## Use of this source code is governed by a GNU General Public License v3.0
+## Use of this source code is governed by an GNU Affero General Public License v3.0
 ## license that can be found in the LICENSE file.
 
 ## gets environment variables
@@ -19,6 +19,7 @@ maintenance_lock = threading.Lock()
 ## third-party libraries
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from starlette.middleware.base import BaseHTTPMiddleware
 from fastapi.responses import JSONResponse
 from fastapi.security import HTTPBasic
 
@@ -37,6 +38,7 @@ from routes.auth import router as auth_router
 from routes.turnstile import router as turnstile_router
 from routes.db import router as db_router
 from routes.financial import router as financial_router
+from routes.email import router as email_router
 
 ##-----------------------------------------start-of-main----------------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -109,6 +111,21 @@ async def dynamic_cors(request: Request, call_next):
     response.headers["Access-Control-Allow-Headers"] = "Authorization, Content-Type"
     return response
 
+class XFrameOptionsMiddleware(BaseHTTPMiddleware):
+    async def dispatch(self, request: Request, call_next):
+        response = await call_next(request)
+        response.headers['X-Frame-Options'] = 'DENY'
+        return response
+
+class CSPMiddleware(BaseHTTPMiddleware):
+    async def dispatch(self, request: Request, call_next):
+        response = await call_next(request)
+        response.headers['Content-Security-Policy'] = "frame-ancestors 'none';"
+        return response
+
+app.add_middleware(CSPMiddleware)
+app.add_middleware(XFrameOptionsMiddleware)
+
 app.include_router(warmups_router)
 app.include_router(kairyou_router)
 app.include_router(easytl_router)
@@ -117,6 +134,8 @@ app.include_router(elucidate_router)
 app.include_router(turnstile_router)
 app.include_router(db_router)
 app.include_router(financial_router)
+app.include_router(email_router)
+
 @app.on_event("startup")
 async def startup_event():
     db = SessionLocal()
@@ -125,5 +144,5 @@ async def startup_event():
 @app.on_event("shutdown")
 async def shutdown_event():
     scheduler = app.state.scheduler
-    if scheduler:
+    if(scheduler):
         scheduler.shutdown(wait=False)
