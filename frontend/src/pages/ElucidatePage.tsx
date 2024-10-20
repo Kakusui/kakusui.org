@@ -92,7 +92,6 @@ Evaluation Instructions:
   const [modelOptions, setModelOptions] = useState<string[]>([]);
   const [isAdvancedSettingsVisible, setAdvancedSettingsVisible] = useState(false);
   const toast = useToast();
-  const [rememberApiKey, setRememberApiKey] = useState(false);
   const access_token = localStorage.getItem('access_token');
 
   useEffect(() => 
@@ -155,7 +154,6 @@ Evaluation Instructions:
         {
           const decryptedApiKey = decryptWithAccessToken(encryptedApiKey, access_token);
           setValue("userAPIKey", decryptedApiKey);
-          setRememberApiKey(true);
         } 
         catch (error) 
         {
@@ -317,18 +315,12 @@ Evaluation Instructions:
 
       setResponse(result);
 
-      if (rememberApiKey && access_token) 
-      {
+      if (access_token) {
         const encryptedApiKey = encryptWithAccessToken(data.userAPIKey, access_token);
         Cookies.set(`elucidate_${data.llmType.toLowerCase()}_apiKey`, encryptedApiKey, { 
-          secure: true, 
-          httpOnly: true,
+          secure: true,
           sameSite: 'strict'
         });
-      } 
-      else 
-      {
-        Cookies.remove(`elucidate_${data.llmType.toLowerCase()}_apiKey`);
       }
     } 
     catch (error) 

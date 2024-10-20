@@ -28,7 +28,7 @@ import {
   Text,
   Collapse,
   Radio,
-  RadioGroup
+  RadioGroup,
 } from "@chakra-ui/react";
 
 import { ViewIcon, ViewOffIcon, ChevronDownIcon, ChevronUpIcon, ArrowUpDownIcon } from "@chakra-ui/icons";
@@ -97,7 +97,6 @@ Additional instructions:
   const toast = useToast();
   const { isPrivilegedUser, credits, updateCredits, isLoggedIn } = useAuth();
 
-  const [rememberApiKey, setRememberApiKey] = useState(false);
   const access_token = localStorage.getItem('access_token');
 
   const selectedLLM = watch("llmType");
@@ -148,16 +147,17 @@ Additional instructions:
     };
 
     const updateApiKey = () => {
-      if (!access_token) return;
+      if (!access_token) {
+        return;
+      }
 
       const encryptedApiKey = Cookies.get(`easytl_${selectedLLM.toLowerCase()}_apiKey`);
+
       if (encryptedApiKey) {
         try {
           const decryptedApiKey = decryptWithAccessToken(encryptedApiKey, access_token);
           setValue("userAPIKey", decryptedApiKey);
-          setRememberApiKey(true);
         } catch (error) {
-          console.error("Failed to decrypt API key:", error);
           Cookies.remove(`easytl_${selectedLLM.toLowerCase()}_apiKey`);
         }
       } else {
@@ -265,7 +265,6 @@ Additional instructions:
     } 
     catch (error) 
     {
-      console.error("Error calculating token cost:", error);
       showToast("Error", "Failed to calculate token cost", "error");
       return null;
     }
@@ -359,8 +358,6 @@ Additional instructions:
       if (!response.ok) 
       {
         const errorText = await response.text();
-        console.error(`Error response: ${response.status} ${response.statusText}`);
-        console.error(`Error details: ${errorText}`);
         throw new Error(`HTTP error! status: ${response.status} ${errorText}`);
       }
 
@@ -372,20 +369,16 @@ Additional instructions:
         updateCredits(result.credits);
       }
 
-      if (rememberApiKey && access_token) {
+      if (access_token) {
         const encryptedApiKey = encryptWithAccessToken(data.userAPIKey, access_token);
         Cookies.set(`easytl_${data.llmType.toLowerCase()}_apiKey`, encryptedApiKey, { 
-          secure: true, 
-          httpOnly: true,
+          secure: true,
           sameSite: 'strict'
         });
-      } else {
-        Cookies.remove(`easytl_${data.llmType.toLowerCase()}_apiKey`);
       }
     } 
     catch (error) 
     {
-      console.error("Error Occurred:", error);
       showToast("An error occurred.", (error as Error).message || "An error occurred.", "error");
     } 
     finally 
