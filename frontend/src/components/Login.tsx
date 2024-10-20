@@ -283,30 +283,28 @@ const Login: React.FC<LoginProps> = ({ isOpen: propIsOpen, onClose: propOnClose,
         }
     };
 
-    if (hidden) {
-        return null; // If hidden is true, don't render anything
-    }
-
     return (
         <>
-            <motion.div whileHover="hover" variants={buttonVariants}>
-                <Button 
-                    onClick={handleButtonClick}
-                    rounded="full"
-                    bg="orange.400"
-                    color="white"
-                    _hover={{ bg: 'orange.500' }}
-                    minWidth="70px" 
-                    height="40px"    
-                    disabled={isLoading}
-                >
-                    {isLoading ? (
-                        <Spinner size="sm" color="white" />
-                    ) : (
-                        isLoggedIn ? 'Logout' : 'Login'
-                    )}
-                </Button>
-            </motion.div>
+            {!hidden && (
+                <motion.div whileHover="hover" variants={buttonVariants}>
+                    <Button 
+                        onClick={handleButtonClick}
+                        rounded="full"
+                        bg="orange.400"
+                        color="white"
+                        _hover={{ bg: 'orange.500' }}
+                        minWidth="70px" 
+                        height="40px"    
+                        disabled={isLoading}
+                    >
+                        {isLoading ? (
+                            <Spinner size="sm" color="white" />
+                        ) : (
+                            isLoggedIn ? 'Logout' : 'Login'
+                        )}
+                    </Button>
+                </motion.div>
+            )}
             <Modal 
                 isOpen={isOpen} 
                 onClose={handleClose} 

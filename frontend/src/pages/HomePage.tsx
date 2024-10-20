@@ -202,7 +202,7 @@ function HomePage()
             <Login 
                 isOpen={isLoginModalOpen} 
                 onClose={handleLoginModalClose} 
-                hidden={true} // Set hidden to true for HomePage
+                hidden={true}
             />
         </PageWrapper>
     );
