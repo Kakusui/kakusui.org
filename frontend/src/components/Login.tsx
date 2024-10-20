@@ -8,7 +8,7 @@
 import { useState, useEffect } from 'react';
 
 // chakra-ui
-import { Box, Button, Input, Modal, ModalOverlay, ModalContent, ModalHeader, ModalFooter, ModalBody, ModalCloseButton, Text, useDisclosure, Spinner, Flex, useToast, Divider } from "@chakra-ui/react";
+import { Box, Button, Input, Modal, ModalOverlay, ModalContent, ModalHeader, ModalFooter, ModalBody, ModalCloseButton, Text, useDisclosure, Spinner, Flex, useToast, Divider, Center } from "@chakra-ui/react";
 
 // util
 import { getURL } from '../utils';
@@ -351,12 +351,12 @@ const Login: React.FC<LoginProps> = ({ isOpen: propIsOpen, onClose: propOnClose,
                             )}
                             <Divider my={4} />
                             <Text textAlign="center">Or</Text>
-                            <Box textAlign="center">
+                            <Center>
                                 <GoogleLogin
                                     onSuccess={handleGoogleLogin}
                                     onError={() => showToast("Error", "Google login failed", "error")}
                                 />
-                            </Box>
+                            </Center>
                         </Flex>
                     </ModalBody>
                     <ModalFooter>
