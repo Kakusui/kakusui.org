@@ -91,7 +91,7 @@ const HomeHeader: React.FC<HomeHeaderProps> = ({ onLoginClick }) =>
                                 </Link>
                             </Flex>
                         )}
-                        <Login isOpen={false} onClose={onLoginClick} />
+                        <Login onLoginClick={onLoginClick} />
                     </Flex>
                 </Flex>
             </Flex>

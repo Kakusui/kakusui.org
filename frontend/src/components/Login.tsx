@@ -28,9 +28,10 @@ import { GoogleLogin } from '@react-oauth/google';
 interface LoginProps {
     isOpen?: boolean;
     onClose?: () => void;
+    onLoginClick?: () => void;
 }
 
-const Login: React.FC<LoginProps> = ({ isOpen: propIsOpen, onClose: propOnClose }) => 
+const Login: React.FC<LoginProps> = ({ isOpen: propIsOpen, onClose: propOnClose, onLoginClick }) => 
 {
     const { isOpen: internalIsOpen, onOpen: internalOnOpen, onClose: internalOnClose } = useDisclosure();
     const [email, setEmail] = useState('');
@@ -261,11 +262,31 @@ const Login: React.FC<LoginProps> = ({ isOpen: propIsOpen, onClose: propOnClose 
         }
     };
 
+    const handleButtonClick = () => 
+    {
+        if (isLoggedIn) 
+        {
+            logout();
+            showToast("Success", "Successfully logged out", "success");
+        } 
+        else 
+        {
+            if (onLoginClick) 
+            {
+                onLoginClick();
+            } 
+            else 
+            {
+                internalOnOpen();
+            }
+        }
+    };
+
     return (
         <>
             <motion.div whileHover="hover" variants={buttonVariants}>
                 <Button 
-                    onClick={isLoggedIn ? async () => { await logout(); showToast("Success", "Successfully logged out", "success"); } : internalOnOpen} 
+                    onClick={handleButtonClick}
                     rounded="full"
                     bg="orange.400"
                     color="white"
