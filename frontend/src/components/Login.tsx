@@ -29,9 +29,10 @@ interface LoginProps {
     isOpen?: boolean;
     onClose?: () => void;
     onLoginClick?: () => void;
+    hidden?: boolean;
 }
 
-const Login: React.FC<LoginProps> = ({ isOpen: propIsOpen, onClose: propOnClose, onLoginClick }) => 
+const Login: React.FC<LoginProps> = ({ isOpen: propIsOpen, onClose: propOnClose, onLoginClick, hidden = false }) => 
 {
     const { isOpen: internalIsOpen, onOpen: internalOnOpen, onClose: internalOnClose } = useDisclosure();
     const [email, setEmail] = useState('');
@@ -281,6 +282,10 @@ const Login: React.FC<LoginProps> = ({ isOpen: propIsOpen, onClose: propOnClose,
             }
         }
     };
+
+    if (hidden) {
+        return null; // If hidden is true, don't render anything
+    }
 
     return (
         <>

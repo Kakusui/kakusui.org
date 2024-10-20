@@ -29,8 +29,8 @@ const stripePromise = loadStripe(getPublishableStripeKey());
 function PricingPage()
 {
     const toast = useToast();
-    const [isLoading, setIsLoading] = useState(false);
-    const { isLoggedIn, checkLoginStatus } = useAuth();
+    const [isProcessing, setIsProcessing] = useState(false);
+    const { isLoggedIn, checkLoginStatus, isLoading } = useAuth();
     const navigate = useNavigate();
 
     useEffect(() =>
@@ -48,7 +48,7 @@ function PricingPage()
             return;
         }
 
-        setIsLoading(true);
+        setIsProcessing(true);
         try
         {
             const stripe = await stripePromise;
@@ -94,7 +94,7 @@ function PricingPage()
         }
         finally
         {
-            setIsLoading(false);
+            setIsProcessing(false);
         }
     };
 
@@ -181,12 +181,12 @@ function PricingPage()
                             onClick={handleBuyNow}
                             colorScheme="orange"
                             size="lg"
-                            isLoading={isLoading}
-                            loadingText="Processing"
+                            isLoading={isProcessing || isLoading}
+                            loadingText={isProcessing ? "Processing" : "Checking login"}
                             spinner={<Spinner color="white" />}
-                            disabled={isLoading}
+                            disabled={isProcessing || isLoading}
                         >
-                            {isLoading ? 'Processing' : (isLoggedIn ? 'Buy Now' : 'Login to Purchase')}
+                            {isProcessing ? 'Processing' : (isLoading ? 'Checking login' : (isLoggedIn ? 'Buy Now' : 'Login to Purchase'))}
                         </Button>
                         
                         <Text fontSize="sm" textAlign="center">
