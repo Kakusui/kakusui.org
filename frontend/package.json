@@ -21,6 +21,7 @@
     "framer-motion": "^11.2.6",
     "js-cookie": "^3.0.5",
     "jwt-decode": "^4.0.0",
+    "lodash": "^4.17.21",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-hook-form": "^7.51.5",
@@ -29,6 +30,7 @@
   "devDependencies": {
     "@types/crypto-js": "^4.2.2",
     "@types/js-cookie": "^3.0.6",
+    "@types/lodash": "^4.17.12",
     "@types/node": "^18.0.0",
     "@types/react": "^18.2.66",
     "@types/react-dom": "^18.2.22",
