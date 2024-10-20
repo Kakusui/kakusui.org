@@ -5,17 +5,20 @@
 ## built-in imports
 from datetime import timedelta, datetime
 
+import logging
+
 ## third-party imports
 from fastapi import APIRouter, HTTPException, Request, status, Cookie, Depends
 from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
+from google.oauth2 import id_token
+from google.auth.transport import requests
 
 ## custom imports
 from db.base import get_db
 from db.models import User, EmailAlertModel
 
-
-from routes.models import LoginModel, LoginToken, RegisterForEmailAlert, SendVerificationEmailRequest, VerifyEmailCodeRequest
+from routes.models import LoginModel, LoginToken, RegisterForEmailAlert, SendVerificationEmailRequest, VerifyEmailCodeRequest, GoogleLoginRequest
 
 from auth.func import verify_verification_code, create_access_token, create_refresh_token, func_verify_token, generate_verification_code, save_verification_data, send_verification_email, get_current_user
 from auth.util import check_internal_request
@@ -24,17 +27,57 @@ from email_util.verification import get_verification_data, remove_verification_d
 
 from rate_limit.func import rate_limit
 
-from constants import TOKEN_EXPIRE_MINUTES, ADMIN_USER
+from constants import TOKEN_EXPIRE_MINUTES, ADMIN_USER, GOOGLE_CLIENT_ID
 
 import typing
 
 router = APIRouter()
 
+@router.post('/auth/google-login')
+async def google_login(request: GoogleLoginRequest, db: Session = Depends(get_db)):
+    try:
+        idinfo = id_token.verify_oauth2_token(request.token, requests.Request(), GOOGLE_CLIENT_ID)
+
+        if(idinfo['iss'] not in ['accounts.google.com', 'https://accounts.google.com']):
+            raise ValueError('Wrong issuer.')
+
+        email = idinfo['email']
+        
+        user = db.query(User).filter(User.email == email).first()
+        if(not user):
+            user = User(email=email)
+            db.add(user)
+            db.commit()
+
+        access_token_expires = timedelta(minutes=TOKEN_EXPIRE_MINUTES)
+        access_token = await create_access_token(
+            data={"sub": email}, expires_delta=access_token_expires
+        )
+        refresh_token_expires = timedelta(minutes=TOKEN_EXPIRE_MINUTES)
+        refresh_token = await create_refresh_token(
+            data={"sub": email}, expires_delta=refresh_token_expires
+        )
+
+        response = JSONResponse({"access_token": access_token, "token_type": "bearer"})
+        response.set_cookie(
+            key="refresh_token",
+            value=refresh_token,
+            httponly=True,
+            secure=True,
+            samesite="strict",
+            max_age=TOKEN_EXPIRE_MINUTES * 60
+        )
+        return response
+
+    except ValueError:
+        raise HTTPException(status_code=400, detail='Invalid token')
+    finally:
+        db.close()
+
 @router.post('/auth/check-email-registration')
 async def check_email_registration(data:RegisterForEmailAlert, request:Request, db:Session = Depends(get_db)):
-    origin = request.headers.get('origin')
 
-    await check_internal_request(origin)
+    await check_internal_request(request)
 
     try:
         existing_user = db.query(User).filter(User.email == data.email).first()
@@ -62,10 +105,7 @@ async def login(data:LoginModel, request:Request, db:Session = Depends(get_db)) 
 
     """
 
-    origin = request.headers.get('origin')
-
-    await check_internal_request(origin)
-
+    await check_internal_request(request)
 
     try:
         existing_user = db.query(User).filter(User.email == data.email).first()
@@ -76,7 +116,7 @@ async def login(data:LoginModel, request:Request, db:Session = Depends(get_db)) 
                 headers={"WWW-Authenticate": "Bearer"},
             )
 
-        if(not verify_verification_code(data.email, data.verification_code)):
+        if(not await verify_verification_code(data.email, data.verification_code)):
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Invalid email or verification code",
@@ -100,19 +140,17 @@ async def login(data:LoginModel, request:Request, db:Session = Depends(get_db)) 
 @router.post("/auth/signup")
 async def signup(data:LoginModel, request:Request, db:Session = Depends(get_db)) -> JSONResponse:
 
-    origin = request.headers.get('origin')
-
-    await check_internal_request(origin)
+    await check_internal_request(request)
 
     try:
 
         existing_user = db.query(User).filter(User.email == data.email).first()
 
-
         if(existing_user):
             return JSONResponse(status_code=status.HTTP_400_BAD_REQUEST, content={"message": "Email already registered."})
 
-        if(not await verify_verification_code(data.email, data.verification_code)):
+        verification_result = await verify_verification_code(data.email, data.verification_code)
+        if(not verification_result):
             return JSONResponse(status_code=status.HTTP_401_UNAUTHORIZED, content={"message": "Invalid email or verification code"})
 
         new_user = User(email=data.email)
@@ -137,7 +175,7 @@ async def signup(data:LoginModel, request:Request, db:Session = Depends(get_db))
 
     except Exception as e:
         db.rollback()
-        print(f"Error during signup: {str(e)}")
+        logging.error(f"Error during signup: {str(e)}")
         return JSONResponse(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, content={"message": "An error occurred during signup."})
 
     finally:
@@ -158,9 +196,7 @@ async def refresh_token(request:Request, refresh_token: str = Cookie(None)) -> J
 
     """
 
-    origin = request.headers.get('origin')
-
-    await check_internal_request(origin)
+    await check_internal_request(request)
 
     if(refresh_token is None):
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="No refresh token provided")
@@ -189,9 +225,8 @@ async def refresh_token(request:Request, refresh_token: str = Cookie(None)) -> J
 
 @router.post("/auth/send-verification-email")
 async def send_verification_email_endpoint(request_data: SendVerificationEmailRequest, request: Request, db: Session = Depends(get_db)):
-    origin = request.headers.get('origin')
 
-    await check_internal_request(origin)
+    await check_internal_request(request)
     
     email = request_data.email
     client_id = request_data.clientID
@@ -215,15 +250,13 @@ async def send_verification_email_endpoint(request_data: SendVerificationEmailRe
             return JSONResponse(status_code=status.HTTP_200_OK, content={"message": "Verification email sent successfully for signup."})
     
     except Exception as e:
-        print(f"Error sending verification email: {str(e)}")
+        logging.error(f"Error sending verification email: {str(e)}")
         return JSONResponse(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, content={"message": "An error occurred while sending the verification email."})
 
 @router.post("/auth/verify-token")
 async def verify_token_endpoint(request: Request):
 
-    origin = request.headers.get('origin')
-
-    await check_internal_request(origin)
+    await check_internal_request(request)
 
     auth_header = request.headers.get("Authorization")
     
@@ -241,19 +274,17 @@ async def verify_token_endpoint(request: Request):
 
 @router.post("/auth/check-if-admin-user")
 async def check_admin(request: Request, current_user:str = Depends(get_current_user)):
-    origin = request.headers.get('origin')
+    
+    await check_internal_request(request)
 
-    await check_internal_request(origin)
-
-    is_admin = current_user == ADMIN_USER
+    is_admin = (current_user == ADMIN_USER)
 
     return JSONResponse(status_code=status.HTTP_200_OK, content={"result": is_admin})
 
 @router.post("/auth/landing-verify-code", response_model=LoginToken)
 async def landing_verify_code_endpoint(request_data:VerifyEmailCodeRequest, request:Request, db: Session = Depends(get_db)):
-    origin = request.headers.get('origin')
 
-    await check_internal_request(origin)
+    await check_internal_request(request)
 
     email = request_data.email
     submitted_code = request_data.code
@@ -275,16 +306,18 @@ async def landing_verify_code_endpoint(request_data:VerifyEmailCodeRequest, requ
 
         existing_email_alert = db.query(EmailAlertModel).filter(EmailAlertModel.email == email).first()
         if(existing_email_alert):
-            return JSONResponse(status_code=status.HTTP_400_BAD_REQUEST, content={"message": "Email already registered for alerts."})
+            pass
+            ## just don't register, but still return success
 
-        new_email_alert = EmailAlertModel(email=email)
-        db.add(new_email_alert)
-        db.commit()
+        else:
+            new_email_alert = EmailAlertModel(email=email)
+            db.add(new_email_alert)
+            db.commit()
         
         await remove_verification_data(email)
         return JSONResponse(status_code=status.HTTP_200_OK, content={"message": "Email successfully verified and registered for alerts.", "token_type": "bearer"})
     
     except Exception as e:
         db.rollback()
-        print(f"Error verifying landing page email code: {str(e)}")
+        logging.error(f"Error verifying landing page email code: {str(e)}")
         return JSONResponse(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, content={"message": "An error occurred while verifying the email code."})

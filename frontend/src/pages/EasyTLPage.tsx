@@ -26,7 +26,9 @@ import {
   Box,
   Flex,
   Text,
-  Collapse
+  Collapse,
+  Radio,
+  RadioGroup,
 } from "@chakra-ui/react";
 
 import { ViewIcon, ViewOffIcon, ChevronDownIcon, ChevronUpIcon, ArrowUpDownIcon } from "@chakra-ui/icons";
@@ -39,6 +41,8 @@ import HowToUseSection from "../components/HowToUseSection";
 import LegalLinks from "../components/LegalLinks";
 import { getURL } from "../utils";
 import { useAuth } from "../contexts/AuthContext";
+import { encryptWithAccessToken, decryptWithAccessToken } from "../utils";
+import Cookies from 'js-cookie';
 
 type FormInput = 
 {
@@ -50,11 +54,13 @@ type FormInput =
   tone: string,
   additional_instructions: string,
   easytlCustomInstructionFormat: string,
+  paymentMethod: string,
 };
 
 type ResponseValues = 
 {
   translatedText: string;
+  credits?: number;
 };
 
 function EasyTLPage()  
@@ -69,6 +75,7 @@ function EasyTLPage()
       tone: "Formal; Polite",
       llmType: "OpenAI",
       model: "gpt-4o-mini",
+      paymentMethod: "credits",
       easytlCustomInstructionFormat: `You are a professional translator, please translate the text given to you following the below instructions. Do not use quotations or say anything else aside from the translation in your response.
 Language: {{language}}
 Tone: {{tone}}
@@ -88,9 +95,13 @@ Additional instructions:
   const [modelOptions, setModelOptions] = useState<string[]>([]);
   const [isAdvancedSettingsVisible, setAdvancedSettingsVisible] = useState(false);
   const toast = useToast();
-  const { isPrivilegedUser } = useAuth();
+  const { isPrivilegedUser, credits, updateCredits, isLoggedIn } = useAuth();
 
   const access_token = localStorage.getItem('access_token');
+
+  const selectedLLM = watch("llmType");
+  const selectedModel = watch("model");
+  const selectedPaymentMethod = watch("paymentMethod");
 
   useEffect(() => 
   {
@@ -126,9 +137,6 @@ Additional instructions:
     if (savedAdditionalInstructions) setValue('additional_instructions', savedAdditionalInstructions);
   }, [setValue]);
 
-  const selectedLLM = watch("llmType");
-  const selectedModel = watch("model");
-
   useEffect(() => {
     const updateModelOptions = () => {
       const options = getModelOptions(selectedLLM);
@@ -139,13 +147,27 @@ Additional instructions:
     };
 
     const updateApiKey = () => {
-      const savedApiKey = localStorage.getItem(`easytl_${selectedLLM.toLowerCase()}_apiKey`);
-      setValue("userAPIKey", savedApiKey || "");
+      if (!access_token) {
+        return;
+      }
+
+      const encryptedApiKey = Cookies.get(`easytl_${selectedLLM.toLowerCase()}_apiKey`);
+
+      if (encryptedApiKey) {
+        try {
+          const decryptedApiKey = decryptWithAccessToken(encryptedApiKey, access_token);
+          setValue("userAPIKey", decryptedApiKey);
+        } catch (error) {
+          Cookies.remove(`easytl_${selectedLLM.toLowerCase()}_apiKey`);
+        }
+      } else {
+        setValue("userAPIKey", "");
+      }
     };
 
     updateModelOptions();
     updateApiKey();
-  }, [selectedLLM, setValue, selectedModel]);
+  }, [selectedLLM, setValue, selectedModel, access_token]);
 
   const handleToggleShowApiKey = () => setShowApiKey(!showApiKey);
 
@@ -201,6 +223,53 @@ Additional instructions:
     return requiredPlaceholders.every(placeholder => instructions.includes(placeholder));
   };
 
+  const calculateTokenCost = async (data: FormInput) => 
+  {
+    try 
+    {
+      let translationInstructions = data.easytlCustomInstructionFormat
+        .replace("{{language}}", data.language)
+        .replace("{{tone}}", data.tone);
+
+      if (data.additional_instructions) 
+      {
+        translationInstructions = translationInstructions.replace("{{#if additional_instructions}}\nAdditional instructions:\n{{additional_instructions}}\n{{/if}}", `Additional instructions:\n${data.additional_instructions}`);
+      } 
+      else 
+      {
+        translationInstructions = translationInstructions.replace("{{#if additional_instructions}}\nAdditional instructions:\n{{additional_instructions}}\n{{/if}}", '');
+      }
+
+      const response = await fetch(getURL("/proxy/calculate-token-cost"), 
+      {
+        method: "POST",
+        headers: 
+        { 
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${access_token}` 
+        },
+        body: JSON.stringify({
+          text_to_translate: data.textToTranslate,
+          translation_instructions: translationInstructions,
+          model: data.model
+        }),
+      });
+
+      if (!response.ok) 
+      {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const result = await response.json();
+      return result.cost;
+    } 
+    catch (error) 
+    {
+      showToast("Error", "Failed to calculate token cost", "error");
+      return null;
+    }
+  };
+
   const onSubmit = async (data: FormInput) => 
   {
     setResetTurnstile(false);
@@ -211,22 +280,40 @@ Additional instructions:
       return;
     }
 
-    if(!turnstileToken && window.location.hostname === "kakusui.org")
+    if(selectedPaymentMethod !== "credits" && window.location.hostname === "kakusui.org" && !turnstileToken)
     {
       showToast("Verification failed", "Please complete the verification", "error");
       return;
     }
 
-    if (!validateInstructions(data.easytlCustomInstructionFormat)) {
+    if (!validateInstructions(data.easytlCustomInstructionFormat)) 
+    {
       showToast("Invalid Instructions", "Instructions must include {{language}} and {{tone}} placeholders.", "error");
       return;
     }
 
     try 
     {
-      if(window.location.hostname === "kakusui.org" && !(await handleVerification()))
+      if(window.location.hostname === "kakusui.org" && selectedPaymentMethod !== "credits" && !(await handleVerification()))
       {
         throw new Error("Turnstile verification failed. Please try again.");
+      }
+
+      const estimatedCost = await calculateTokenCost(data);
+      
+      if (data.paymentMethod === "credits") 
+      {
+        if (!isLoggedIn) 
+        {
+          showToast("Authentication Required", "Please log in to use credits for translation.", "error");
+          return;
+        }
+        
+        if (estimatedCost && estimatedCost > credits) 
+        {
+          showToast("Insufficient Credits", "You don't have enough credits for this translation.", "error");
+          return;
+        }
       }
 
       localStorage.setItem(`easytl_${data.llmType.toLowerCase()}_apiKey`, data.userAPIKey);
@@ -252,8 +339,9 @@ Additional instructions:
         textToTranslate: data.textToTranslate,
         translationInstructions,
         llmType: data.llmType.toLowerCase(),
-        userAPIKey: isPrivilegedUser ? "" : data.userAPIKey,
-        model: data.model
+        userAPIKey: isPrivilegedUser || data.paymentMethod === "credits" ? "" : data.userAPIKey,
+        model: data.model,
+        using_credits: data.paymentMethod === "credits"
       };
 
       const response = await fetch(getURL("/proxy/easytl"), 
@@ -267,19 +355,30 @@ Additional instructions:
         body: JSON.stringify(requestBody),
       });
 
-      if (!response.ok) {
+      if (!response.ok) 
+      {
         const errorText = await response.text();
-        console.error(`Error response: ${response.status} ${response.statusText}`);
-        console.error(`Error details: ${errorText}`);
         throw new Error(`HTTP error! status: ${response.status} ${errorText}`);
       }
 
       const result = await response.json();
       setResponse(result);
+
+      if (data.paymentMethod === "credits") 
+      {
+        updateCredits(result.credits);
+      }
+
+      if (access_token) {
+        const encryptedApiKey = encryptWithAccessToken(data.userAPIKey, access_token);
+        Cookies.set(`easytl_${data.llmType.toLowerCase()}_apiKey`, encryptedApiKey, { 
+          secure: true,
+          sameSite: 'strict'
+        });
+      }
     } 
     catch (error) 
     {
-      console.error("Error Occurred:", error);
       showToast("An error occurred.", (error as Error).message || "An error occurred.", "error");
     } 
     finally 
@@ -341,7 +440,7 @@ Additional instructions:
             />
           </FormControl>
 
-          <HStack spacing={4}>
+          <HStack spacing={4} align="flex-start">
             <FormControl isInvalid={!!errors.llmType} flex={1}>
               <FormLabel>LLM</FormLabel>
               <Select {...register("llmType", { required: true })}>
@@ -360,12 +459,12 @@ Additional instructions:
               </Select>
             </FormControl>
 
-            {!isPrivilegedUser && (
+            {(selectedPaymentMethod === "api_key") && (
               <FormControl isInvalid={!!errors.userAPIKey} flex={1}>
                 <FormLabel>API Key</FormLabel>
                 <InputGroup>
                   <Input
-                    {...register("userAPIKey", { required: !isPrivilegedUser })}
+                    {...register("userAPIKey", { required: selectedPaymentMethod === "api_key" })}
                     type={showApiKey ? "text" : "password"}
                     placeholder="Enter API key"
                   />
@@ -381,6 +480,16 @@ Additional instructions:
               </FormControl>
             )}
           </HStack>
+
+          <FormControl as="fieldset">
+            <FormLabel as="legend">Payment Method</FormLabel>
+            <RadioGroup defaultValue="credits">
+              <HStack spacing="24px">
+                <Radio {...register("paymentMethod")} value="credits">Credits</Radio>
+                <Radio {...register("paymentMethod")} value="api_key">API Key</Radio>
+              </HStack>
+            </RadioGroup>
+          </FormControl>
 
           <Box width="100%">
             <Button 
@@ -423,7 +532,7 @@ Additional instructions:
           </Button>
         </VStack>
 
-        {!isBlacklistedDomain && (
+        {selectedPaymentMethod !== "credits" && !isBlacklistedDomain && (
           <Center mt={4}>
             {memoizedTurnstile}
           </Center>
@@ -458,7 +567,8 @@ Additional instructions:
           "Specify the language and tone for the translation.",
           "Include optional additional instructions.",
           "Select the LLM and model you want to use.",
-          "Provide your API key.",
+          "Choose your payment method (Credits or API Key).",
+          "If using API Key, provide your API key.",
           "Click 'Submit' to get the translated text.",
           "Review the translated text and download or copy if necessary.",
           "(For custom format specifiers click the dropdown)"

@@ -24,6 +24,7 @@ const EasyTLTermsOfServicePage: React.FC = () => {
             <Heading as="h2" size="md" mt={4} mb={2}>1. Introduction</Heading>
             <Text mb={4}>
                 Welcome to EasyTL! By using our software, you agree to be bound by these Terms of Service and all terms incorporated by reference. Please read these terms carefully before using our services.
+                This service is subject to Kakusui's general <Link href="/tos" color="orange.400">Terms of Service</Link> and <Link href="/privacy" color="orange.400">Privacy Policy</Link>. Please review these documents for important information about your rights and responsibilities when using our services.
             </Text>
 
             <Heading as="h2" size="md" mt={4} mb={2}>2. Eligibility</Heading>
@@ -70,15 +71,29 @@ const EasyTLTermsOfServicePage: React.FC = () => {
                 Kakusui reserves the right to modify or replace these Terms at any time, with or without notice. Changes to these terms will be made as necessary, and you are encouraged to review the terms periodically.
             </Text>
 
-            <Heading as="h2" size="md" mt={4} mb={2}>10. Contact Information</Heading>
+            <Heading as="h2" size="md" mt={4} mb={2}>10. Credit Usage</Heading>
+            <Text mb={4}>
+                This service uses the Kakusui credit system. Each use of the service will deduct credits from your account based on the current pricing model. Please refer to our pricing page for details.
+                You are however free to use the service without any credits if you provide your own API key for Gemini, Anthropic, or OpenAI services.
+            </Text>
+
+            <Heading as="h2" size="md" mt={4} mb={2}>11. Data Processing</Heading>
+            <Text mb={4}>
+                This service utilizes AI models provided by OpenAI, Anthropic, or Google (based on your selection) to process your input. While we do not store your input or the results, please be aware that these third-party AI providers may have access to the data during processing.
+            </Text>
+
+            <Heading as="h2" size="md" mt={4} mb={2}>12. Contact Information</Heading>
             <Text mb={4}>
                 If you have any questions about these Terms, please contact us at <Link href="mailto:contact@kakusui.org" color="orange.400">contact@kakusui.org</Link>.
             </Text>
 
             <Text mt={4} fontSize="sm" color="gray.500">
+                Last updated: 2024-10-05 <br /> <br />
+
                 Changelog: <br />
+                2024-10-05: Various changes to the TOS to reflect new services, account details, credits, and other changes. <br />
                 2024-07-15: Switched to AGPLv3 for the API and website. <br />
-                2024-06-06: Initial version.
+                2024-06-06: Initial version. <br />
             </Text>
 
             <Box mt={4}>

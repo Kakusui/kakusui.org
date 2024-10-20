@@ -3,7 +3,7 @@
 ## license that can be found in the LICENSE file.
 
 ## third-party imports
-from pydantic import BaseModel
+from pydantic import BaseModel, EmailStr
 
 class LoginModel(BaseModel):
     email:str
@@ -38,6 +38,7 @@ class EasyTLRequest(BaseModel):
     llmType:str
     userAPIKey:str
     model:str
+    using_credits:bool
 
 class ElucidateRequest(BaseModel):
     textToEvaluate:str
@@ -52,3 +53,15 @@ class VerifyTurnstileRequest(BaseModel):
 class EmailRequest(BaseModel):
     subject:str
     body:str
+
+class FeedbackEmailRequest(BaseModel):
+    email:EmailStr
+    text:str
+
+class TokenCostRequest(BaseModel):
+    text_to_translate:str
+    translation_instructions:str
+    model:str
+
+class GoogleLoginRequest(BaseModel):
+    token:str

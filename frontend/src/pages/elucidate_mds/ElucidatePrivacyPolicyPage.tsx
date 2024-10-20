@@ -25,6 +25,7 @@ const ElucidatePrivacyPolicyPage: React.FC = () => {
             <Text mb={4}>
                 This Privacy Policy outlines how we handle your data when using Elucidate. Your privacy is important to us, and we are committed to protecting your personal information.
                 The following applies to Elucidate on our website <Link href="https://kakusui.org/elucidate" color="orange.400">Kakusui.org/elucidate</Link> and its API endpoint at <Link href="https://api.kakusui.org/v1/elucidate" color="orange.400">api.kakusui.org/v1/elucidate</Link>.
+                This service is subject to Kakusui's general <Link href="/tos" color="orange.400">Terms of Service</Link> and <Link href="/privacy" color="orange.400">Privacy Policy</Link>. Please review these documents for important information about your rights and responsibilities when using our services.
             </Text>
 
             <Heading as="h2" size="md" mt={4} mb={2}>2. Data Collection</Heading>
@@ -59,7 +60,10 @@ const ElucidatePrivacyPolicyPage: React.FC = () => {
             </Text>
 
             <Text mt={4} fontSize="sm" color="gray.500">
-                Last updated: 2024-07-15
+                Last updated: 2024-10-05 <br /> <br />
+
+                Changelog: <br />
+                2024-10-05: Various changes to the Privacy Policy to reflect new services, account details, credits, and other changes. <br />
             </Text>
 
             <Box mt={4}>

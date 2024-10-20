@@ -19,6 +19,9 @@ import PageWrapper from "./components/PageWrapper.tsx";
 import theme from "./theme.ts";
 import Router from "./Router.tsx";
 
+// google oauth
+import { GoogleOAuthProvider } from '@react-oauth/google';
+
 function AppContent() 
 {
     const location = useLocation();
@@ -29,7 +32,7 @@ function AppContent()
         checkLoginStatus();
     }, [location]);
 
-    const isBorderLessFullScreen = location.pathname === '/' || location.pathname === '/pricing';
+    const isBorderLessFullScreen = location.pathname === '/' || location.pathname === '/pricing' || location.pathname === '/pricing/credits';
     const isFullScreenPage = location.pathname === '/home' || location.pathname === '/admin';
 
     return (
@@ -52,9 +55,13 @@ function AppContent()
 function App() 
 {
     return (
-        <ChakraProvider theme={theme}>
-            <AppContent />
-        </ChakraProvider>
+        // This is the Google OAuth client ID for Kakusui's Google API Console project.
+        // I should be fine hardcoding this. As it's meant for client-side (right?)
+        <GoogleOAuthProvider clientId="951070461527-dhsteb0ro97qrq4d2e7cq2mr9ehichol.apps.googleusercontent.com">
+            <ChakraProvider theme={theme}>
+                <AppContent />
+            </ChakraProvider>
+        </GoogleOAuthProvider>
     );
 }
 

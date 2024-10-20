@@ -2,6 +2,9 @@
 ## Use of this source code is governed by an GNU Affero General Public License v3.0
 ## license that can be found in the LICENSE file.
 
+## built-in imports
+import logging
+
 ## third-party imports
 from sqlalchemy.inspection import inspect
 from sqlalchemy.orm import DeclarativeMeta
@@ -18,4 +21,4 @@ def create_tables_if_not_exist(engine:Engine, base:DeclarativeMeta) -> None:
                 base.metadata.tables[table_name].create(engine)
 
         except OperationalError:
-            print(f"Tried creating table {table_name}, but failed. SAFE TO IGNORE")
+            logging.warning(f"Tried creating table {table_name}, but failed. SAFE TO IGNORE")

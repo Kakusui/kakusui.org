@@ -6,6 +6,7 @@
 
 // react
 import { useEffect, useState } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 
 // motion
 import { motion } from 'framer-motion';
@@ -27,14 +28,20 @@ import ProductSection from "../components/ProductSection";
 import PageWrapper from "../components/PageWrapper";
 import HomeHeader from "../components/HomeHeader";
 import HomeFooter from "../components/HomeFooter";
+import Login from '../components/Login';
 
 // animations
 import { textVariants, containerVariants, imageVariants, buttonVariants, githubButtonVariants } from '../animations/commonAnimations';
+
+import { getURL } from '../utils';
 
 function HomePage() 
 {
     const { isOpen, onOpen, onClose } = useDisclosure();
     const [isMobile, setIsMobile] = useState(false);
+    const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
+    const location = useLocation();
+    const navigate = useNavigate();
 
     useEffect(() => 
     {
@@ -52,17 +59,62 @@ function HomePage()
             onOpen();
         }
 
+        const searchParams = new URLSearchParams(location.search);
+        if (searchParams.get('openLoginModal') === 'true') {
+            setIsLoginModalOpen(true);
+        }
+
         return () => window.removeEventListener('resize', checkMobile);
-    }, [onOpen, isMobile]);
+    }, [onOpen, isMobile, location]);
 
     const handleDoNotShowAgain = () => {
         localStorage.setItem('hideMobileModalWarningPersistent', 'true');
         onClose();
     };
 
+    const handleLoginModalOpen = () => {
+        setIsLoginModalOpen(true);
+    };
+
+    const checkLoginStatusAndRedirect = async () => {
+        try {
+            const response = await fetch(getURL('/auth/verify-token'), {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('access_token')}`
+                },
+            });
+            const data = await response.json();
+            
+            if (data.valid) 
+            {
+                const searchParams = new URLSearchParams(location.search);
+                const redirectPath = searchParams.get('redirect');
+                if (redirectPath) 
+                {
+                    navigate(redirectPath, { replace: true });
+                } else {
+                    navigate(location.pathname, { replace: true });
+                }
+            } 
+            else 
+            {
+                navigate(location.pathname, { replace: true });
+            }
+        } catch (error) {
+            navigate(location.pathname, { replace: true });
+        }
+    };
+
+    const handleLoginModalClose = () => {
+        setIsLoginModalOpen(false);
+        // Check login status and redirect after a short delay
+        setTimeout(checkLoginStatusAndRedirect, 500);
+    };
+
     return (
         <PageWrapper showBackground={true}>
-            <HomeHeader />
+            <HomeHeader onLoginClick={handleLoginModalOpen} />
             <Box px={4} pt="60px" pb="100px">
                 <Kakusui />
                 <Box position="relative" padding="10">
@@ -146,6 +198,12 @@ function HomePage()
                     </Flex>
                 </ModalContent>
             </Modal>
+
+            <Login 
+                isOpen={isLoginModalOpen} 
+                onClose={handleLoginModalClose} 
+                hidden={true}
+            />
         </PageWrapper>
     );
 }

@@ -6,13 +6,15 @@
 import typing
 import os
 import json
-import random
 import string
 import asyncio
+import secrets
+from hmac import compare_digest
 
 from datetime import datetime, timedelta, timezone
 
 ## third-party imports
+from pydantic import EmailStr
 from jwt import PyJWTError
 
 import jwt
@@ -27,7 +29,18 @@ from auth.util import get_secure_filename
 
 from email_util.common import send_email, get_smtp_envs
 
-from constants import ACCESS_TOKEN_SECRET, REFRESH_TOKEN_SECRET, TOKEN_ALGORITHM, ADMIN_USER, VERIFICATION_DATA_DIR, VERIFICATION_EXPIRATION_MINUTES, OPENAI_API_KEY, ANTHROPIC_API_KEY, GEMINI_API_KEY
+from constants import (
+    ACCESS_TOKEN_SECRET,
+    REFRESH_TOKEN_SECRET,
+    TOKEN_ALGORITHM,
+    ADMIN_USER,
+    VERIFICATION_DATA_DIR,
+    VERIFICATION_EXPIRATION_MINUTES,
+    OPENAI_API_KEY,
+    ANTHROPIC_API_KEY,
+    GEMINI_API_KEY,
+    MAX_EMAIL_VERIFICATION_ATTEMPTS
+)
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
 
@@ -86,7 +99,7 @@ async def create_refresh_token(data:dict,
     encoded_jwt = jwt.encode(to_encode, REFRESH_TOKEN_SECRET, algorithm=TOKEN_ALGORITHM) # type: ignore
     return encoded_jwt
 
-async def verify_verification_code(email: str, verification_code: str) -> bool:
+async def verify_verification_code(email:str, verification_code:str) -> bool:
 
     """
 
@@ -108,14 +121,23 @@ async def verify_verification_code(email: str, verification_code: str) -> bool:
     
     stored_code = verification_data["code"]
     expiration_time = datetime.fromisoformat(verification_data["expiration"])
+    attempts = verification_data.get("attempts", 0)
     
     if(datetime.now() > expiration_time):
         await remove_verification_data(email)
         return False
     
-    if(verification_code == stored_code):
+    if(attempts >= MAX_EMAIL_VERIFICATION_ATTEMPTS):
+        await remove_verification_data(email)
+        return False
+    
+    if(compare_digest(verification_code, stored_code)):
         await remove_verification_data(email)
         return True
+    
+    ## Increment attempts and save
+    verification_data["attempts"] = attempts + 1
+    await save_verification_data(email, verification_data["code"], verification_data)
     
     return False
 
@@ -194,14 +216,19 @@ async def check_if_admin_user(current_user:str = Depends(get_current_user)):
     return is_admin
 
 async def generate_verification_code() -> str:
-    return ''.join(random.choices(string.digits, k=6))
+    return ''.join(secrets.choice(string.digits) for _ in range(6))
 
-async def save_verification_data(email:str, code:str) -> None:
-    expiration_time = datetime.now() + timedelta(minutes=VERIFICATION_EXPIRATION_MINUTES)
-    data = {
-        "code": code,
-        "expiration": expiration_time.isoformat()
-    }
+async def save_verification_data(email:str, code:str, existing_data:dict | None = None) -> None:
+    if(existing_data is None):
+        expiration_time = datetime.now() + timedelta(minutes=VERIFICATION_EXPIRATION_MINUTES)
+        data = {
+            "code": code,
+            "expiration": expiration_time.isoformat(),
+            "attempts": 0
+        }
+    else:
+        data = existing_data
+        data["code"] = code
     
     if(not os.path.exists(VERIFICATION_DATA_DIR)):
         await asyncio.to_thread(os.makedirs, VERIFICATION_DATA_DIR)
@@ -209,12 +236,11 @@ async def save_verification_data(email:str, code:str) -> None:
     secure_email = await get_secure_filename(email)
 
     async with asyncio.Lock():
-        await asyncio.to_thread(
-            lambda: json.dump(
-                data, 
-                open(f"{VERIFICATION_DATA_DIR}/{secure_email}.json", "w")
-            )
-        )
+        def write_data():
+            with open(f"{VERIFICATION_DATA_DIR}/{secure_email}.json", "w") as f:
+                json.dump(data, f)
+        
+        await asyncio.to_thread(write_data)
 
 async def get_verification_data(email:str) -> dict | None:
     try:
@@ -231,16 +257,16 @@ async def get_verification_data(email:str) -> dict | None:
 
 async def remove_verification_data(email:str) -> None:
     try:
-        secure_email = get_secure_filename(email)
+        secure_email = await get_secure_filename(email)
         async with asyncio.Lock():
             await asyncio.to_thread(os.remove, f"{VERIFICATION_DATA_DIR}/{secure_email}.json")
     except FileNotFoundError:
         pass
 
-async def send_verification_email(email:str, code:str) -> None:
+async def send_verification_email(email:EmailStr, code:str) -> None:
     _, SMTP_SERVER, SMTP_PORT, SMTP_USER, SMTP_PASSWORD, FROM_EMAIL, _ = await get_smtp_envs()
 
-    subject = "Email Verification Code for Kakusui.org"
+    subject = "Email Verification Code for https://kakusui.org"
     body = f"Your verification code is {code}. Do not share this code with anyone. Someone from Kakusui will never ask you for this code."
 
     await send_email(

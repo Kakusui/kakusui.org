@@ -8,7 +8,7 @@
 import { useState, useEffect } from 'react';
 
 // chakra-ui
-import { Box, Button, Input, Modal, ModalOverlay, ModalContent, ModalHeader, ModalFooter, ModalBody, ModalCloseButton, Text, useDisclosure, Spinner, Flex, useToast } from "@chakra-ui/react";
+import { Box, Button, Input, Modal, ModalOverlay, ModalContent, ModalHeader, ModalFooter, ModalBody, ModalCloseButton, Text, useDisclosure, Spinner, Flex, useToast, Divider } from "@chakra-ui/react";
 
 // util
 import { getURL } from '../utils';
@@ -22,9 +22,19 @@ import { buttonVariants } from '../animations/commonAnimations';
 // auth
 import { useAuth } from '../contexts/AuthContext';
 
-const Login: React.FC = () => 
+// google oauth
+import { GoogleLogin } from '@react-oauth/google';
+
+interface LoginProps {
+    isOpen?: boolean;
+    onClose?: () => void;
+    onLoginClick?: () => void;
+    hidden?: boolean;
+}
+
+const Login: React.FC<LoginProps> = ({ isOpen: propIsOpen, onClose: propOnClose, onLoginClick, hidden = false }) => 
 {
-    const { isOpen, onOpen, onClose } = useDisclosure();
+    const { isOpen: internalIsOpen, onOpen: internalOnOpen, onClose: internalOnClose } = useDisclosure();
     const [email, setEmail] = useState('');
     const [loginCode, setLoginCode] = useState('');
     const [isLoginStep, setIsLoginStep] = useState(false);
@@ -32,6 +42,10 @@ const Login: React.FC = () =>
     const [clientId, setClientId] = useState('');
     const toast = useToast();
     const { isLoggedIn, login, logout, isLoading } = useAuth();
+
+    const isControlled = propIsOpen !== undefined;
+    const isOpen = isControlled ? propIsOpen : internalIsOpen;
+    const onClose = isControlled ? propOnClose : internalOnClose;
 
     useEffect(() =>
     {
@@ -58,7 +72,7 @@ const Login: React.FC = () =>
         setEmail('');
         setLoginCode('');
         setIsLoginStep(false);
-        onClose();
+        if (onClose) onClose();
     };
 
     const showToast = (title: string, description: string, status: "error" | "info" | "warning" | "success") => 
@@ -90,7 +104,8 @@ const Login: React.FC = () =>
                 {
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify({ email, clientID: clientId })
+                body: JSON.stringify({ email, clientID: clientId }),
+                credentials: 'include'
             });
 
             if(checkUserResponse.ok) 
@@ -118,7 +133,8 @@ const Login: React.FC = () =>
                     {
                         'Content-Type': 'application/json'
                     },
-                    body: JSON.stringify({ email, clientID: clientId })
+                    body: JSON.stringify({ email, clientID: clientId }),
+                    credentials: 'include'
                 });
 
                 if(!response.ok) 
@@ -153,7 +169,8 @@ const Login: React.FC = () =>
                 {
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify({ email, verification_code: loginCode })
+                body: JSON.stringify({ email, verification_code: loginCode }),
+                credentials: 'include'
             });
 
             if (response.ok) 
@@ -162,8 +179,8 @@ const Login: React.FC = () =>
                 if (data.access_token) 
                 {
                     await login(data.access_token);
-                    handleClose();
                     showToast("Success", `Successfully ${isSignUp ? "signed up" : "logged in"}`, "success");
+                    if (onClose) onClose();
                 } 
                 else 
                 {
@@ -205,27 +222,96 @@ const Login: React.FC = () =>
         }
     };
 
+    const handleGoogleLogin = async (credentialResponse: any) =>
+    {
+        try
+        {
+            const response = await fetch(getURL('/auth/google-login'), 
+            {
+                method: 'POST',
+                headers: 
+                {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ token: credentialResponse.credential }),
+                credentials: 'include'
+            });
+
+            if (response.ok)
+            {
+                const data = await response.json();
+                if (data.access_token)
+                {
+                    await login(data.access_token);
+                    showToast("Success", "Successfully logged in with Google", "success");
+                    if (onClose) onClose();
+                }
+                else
+                {
+                    showToast("Error", "Failed to log in with Google", "error");
+                }
+            }
+            else
+            {
+                const errorData = await response.json();
+                showToast("Error", errorData.message || 'Failed to log in with Google', "error");
+            }
+        }
+        catch (error)
+        {
+            showToast("Error", "An error occurred during Google login. Please try again.", "error");
+        }
+    };
+
+    const handleButtonClick = () => 
+    {
+        if (isLoggedIn) 
+        {
+            logout();
+            showToast("Success", "Successfully logged out", "success");
+        } 
+        else 
+        {
+            if (onLoginClick) 
+            {
+                onLoginClick();
+            } 
+            else 
+            {
+                internalOnOpen();
+            }
+        }
+    };
+
     return (
         <>
-            <motion.div whileHover="hover" variants={buttonVariants}>
-                <Button 
-                    onClick={isLoggedIn ? async () => { await logout(); showToast("Success", "Successfully logged out", "success"); } : onOpen} 
-                    rounded="full"
-                    bg="orange.400"
-                    color="white"
-                    _hover={{ bg: 'orange.500' }}
-                    minWidth="70px" 
-                    height="40px"    
-                    disabled={isLoading}
-                >
-                    {isLoading ? (
-                        <Spinner size="sm" color="white" />
-                    ) : (
-                        isLoggedIn ? 'Logout' : 'Login'
-                    )}
-                </Button>
-            </motion.div>
-            <Modal isOpen={isOpen} onClose={handleClose} isCentered motionPreset="slideInBottom">
+            {!hidden && (
+                <motion.div whileHover="hover" variants={buttonVariants}>
+                    <Button 
+                        onClick={handleButtonClick}
+                        rounded="full"
+                        bg="orange.400"
+                        color="white"
+                        _hover={{ bg: 'orange.500' }}
+                        minWidth="70px" 
+                        height="40px"    
+                        disabled={isLoading}
+                    >
+                        {isLoading ? (
+                            <Spinner size="sm" color="white" />
+                        ) : (
+                            isLoggedIn ? 'Logout' : 'Login'
+                        )}
+                    </Button>
+                </motion.div>
+            )}
+            <Modal 
+                isOpen={isOpen} 
+                onClose={handleClose} 
+                isCentered 
+                motionPreset="slideInBottom"
+                closeOnOverlayClick={false}
+            >
                 <ModalOverlay bg="blackAlpha.300" backdropFilter="blur(10px)" />
                 <ModalContent
                     bg="rgba(20, 25, 43, 0.95)"
@@ -263,6 +349,14 @@ const Login: React.FC = () =>
                                     />
                                 </>
                             )}
+                            <Divider my={4} />
+                            <Text textAlign="center">Or</Text>
+                            <Box textAlign="center">
+                                <GoogleLogin
+                                    onSuccess={handleGoogleLogin}
+                                    onError={() => showToast("Error", "Google login failed", "error")}
+                                />
+                            </Box>
                         </Flex>
                     </ModalBody>
                     <ModalFooter>

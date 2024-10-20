@@ -1,5 +1,5 @@
 ## Copyright 2024 Kakusui LLC (https://kakusui.org) (https://github.com/Kakusui) (https://github.com/Kakusui/kakusui.org)
-## Use of this source code is governed by a GNU General Public License v3.0
+## Use of this source code is governed by an GNU Affero General Public License v3.0
 ## license that can be found in the LICENSE file.
 
 ## gets environment variables
@@ -7,8 +7,11 @@
 from constants import *
 
 ## built-in libraries
+import logging
 import os
 import threading
+
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
 maintenance_mode = False
 maintenance_lock = threading.Lock()
@@ -16,6 +19,7 @@ maintenance_lock = threading.Lock()
 ## third-party libraries
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from starlette.middleware.base import BaseHTTPMiddleware
 from fastapi.responses import JSONResponse
 from fastapi.security import HTTPBasic
 
@@ -33,6 +37,9 @@ from routes.elucidate import router as elucidate_router
 from routes.auth import router as auth_router
 from routes.turnstile import router as turnstile_router
 from routes.db import router as db_router
+from routes.financial import router as financial_router
+from routes.email import router as email_router
+
 ##-----------------------------------------start-of-main----------------------------------------------------------------------------------------------------------------------------------------------------------
 
 if(not os.path.exists("database") and ACCESS_TOKEN_SECRET == "secret"):
@@ -59,7 +66,8 @@ envs = {
     "V1_ELUCIDATE_ROOT_KEY": V1_ELUCIDATE_ROOT_KEY,
     "OPENAI_API_KEY": OPENAI_API_KEY,
     "ANTHROPIC_API_KEY": ANTHROPIC_API_KEY,
-    "GEMINI_API_KEY": GEMINI_API_KEY
+    "GEMINI_API_KEY": GEMINI_API_KEY,
+    "STRIPE_API_KEY": STRIPE_API_KEY,
 }
 
 for key, value in envs.items():
@@ -74,10 +82,9 @@ migrate_database(engine)
 app = FastAPI()
 
 ## CORS setup
-allowed_origins = ["*"]
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=allowed_origins,
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -89,10 +96,35 @@ async def maintenance_middleware(request:Request, call_next):
     with maintenance_lock:
         if(maintenance_mode):
             return JSONResponse(status_code=503, content={"message": "Server is in maintenance mode"})
-    
+        
     response = await call_next(request)
-    
     return response
+
+@app.middleware("http")
+async def dynamic_cors(request: Request, call_next):
+    origin = request.headers.get("Origin")
+    response = await call_next(request)
+    if(origin):
+        response.headers["Access-Control-Allow-Origin"] = origin
+    response.headers["Access-Control-Allow-Credentials"] = "true"
+    response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, OPTIONS"
+    response.headers["Access-Control-Allow-Headers"] = "Authorization, Content-Type"
+    return response
+
+class XFrameOptionsMiddleware(BaseHTTPMiddleware):
+    async def dispatch(self, request: Request, call_next):
+        response = await call_next(request)
+        response.headers['X-Frame-Options'] = 'DENY'
+        return response
+
+class CSPMiddleware(BaseHTTPMiddleware):
+    async def dispatch(self, request: Request, call_next):
+        response = await call_next(request)
+        response.headers['Content-Security-Policy'] = "frame-ancestors 'none';"
+        return response
+
+app.add_middleware(CSPMiddleware)
+app.add_middleware(XFrameOptionsMiddleware)
 
 app.include_router(warmups_router)
 app.include_router(kairyou_router)
@@ -101,6 +133,8 @@ app.include_router(auth_router)
 app.include_router(elucidate_router)
 app.include_router(turnstile_router)
 app.include_router(db_router)
+app.include_router(financial_router)
+app.include_router(email_router)
 
 @app.on_event("startup")
 async def startup_event():

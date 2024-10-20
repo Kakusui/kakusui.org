@@ -5,22 +5,124 @@
 // maintain allman bracket style for consistency
 
 // react
-import { useEffect } from 'react';
-import { Link as RouterLink } from 'react-router-dom';
+import { useEffect, useState, useCallback } from 'react';
+import { Link as RouterLink, useNavigate } from 'react-router-dom';
 
 // chakra-ui
-import { Box, Heading, Text, VStack, List, ListItem, ListIcon, Button, Flex, IconButton } from '@chakra-ui/react';
+import { Box, Heading, Text, VStack, List, ListItem, ListIcon, Button, Flex, IconButton, Link, useToast, Spinner } from '@chakra-ui/react';
 import { CheckIcon, ArrowBackIcon } from '@chakra-ui/icons';
 
 // images
 import landingPageBg from '../assets/images/landing_page.webp';
 
+// utils
+import { getURL, getPublishableStripeKey } from '../utils';
+
+// stripe
+import { loadStripe } from '@stripe/stripe-js';
+
+// auth context
+import { useAuth } from '../contexts/AuthContext';
+
+// lodash
+import debounce from 'lodash/debounce';
+
+const stripePromise = loadStripe(getPublishableStripeKey());
+
 function PricingPage()
 {
+    const toast = useToast();
+    const [isProcessing, setIsProcessing] = useState(false);
+    const { isLoggedIn, checkLoginStatus, isLoading } = useAuth();
+    const navigate = useNavigate();
+    const [lastCheckoutAttempt, setLastCheckoutAttempt] = useState(0);
+
     useEffect(() =>
     {
         document.title = 'Kakusui | Pricing';
-    }, []);
+        checkLoginStatus();
+    }, [checkLoginStatus]);
+
+    const debouncedHandleBuyNow = useCallback(
+        debounce(async () =>
+        {
+            if (!isLoggedIn)
+            {
+                navigate('/home?openLoginModal=true&redirect=/pricing');
+                return;
+            }
+
+            setIsProcessing(true);
+            try
+            {
+                const stripe = await stripePromise;
+                if (!stripe)
+                {
+                    throw new Error('Stripe failed to load');
+                }
+
+                const response = await fetch(getURL('/stripe/create-checkout-session'), {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${localStorage.getItem('access_token')}`
+                    },
+                });
+
+                if (!response.ok)
+                {
+                    throw new Error('Failed to create checkout session');
+                }
+
+                const session = await response.json();
+
+                const result = await stripe.redirectToCheckout({
+                    sessionId: session.id
+                });
+
+                if (result.error)
+                {
+                    throw new Error(result.error.message);
+                }
+            }
+            catch (error)
+            {
+                console.error('Error creating checkout session:', error);
+                toast({
+                    title: 'Error',
+                    description: 'Failed to start checkout process. Please try again.',
+                    status: 'error',
+                    duration: 5000,
+                    isClosable: true,
+                });
+            }
+            finally
+            {
+                setIsProcessing(false);
+            }
+        }, 1000),
+        [isLoggedIn, navigate, toast]
+    );
+
+    const handleBuyNow = () =>
+    {
+        const now = Date.now();
+        if (now - lastCheckoutAttempt < 5000)
+        {
+            // If less than 5 seconds have passed since the last attempt, show a message
+            toast({
+                title: 'Please wait',
+                description: 'You can only initiate a checkout once every 5 seconds.',
+                status: 'warning',
+                duration: 3000,
+                isClosable: true,
+            });
+            return;
+        }
+
+        setLastCheckoutAttempt(now);
+        debouncedHandleBuyNow();
+    };
 
     return (
         <Box
@@ -75,7 +177,7 @@ function PricingPage()
                         </Heading>
                         
                         <Text fontSize="xl" textAlign="center">
-                            Coming Soon
+                            $5 for 50,000 credits
                         </Text>
                         
                         <List spacing={3}>
@@ -95,18 +197,28 @@ function PricingPage()
                                 <ListIcon as={CheckIcon} color="green.500" />
                                 Priority support
                             </ListItem>
+                            <ListItem>
+                                <ListIcon as={CheckIcon} color="green.500" />
+                                No Captchas
+                            </ListItem>
                         </List>
                         
                         <Button
+                            onClick={handleBuyNow}
                             colorScheme="orange"
                             size="lg"
-                            isDisabled={true}
+                            isLoading={isProcessing || isLoading}
+                            loadingText={isProcessing ? "Processing" : "Checking login"}
+                            spinner={<Spinner color="white" />}
+                            disabled={isProcessing || isLoading}
                         >
-                            Coming Soon
+                            {isProcessing ? 'Processing' : (isLoading ? 'Checking login' : (isLoggedIn ? 'Buy Now' : 'Login to Purchase'))}
                         </Button>
                         
                         <Text fontSize="sm" textAlign="center">
-                            Stay tuned for our upcoming pricing plans!
+                            <Link as={RouterLink} to="/pricing/credits" color="orange.300">
+                                Click here for a detailed credit cost breakdown by model
+                            </Link>
                         </Text>
                     </VStack>
                 </Box>

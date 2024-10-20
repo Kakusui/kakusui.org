@@ -26,6 +26,7 @@ import { DesktopNav, MobileNav, NAV_ITEMS } from './NavItems';
 import Login from './Login';
 
 import { useAuth } from '../contexts/AuthContext';
+import { Link as RouterLink } from 'react-router-dom';
 
 interface NavbarProps 
 {
@@ -35,7 +36,7 @@ interface NavbarProps
 export default function Navbar({ isHomePage }: NavbarProps) 
 {
     const { isOpen, onToggle } = useDisclosure();
-    const { isLoggedIn, userEmail, isLoading, isPrivilegedUser } = useAuth();
+    const { isLoggedIn, userEmail, credits, isPrivilegedUser, isLoading } = useAuth();
 
     const navItems = isPrivilegedUser ? [...NAV_ITEMS, { label: 'Admin', href: '/admin' }] : NAV_ITEMS;
 
@@ -88,7 +89,12 @@ export default function Navbar({ isHomePage }: NavbarProps)
                     </Flex>
                     <Flex align="center">
                         {!isLoading && isLoggedIn && userEmail && (
-                            <Text mr={4} fontSize="sm" fontWeight="medium" color="orange.400">{userEmail}</Text>
+                            <Flex align="center">
+                                <Text fontSize="sm" fontWeight="medium" mr={2}>{credits} Credits</Text>
+                                <Link as={RouterLink} to="/profile" fontSize="sm" fontWeight="medium" color="orange.400" mr={4}>
+                                    {userEmail}
+                                </Link>
+                            </Flex>
                         )}
                         <Login />
                     </Flex>

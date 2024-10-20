@@ -5,7 +5,6 @@
 ## build-in imports
 import typing
 import os
-import shutil
 import asyncio
 import aiofiles
 
@@ -15,16 +14,16 @@ from fastapi.responses import JSONResponse
 
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import SQLAlchemyError
-from sqlalchemy import text
+from sqlalchemy import text, select
 
 ## custom modules
 from email_util.backup import perform_backup, decrypt_file, decompress_file, replace_sqlite_db
 from email_util.common import send_email, get_smtp_envs
 
 from db.base import engine, get_db
-from db.models import EmailAlertModel
+from db.models import EmailAlertModel, User
 
-from auth.func import check_if_admin_user
+from auth.func import check_if_admin_user, get_current_user
 from auth.util import check_internal_request
 
 from constants import ENCRYPTION_KEY
@@ -38,8 +37,8 @@ router = APIRouter()
 
 @router.post("/admin/db/send-email")
 async def send_email_to_all(request: Request, email_request:EmailRequest, db: Session = Depends(get_db), is_admin:bool = Depends(check_if_admin_user)):
-    origin = request.headers.get('origin')
-    await check_internal_request(origin)
+
+    await check_internal_request(request)
 
     if(not is_admin):
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="You are not authorized to perform this action.")
@@ -86,9 +85,7 @@ async def force_backup(request:Request, db:Session = Depends(get_db), is_admin:b
 
     """
 
-    origin = request.headers.get('origin')
-
-    await check_internal_request(origin)
+    await check_internal_request(request)
 
     if(not is_admin):
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="You are not authorized to perform this action.")
@@ -115,9 +112,7 @@ async def upload_backup(request:Request, file: UploadFile = File(...), is_admin:
 
     """
 
-    origin = request.headers.get('origin')
-
-    await check_internal_request(origin)
+    await check_internal_request(request)
 
     if(not is_admin):
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="You are not authorized to perform this action.")
@@ -172,9 +167,7 @@ async def run_query(
     JSONResponse: The result of the query in JSON format or an error message
     """
 
-    origin = request.headers.get('origin')
-
-    await check_internal_request(origin)
+    await check_internal_request(request)
 
     if(not is_admin):
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="You are not authorized to perform this action.")
@@ -184,23 +177,28 @@ async def run_query(
         if(sql_query.lower() in ["force absolute reset"]):
 
             db.execute(text("DROP TABLE IF EXISTS users;"))
+
             db.execute(text("DROP TABLE IF EXISTS email_alerts;"))
 
             result = {"result": "Database reset successfully"}
 
         else:
-
+            
             if(sql_query.lower() in ["tables", "show tables"]):
                 sql_query = "SELECT name FROM sqlite_master WHERE type='table';"
 
             result = db.execute(text(sql_query))
-            columns = result.keys()
-            rows = [dict(zip(columns, row)) for row in result.fetchall()]
-
-            result = {"result": rows}
+            db.commit()
+            
+            if(result.returns_rows): # type: ignore
+                columns = result.keys()
+                rows = [dict(zip(columns, row)) for row in result.fetchall()]
+                result = {"result": rows}
+            else:
+                affected_rows = result.rowcount # type: ignore
+                result = {"result": f"Query executed successfully. Affected rows: {affected_rows}"}
 
         return JSONResponse(content=result)
-
 
     except ValueError as ve:
         return JSONResponse(
@@ -217,3 +215,49 @@ async def run_query(
             status_code=500,
             content={"error": f"Unexpected error: {str(e)}"}
         )
+
+@router.get("/user/info")
+async def get_user_info(
+    request: Request,
+    fields: typing.Optional[typing.List[str]] = None,
+    current_user: str = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """
+    Get information about the current logged-in user.
+    
+    Args:
+    request (Request): The incoming request
+    fields (Optional[List[str]]): List of fields to return. If None, returns all fields.
+    current_user (str): The email of the current logged-in user
+    db (Session): The database session
+
+    Returns:
+    dict: The user information
+    """
+    
+    await check_internal_request(request)
+
+    if(not current_user):
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authenticated")
+
+    try:
+        query = select(User)
+        if(fields):
+            query = select(*[getattr(User, field) for field in fields if hasattr(User, field)])
+        
+        user = db.execute(query.filter(User.email == current_user)).first()
+
+        if(not user):
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+
+        if(fields):
+            return {field: getattr(user[0], field) for field in fields if hasattr(User, field)}
+        else:
+            return {column.name: getattr(user[0], column.name) for column in User.__table__.columns}
+
+    except Exception as e:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"An error occurred: {str(e)}")
+
+    finally:
+        db.close()

@@ -5,17 +5,22 @@
 ## built-in imports
 import os
 import json
-import time
+import asyncio
 from datetime import datetime, timedelta
+import logging
+from pathlib import Path
 
 ## third-party imports
 import shelve
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from sqlalchemy.orm import Session
 
+## custom modules
+from auth.util import is_safe_filename
+
 ## custom imports
 from email_util.backup import perform_backup_scheduled
-from constants import BACKUP_LOGS_DIR, VERIFICATION_DATA_DIR, RATE_LIMIT_DATA_DIR, DATABASE_PATH
+from constants import BACKUP_LOGS_DIR, VERIFICATION_DATA_DIR, RATE_LIMIT_DATA_DIR
 
 async def start_scheduler(db:Session) -> AsyncIOScheduler:
     """
@@ -41,7 +46,7 @@ async def start_scheduler(db:Session) -> AsyncIOScheduler:
             break
         except Exception as e:
             if("Resource temporarily unavailable" in str(e)):
-                time.sleep(retry_delay)
+                await asyncio.sleep(retry_delay)
             else:
                 raise
     else:
@@ -74,19 +79,23 @@ async def cleanup_expired_codes() -> None:
     current_time = datetime.now()
 
     for filename in os.listdir(VERIFICATION_DATA_DIR):
-        file_path = os.path.join(VERIFICATION_DATA_DIR, filename)
+        if not await is_safe_filename(filename):
+            logging.warning(f"Skipping potentially unsafe filename: {filename}")
+            continue
+
+        file_path = Path(VERIFICATION_DATA_DIR) / filename
 
         try:
-            with open(file_path, 'r') as f:
+            with file_path.open('r') as f:
                 data = json.load(f)
             expiration_time = datetime.fromisoformat(data['expiration'])
 
             if(current_time > expiration_time):
-                os.remove(file_path)
-                print(f"Removed expired verification code for {filename}")
+                file_path.unlink()
+                logging.info(f"Removed expired verification code file")
 
         except Exception as e:
-            print(f"Error processing {filename}: {str(e)}")
+            logging.error(f"Error processing verification file: {str(e)}")
 
     if(not os.path.exists(RATE_LIMIT_DATA_DIR)):
         return
@@ -101,7 +110,7 @@ async def cleanup_expired_codes() -> None:
 
             if(blocked_until and current_time.timestamp() > blocked_until):
                 os.remove(file_path)
-                print(f"Removed expired rate limit file for {filename}")
+                logging.info(f"Removed expired rate limit file for {filename}")
 
         except Exception as e:
-            print(f"Error processing {filename}: {str(e)}")
+            logging.error(f"Error processing {filename}: {str(e)}")

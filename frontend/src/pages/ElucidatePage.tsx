@@ -26,8 +26,10 @@ import {
   Box,
   Flex,
   Text,
-  Collapse
+  Collapse,
 } from "@chakra-ui/react";
+
+import Cookies from 'js-cookie';
 
 import { ViewIcon, ViewOffIcon, ChevronDownIcon, ChevronUpIcon, ArrowUpDownIcon } from "@chakra-ui/icons";
 
@@ -37,7 +39,7 @@ import CopyButton from "../components/CopyButton";
 import DownloadButton from "../components/DownloadButton";
 import HowToUseSection from "../components/HowToUseSection";
 import LegalLinks from "../components/LegalLinks";
-import { getURL } from "../utils";
+import { getURL, encryptWithAccessToken, decryptWithAccessToken } from "../utils";
 
 type FormInput = 
 {
@@ -90,6 +92,7 @@ Evaluation Instructions:
   const [modelOptions, setModelOptions] = useState<string[]>([]);
   const [isAdvancedSettingsVisible, setAdvancedSettingsVisible] = useState(false);
   const toast = useToast();
+  const access_token = localStorage.getItem('access_token');
 
   useEffect(() => 
   {
@@ -142,13 +145,31 @@ Evaluation Instructions:
 
     const updateApiKey = () => 
     {
-      const savedApiKey = localStorage.getItem(`elucidate_${selectedLLM}_apiKey`);
-      setValue("userAPIKey", savedApiKey || "");
+      if (!access_token) return;
+
+      const encryptedApiKey = Cookies.get(`elucidate_${selectedLLM.toLowerCase()}_apiKey`);
+      if (encryptedApiKey) 
+      {
+        try 
+        {
+          const decryptedApiKey = decryptWithAccessToken(encryptedApiKey, access_token);
+          setValue("userAPIKey", decryptedApiKey);
+        } 
+        catch (error) 
+        {
+          console.error("Failed to decrypt API key:", error);
+          Cookies.remove(`elucidate_${selectedLLM.toLowerCase()}_apiKey`);
+        }
+      } 
+      else 
+      {
+        setValue("userAPIKey", "");
+      }
     };
 
     updateModelOptions();
     updateApiKey();
-  }, [selectedLLM, setValue]);
+  }, [selectedLLM, setValue, access_token]);
 
   useEffect(() => {
     if (selectedInstructionPreset === "minimal") 
@@ -293,6 +314,14 @@ Evaluation Instructions:
       if (!response.ok) throw new Error(result.message || "An unknown error occurred");
 
       setResponse(result);
+
+      if (access_token) {
+        const encryptedApiKey = encryptWithAccessToken(data.userAPIKey, access_token);
+        Cookies.set(`elucidate_${data.llmType.toLowerCase()}_apiKey`, encryptedApiKey, { 
+          secure: true,
+          sameSite: 'strict'
+        });
+      }
     } 
     catch (error) 
     {
@@ -327,6 +356,7 @@ Evaluation Instructions:
   };
 
   const memoizedTurnstile = useMemo(() =>
+    // Meant for client side code
     <Turnstile siteKey="0x4AAAAAAAbu-SlGyNF03684" onVerify={setTurnstileToken} resetKey={resetTurnstile} />
     , [resetTurnstile]);
 
