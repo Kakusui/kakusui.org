@@ -3,75 +3,41 @@
 ## license that can be found in the LICENSE file.
 
 ## built-in imports
-import os
-import asyncio
-import aiofiles
-import json
 import string
 import secrets
-from pathlib import Path
-
 from datetime import datetime, timedelta
 
 ## custom modules
-from constants import VERIFICATION_EXPIRATION_MINUTES, VERIFICATION_DATA_DIR
-
+from constants import VERIFICATION_EXPIRATION_MINUTES
 from email_util.common import send_email, get_smtp_envs
-
-from auth.util import get_secure_filename
+from main import verification_data, verification_lock
 
 def generate_verification_code() -> str:
     return ''.join(secrets.choice(string.digits) for _ in range(6))
 
-async def save_verification_data(email:str, code:str) -> None:
+async def save_verification_data(email: str, code: str) -> None:
     expiration_time = datetime.now() + timedelta(minutes=VERIFICATION_EXPIRATION_MINUTES)
     data = {
         "code": code,
-        "expiration": expiration_time.isoformat()
+        "expiration": expiration_time.isoformat(),
+        "attempts": 0
     }
     
-    if(not os.path.exists(VERIFICATION_DATA_DIR)):
-        await asyncio.to_thread(os.makedirs, VERIFICATION_DATA_DIR)
+    async with verification_lock:
+        verification_data[email] = data
 
-    secure_email = await get_secure_filename(email)
-    file_path = Path(VERIFICATION_DATA_DIR) / f"{secure_email}.json"
-    file_path = file_path.resolve()
+async def get_verification_data(email: str) -> dict | None:
+    async with verification_lock:
+        return verification_data.get(email)
 
-    async with aiofiles.open(file_path, "w") as f:
-        await f.write(json.dumps(data))
+async def remove_verification_data(email: str) -> None:
+    async with verification_lock:
+        verification_data.pop(email, None)
 
-async def get_verification_data(email:str) -> dict | None:
-    try:
-        secure_email = await get_secure_filename(email)
-        file_path = Path(VERIFICATION_DATA_DIR) / f"{secure_email}.json"
-        file_path = file_path.resolve()
-
-        async with aiofiles.open(file_path, "r") as f:
-            data = json.loads(await f.read())
-        return data
-    
-    except FileNotFoundError:
-        return None
-
-async def remove_verification_data(email:str) -> None:
-    try:
-        secure_email = await get_secure_filename(email)
-        file_path = Path(VERIFICATION_DATA_DIR) / f"{secure_email}.json"
-        file_path = file_path.resolve()
-
-        ## Securely overwrite the file before deletion
-        async with aiofiles.open(file_path, "wb") as f:
-            await f.write(os.urandom(1024))
-
-        await asyncio.to_thread(os.remove, file_path)
-
-    except FileNotFoundError:
-        pass
-
-async def send_verification_email(email:str, code:str) -> None:
+async def send_verification_email(email: str, code: str) -> None:
     _, SMTP_SERVER, SMTP_PORT, SMTP_USER, SMTP_PASSWORD, FROM_EMAIL, _ = await get_smtp_envs()
 
     subject = "Email Verification Code for https://kakusui.org"
-    body = f"Your verification code is {code}. Note that this code will expire in {VERIFICATION_EXPIRATION_MINUTES} minutes. Do not share this code with others, No one from Kakusui LLC will ask you for this code."
+    body = f"Your verification code is {code}. Note that this code will expire in {VERIFICATION_EXPIRATION_MINUTES} minutes. Do not share this code with others. No one from Kakusui LLC will ask you for this code."
 
     await send_email(subject=subject, body=body, to_email=email, attachment_path=None, from_email=FROM_EMAIL, smtp_server=SMTP_SERVER, smtp_port=SMTP_PORT, smtp_user=SMTP_USER, smtp_password=SMTP_PASSWORD)

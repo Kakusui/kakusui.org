@@ -4,10 +4,7 @@
 
 ## built-in imports
 import typing
-import os
-import json
 import string
-import asyncio
 import secrets
 from hmac import compare_digest
 
@@ -23,9 +20,9 @@ from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 
 ## custom imports
-from routes.models import TokenData
+from main import verification_data, verification_lock
 
-from auth.util import get_secure_filename
+from routes.models import TokenData
 
 from email_util.common import send_email, get_smtp_envs
 
@@ -34,7 +31,6 @@ from constants import (
     REFRESH_TOKEN_SECRET,
     TOKEN_ALGORITHM,
     ADMIN_USER,
-    VERIFICATION_DATA_DIR,
     VERIFICATION_EXPIRATION_MINUTES,
     OPENAI_API_KEY,
     ANTHROPIC_API_KEY,
@@ -218,7 +214,7 @@ async def check_if_admin_user(current_user:str = Depends(get_current_user)):
 async def generate_verification_code() -> str:
     return ''.join(secrets.choice(string.digits) for _ in range(6))
 
-async def save_verification_data(email:str, code:str, existing_data:dict | None = None) -> None:
+async def save_verification_data(email: str, code: str, existing_data: dict | None = None) -> None:
     if(existing_data is None):
         expiration_time = datetime.now() + timedelta(minutes=VERIFICATION_EXPIRATION_MINUTES)
         data = {
@@ -229,39 +225,17 @@ async def save_verification_data(email:str, code:str, existing_data:dict | None 
     else:
         data = existing_data
         data["code"] = code
-    
-    if(not os.path.exists(VERIFICATION_DATA_DIR)):
-        await asyncio.to_thread(os.makedirs, VERIFICATION_DATA_DIR)
 
-    secure_email = await get_secure_filename(email)
+    async with verification_lock:
+        verification_data[email] = data
 
-    async with asyncio.Lock():
-        def write_data():
-            with open(f"{VERIFICATION_DATA_DIR}/{secure_email}.json", "w") as f:
-                json.dump(data, f)
-        
-        await asyncio.to_thread(write_data)
+async def get_verification_data(email: str) -> dict | None:
+    async with verification_lock:
+        return verification_data.get(email)
 
-async def get_verification_data(email:str) -> dict | None:
-    try:
-        secure_email = await get_secure_filename(email)
-        async with asyncio.Lock():
-            data = await asyncio.to_thread(
-                lambda: json.load(
-                    open(f"{VERIFICATION_DATA_DIR}/{secure_email}.json", "r")
-                )
-            )
-        return data
-    except FileNotFoundError:
-        return None
-
-async def remove_verification_data(email:str) -> None:
-    try:
-        secure_email = await get_secure_filename(email)
-        async with asyncio.Lock():
-            await asyncio.to_thread(os.remove, f"{VERIFICATION_DATA_DIR}/{secure_email}.json")
-    except FileNotFoundError:
-        pass
+async def remove_verification_data(email: str) -> None:
+    async with verification_lock:
+        verification_data.pop(email, None)
 
 async def send_verification_email(email:EmailStr, code:str) -> None:
     _, SMTP_SERVER, SMTP_PORT, SMTP_USER, SMTP_PASSWORD, FROM_EMAIL, _ = await get_smtp_envs()
@@ -290,3 +264,12 @@ async def get_admin_api_key(llm_type:str) -> str | None:
         return GEMINI_API_KEY
     else:
         return None
+
+async def cleanup_expired_verification_data():
+    current_time = datetime.now()
+    async with verification_lock:
+        for email in list(verification_data.keys()):
+            data = verification_data[email]
+            expiration_time = datetime.fromisoformat(data["expiration"])
+            if current_time > expiration_time:
+                del verification_data[email]
