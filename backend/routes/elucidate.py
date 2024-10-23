@@ -3,7 +3,7 @@
 ## license that can be found in the LICENSE file.
 
 ## third-party imports
-from fastapi import APIRouter, Request, status
+from fastapi import APIRouter, Request, status, Depends
 from fastapi.responses import JSONResponse
 
 from elucidate import Elucidate, __version__ as ELUCIDATE_VERSION
@@ -11,6 +11,10 @@ from elucidate import Elucidate, __version__ as ELUCIDATE_VERSION
 from easytl import EasyTL
 
 import httpx
+from sqlalchemy.orm import Session
+from sqlalchemy import update
+from db.base import get_db
+from db.models import EndpointStats
 
 ## custom imports
 from routes.models import ElucidateRequest
@@ -24,7 +28,7 @@ from util import get_backend_url
 router = APIRouter()
 
 @router.post("/v1/elucidate")
-async def elucidate(request_data:ElucidateRequest, request:Request):
+async def elucidate(request_data:ElucidateRequest, request:Request, db: Session = Depends(get_db)):
     text_to_evaluate = request_data.textToEvaluate
     evaluation_instructions = request_data.evaluationInstructions
     llm_type = request_data.llmType.lower()
@@ -73,6 +77,10 @@ async def elucidate(request_data:ElucidateRequest, request:Request):
 
     except:
         return JSONResponse(**ERRORS["invalid_user_api_key"])
+    
+    ## Update endpoint stats
+    db.execute(update(EndpointStats).where(EndpointStats.endpoint == "Elucidate").values(count=EndpointStats.count + 1))
+    db.commit()
 
     try:
 

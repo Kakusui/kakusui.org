@@ -10,11 +10,15 @@ from constants import *
 import logging
 import os
 import threading
+import asyncio
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
 maintenance_mode = False
 maintenance_lock = threading.Lock()
+
+verification_data = {}
+verification_lock = asyncio.Lock()
 
 ## third-party libraries
 from fastapi import FastAPI, Request
@@ -140,9 +144,3 @@ app.include_router(email_router)
 async def startup_event():
     db = SessionLocal()
     app.state.scheduler = await start_scheduler(db)
-
-@app.on_event("shutdown")
-async def shutdown_event():
-    scheduler = app.state.scheduler
-    if(scheduler):
-        scheduler.shutdown(wait=False)

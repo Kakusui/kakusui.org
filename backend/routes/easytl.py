@@ -25,7 +25,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy import update
 
 from db.base import get_db
-from db.models import User
+from db.models import User, EndpointStats
 
 router = APIRouter()
 
@@ -124,6 +124,11 @@ async def easytl(request_data:EasyTLRequest, request:Request, is_admin:bool = De
 
     except:
         return JSONResponse(**ERRORS["invalid_user_api_key"])
+    
+    ## Update endpoint stats if not an admin user, cause it'll be me lol
+    if(not is_admin):
+        db.execute(update(EndpointStats).where(EndpointStats.endpoint == "EasyTL").values(count=EndpointStats.count + 1))
+        db.commit()
 
     try:
         if(model in unsophisticated_models_whitelist):

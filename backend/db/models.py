@@ -25,3 +25,10 @@ class User(Base):
     email = Column(String, unique=True, index=True)
     credits = Column(Integer, default=0)
     is_active = Column(Boolean, default=True)
+
+class EndpointStats(Base):
+    __tablename__ = "endpoint_stats"
+    id = Column(modelUUID(as_uuid=True), primary_key=True, index=True, default=uuid4)
+    endpoint = Column(String, index=True)
+    count = Column(Integer, default=0)
+

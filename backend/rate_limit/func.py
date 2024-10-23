@@ -3,10 +3,7 @@
 ## license that can be found in the LICENSE file.
 
 ## built-in imports
-import os
-import json
 import time
-import aiofiles
 import asyncio
 import logging
 
@@ -14,67 +11,36 @@ import logging
 from fastapi import HTTPException, status
 
 ## custom imports
-from constants import RATE_LIMIT_DATA_DIR, MAX_REQUESTS_PER_EMAIL, MAX_REQUESTS_PER_ID, RATE_LIMIT_WINDOW
+from constants import MAX_REQUESTS_PER_EMAIL, MAX_REQUESTS_PER_ID, RATE_LIMIT_WINDOW
 
-from auth.util import get_secure_path
+# In-memory storage for rate limit data
+rate_limit_data = {}
+rate_limit_lock = asyncio.Lock()
 
-async def cleanup_old_rate_limit_files():
+async def cleanup_old_rate_limit_data():
     current_time = time.time()
-    for filename in os.listdir(RATE_LIMIT_DATA_DIR):
-        file_path = os.path.join(RATE_LIMIT_DATA_DIR, filename)
-        if(os.path.isfile(file_path)):
-            file_mod_time = os.path.getmtime(file_path)
-            if(current_time - file_mod_time > RATE_LIMIT_WINDOW * 2):  ## Remove files older than twice the rate limit window
-                try:
-                    await asyncio.to_thread(os.remove, file_path)
-                except Exception as e:
-                    logging.error(f"Error removing old rate limit file {file_path}: {e}")
-
+    removed_count = 0
+    async with rate_limit_lock:
+        for key in list(rate_limit_data.keys()):
+            if(current_time - rate_limit_data[key]['last_update'] > RATE_LIMIT_WINDOW * 2):
+                del rate_limit_data[key]
+                removed_count += 1
+    logging.info(f"Cleaned up {removed_count} expired rate limit entries")
 
 async def rate_limit(email: str, id: str) -> None:
-    if(not os.path.exists(RATE_LIMIT_DATA_DIR)):
-        await asyncio.to_thread(os.makedirs, RATE_LIMIT_DATA_DIR)
+    async with rate_limit_lock:
+        await check_and_update_rate_limit(f"email_{email}", MAX_REQUESTS_PER_EMAIL)
+        await check_and_update_rate_limit(f"id_{id}", MAX_REQUESTS_PER_ID)
 
-    async with asyncio.Lock(): 
-        email_data = await load_rate_limit_data(email, is_email=True)
-        await check_and_update_rate_limit(email_data, MAX_REQUESTS_PER_EMAIL)
-
-        id_data = await load_rate_limit_data(id, is_email=False)
-        await check_and_update_rate_limit(id_data, MAX_REQUESTS_PER_ID)
-
-        await save_rate_limit_data(email, is_email=True, data=email_data)
-        await save_rate_limit_data(id, is_email=False, data=id_data)
-
-
-async def load_rate_limit_data(email_or_id:str, is_email:bool) -> dict:
-    directory = RATE_LIMIT_DATA_DIR
-    prefix = "email_" if is_email else "id_"
-    filename = f"{prefix}{email_or_id}.json"
-    file_path = await get_secure_path(directory, filename)
-
-    try:
-        async with aiofiles.open(file_path, 'r') as f:
-            return json.loads(await f.read())
-        
-    except FileNotFoundError:
-        return {"requests": [], "blocked_until": None}
-
-
-async def save_rate_limit_data(email_or_id:str, is_email:bool, data:dict) -> None:
-
-    directory = RATE_LIMIT_DATA_DIR
-    prefix = "email_" if is_email else "id_"
-    filename = f"{prefix}{email_or_id}.json"
-    file_path = await get_secure_path(directory, filename)
-
-    async with aiofiles.open(file_path, 'w') as f:
-        json.dump(data, f)
-
-
-async def check_and_update_rate_limit(data:dict, max_requests:int) -> None:
+async def check_and_update_rate_limit(key: str, max_requests: int) -> None:
     current_time = time.time()
 
+    if(key not in rate_limit_data):
+        rate_limit_data[key] = {"requests": [], "blocked_until": None, "last_update": current_time}
+
+    data = rate_limit_data[key]
     data['requests'] = [req for req in data['requests'] if current_time - req < RATE_LIMIT_WINDOW]
+    data['last_update'] = current_time
 
     if(data['blocked_until'] and current_time < data['blocked_until']):
         raise HTTPException(status_code=status.HTTP_429_TOO_MANY_REQUESTS, 
@@ -86,8 +52,3 @@ async def check_and_update_rate_limit(data:dict, max_requests:int) -> None:
                             detail="Rate limit exceeded. Please try again later.")
 
     data['requests'].append(current_time)
-
-async def periodic_cleanup():
-    while True:
-        await asyncio.sleep(RATE_LIMIT_WINDOW)
-        await asyncio.to_thread(cleanup_old_rate_limit_files)
