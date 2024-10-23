@@ -25,6 +25,7 @@ type TurnstileProps =
 const Turnstile: React.FC<TurnstileProps> = ({ siteKey, onVerify, resetKey }) => 
 {
     const turnstileRef = useRef<HTMLDivElement>(null);
+    const widgetId = useRef<number>();
 
     useEffect(() => 
     {
@@ -48,7 +49,8 @@ const Turnstile: React.FC<TurnstileProps> = ({ siteKey, onVerify, resetKey }) =>
         {
             if (turnstileRef.current) 
             {
-                window.turnstile.render(turnstileRef.current, 
+                // Store the widget ID for cleanup
+                widgetId.current = window.turnstile.render(turnstileRef.current, 
                 {
                     sitekey: siteKey,
                     callback: (token: string) => 
@@ -60,13 +62,20 @@ const Turnstile: React.FC<TurnstileProps> = ({ siteKey, onVerify, resetKey }) =>
         };
 
         loadTurnstile();
+
+        // Cleanup function
+        return () => {
+            if (widgetId.current !== undefined) {
+                window.turnstile.remove(widgetId.current);
+            }
+        };
     }, [siteKey, onVerify]);
 
     useEffect(() => 
     {
-        if (resetKey && turnstileRef.current) 
+        if (resetKey && widgetId.current !== undefined) 
         {
-            window.turnstile.reset(turnstileRef.current);
+            window.turnstile.reset(widgetId.current);
         }
     }, [resetKey]);
 
