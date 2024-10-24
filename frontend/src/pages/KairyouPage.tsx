@@ -184,9 +184,8 @@ function KairyouPage()
     };
 
     const memoizedTurnstile = useMemo(() => 
-    (
         <Turnstile siteKey="0x4AAAAAAAbu-SlGyNF03684" onVerify={onTurnstileVerify} resetKey={resetTurnstile} />
-    ), [resetTurnstile]);
+    , [resetTurnstile]);
 
     return (
         <>
