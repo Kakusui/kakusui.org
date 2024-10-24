@@ -128,7 +128,7 @@ For production, the backend is hosted on fly.io via a dockerfile.
 
 #### To deploy to fly.io
 1. Make sure you have the fly cli installed and are logged in.
-2. Run `fly deploy` in the root directory. This will build the dockerfile and deploy it to fly.io.
+2. Run `fly deploy` in the backend directory `cd backend`. This will build the dockerfile and deploy it to fly.io.
 
 --------------------------------------------------------------------------------------------------------------------------------------------------
 

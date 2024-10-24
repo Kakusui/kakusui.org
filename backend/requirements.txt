@@ -16,3 +16,4 @@ python-multipart==0.0.9
 werkzeug==3.0.4
 stripe==10.12.0
 pydantic[email]
+filelock

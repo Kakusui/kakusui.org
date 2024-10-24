@@ -8,6 +8,7 @@ from datetime import datetime, timedelta
 ## third-party imports
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from sqlalchemy.orm import Session
+from filelock import FileLock, Timeout
 
 ## custom imports
 from email_util.backup import perform_backup_scheduled
@@ -16,6 +17,9 @@ from rate_limit.func import cleanup_old_rate_limit_data
 
 ## In-memory storage
 last_backup_run = None
+LOCK_FILE = "scheduler_lock.lock"
+
+lock = FileLock(LOCK_FILE, timeout=1)  # 1 second timeout
 
 async def start_scheduler(db:Session) -> AsyncIOScheduler:
     """
@@ -33,10 +37,14 @@ async def start_scheduler(db:Session) -> AsyncIOScheduler:
             should_run_initial = False
 
     if(should_run_initial):
-        await cleanup_expired_verification_data()
-        await cleanup_old_rate_limit_data()
-        await perform_backup_scheduled(db)
-        last_backup_run = datetime.now()
+        try:
+            with lock:
+                await cleanup_expired_verification_data()
+                await cleanup_old_rate_limit_data()
+                await perform_backup_scheduled(db)
+                last_backup_run = datetime.now()
+        except Timeout:
+            print("Another instance is already running the initial tasks.")
 
     scheduler = AsyncIOScheduler()
 
@@ -56,5 +64,9 @@ async def perform_backup_and_update_time(db:Session) -> None:
     db (Session): The database session
     """
     global last_backup_run
-    await perform_backup_scheduled(db)
-    last_backup_run = datetime.now()
+    try:
+        with lock:
+            await perform_backup_scheduled(db)
+            last_backup_run = datetime.now()
+    except Timeout:
+        print("Another instance is already performing the backup.")
