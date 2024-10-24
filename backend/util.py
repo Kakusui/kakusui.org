@@ -3,6 +3,7 @@
 ## license that can be found in the LICENSE file.
 
 from constants import ENVIRONMENT
+from datetime import datetime, timedelta
 
 async def get_backend_url() -> str:
 
@@ -25,3 +26,18 @@ async def get_frontend_url() -> str:
         return "http://localhost:5173"
     
     return "https://kakusui.org"
+
+class KairyouCache:
+    _last_used: datetime | None = None
+    
+    @classmethod
+    def update_last_used(cls):
+        cls._last_used = datetime.now()
+    
+    @classmethod
+    def should_save_memory(cls) -> bool:
+        if cls._last_used is None:
+            return True
+        
+        time_since_last_use = datetime.now() - cls._last_used
+        return time_since_last_use > timedelta(seconds=30)
