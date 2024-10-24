@@ -1,5 +1,5 @@
 fastapi==0.110.3
-kairyou==1.6.5
+kairyou==1.6.6
 uvicorn==0.30.0
 easytl==0.4.9
 aiofiles==23.2.1
@@ -16,3 +16,4 @@ python-multipart==0.0.9
 werkzeug==3.0.4
 stripe==10.12.0
 pydantic[email]
+filelock

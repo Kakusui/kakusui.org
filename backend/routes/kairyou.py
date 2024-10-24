@@ -21,7 +21,7 @@ from constants import V1_KAIRYOU_ROOT_KEY
 
 from auth.util import check_internal_request
 
-from util import get_backend_url
+from util import get_backend_url, KairyouCache
 
 from sqlalchemy.orm import Session
 from sqlalchemy import update
@@ -60,8 +60,16 @@ async def kairyou(request_data:KairyouRequest, request:Request, db: Session = De
     try:
         replacements_json = await asyncio.to_thread(json.loads, replacements_json)
 
-        preprocessed_text, preprocessing_log, error_log = await asyncio.to_thread(Kairyou.preprocess, text_to_preprocess, replacements_json)
+        should_save_memory = KairyouCache.should_save_memory()
+        
+        preprocessed_text, preprocessing_log, error_log = await asyncio.to_thread(
+            Kairyou.preprocess, 
+            text_to_preprocess, 
+            replacements_json, 
+            should_save_memory
+        )
 
+        KairyouCache.update_last_used()
 
         return JSONResponse(
             status_code=status.HTTP_200_OK,
@@ -76,7 +84,7 @@ async def kairyou(request_data:KairyouRequest, request:Request, db: Session = De
         return JSONResponse(
             status_code=status.HTTP_400_BAD_REQUEST,
             content={
-                "message": "You have an invalid replacement json file. Please see https://github.com/Bikatr7/Kairyou?tab=readme-ov-file#kairyou for usage."
+                "message": "You have an invalid replacement json file. Please see https://github.com/Bikatr7/Kairyou?tab=readme-ov-file#kairyou for what the replacement json file should look like."
             }
         )
 
