@@ -43,6 +43,7 @@ from routes.turnstile import router as turnstile_router
 from routes.db import router as db_router
 from routes.financial import router as financial_router
 from routes.email import router as email_router
+from routes.personal import router as personal_router
 
 ##-----------------------------------------start-of-main----------------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -138,6 +139,7 @@ app.include_router(elucidate_router)
 app.include_router(turnstile_router)
 app.include_router(db_router)
 app.include_router(financial_router)
+app.include_router(personal_router)
 app.include_router(email_router)
 
 @app.on_event("startup")
