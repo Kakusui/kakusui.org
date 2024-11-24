@@ -4,8 +4,9 @@
 
 ## third-party imports
 from fastapi import APIRouter, Request, status, Depends
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, StreamingResponse
 import logging
+import json
 
 from easytl import EasyTL
 
@@ -47,6 +48,30 @@ MODEL_COSTS = {
     'claude-3-opus-20240229': 1.660
 }
 
+MAX_TEXT_LENGTH = 100000
+MAX_INSTRUCTIONS_LENGTH = 5000
+VALID_LLM_TYPES = ["anthropic", "openai", "gemini"]
+
+ERRORS = {
+    "invalid_api_key": {"status_code": status.HTTP_401_UNAUTHORIZED, "content": {"message": "Invalid endpoint API key. If you are actually interested in using this endpoint, please contact us at contact@kakusui.org."}},
+    "text_too_long": {"status_code": status.HTTP_400_BAD_REQUEST, "content": {"message": "The text to translate is too long. Please keep it under 10,000 characters."}},
+    "instructions_too_long": {"status_code": status.HTTP_400_BAD_REQUEST, "content": {"message": "The translation instructions are too long. Please keep it under 1,000 characters."}},
+    "invalid_llm_type": {"status_code": status.HTTP_400_BAD_REQUEST, "content": {"message": "Invalid LLM type. Please use 'anthropic', 'openai', or 'gemini'."}},
+    "invalid_user_api_key": {"status_code": status.HTTP_401_UNAUTHORIZED, "content": {"message": "Invalid user API key. Please check your credentials."}},
+    "internal_error": {"status_code": status.HTTP_500_INTERNAL_SERVER_ERROR, "content": {"message": "An internal error occurred. Please try again later."}},
+    "not_enough_credits": {"status_code": status.HTTP_400_BAD_REQUEST, "content": {"message": "Not enough credits. Please top up your credits."}},
+    "invalid_user": {"status_code": status.HTTP_400_BAD_REQUEST, "content": {"message": "Invalid user."}}
+}
+
+## these models don't listen to translation instructions well, so we need to do something different
+## what we do is put the instructions in the text to translate
+unsophisticated_models_whitelist = [
+    "gpt-3.5-turbo",
+    "claude-3-haiku-20240307", 
+    "claude-3-sonnet-20240229", 
+    "claude-3-opus-20240229"
+]
+
 @router.post("/v1/easytl")
 async def easytl(request_data:EasyTLRequest, request:Request, is_admin:bool = Depends(check_if_admin_user), db: Session = Depends(get_db), current_user: str = Depends(get_current_user)):
 
@@ -60,30 +85,6 @@ async def easytl(request_data:EasyTLRequest, request:Request, is_admin:bool = De
     admin_api_key = await get_admin_api_key(llm_type)
 
     api_key = request.headers.get("X-API-Key")
-
-    MAX_TEXT_LENGTH = 100000
-    MAX_INSTRUCTIONS_LENGTH = 5000
-    VALID_LLM_TYPES = ["anthropic", "openai", "gemini"]
-
-    ERRORS = {
-        "invalid_api_key": {"status_code": status.HTTP_401_UNAUTHORIZED, "content": {"message": "Invalid endpoint API key. If you are actually interested in using this endpoint, please contact us at contact@kakusui.org."}},
-        "text_too_long": {"status_code": status.HTTP_400_BAD_REQUEST, "content": {"message": "The text to translate is too long. Please keep it under 10,000 characters."}},
-        "instructions_too_long": {"status_code": status.HTTP_400_BAD_REQUEST, "content": {"message": "The translation instructions are too long. Please keep it under 1,000 characters."}},
-        "invalid_llm_type": {"status_code": status.HTTP_400_BAD_REQUEST, "content": {"message": "Invalid LLM type. Please use 'anthropic', 'openai', or 'gemini'."}},
-        "invalid_user_api_key": {"status_code": status.HTTP_401_UNAUTHORIZED, "content": {"message": "Invalid user API key. Please check your credentials."}},
-        "internal_error": {"status_code": status.HTTP_500_INTERNAL_SERVER_ERROR, "content": {"message": "An internal error occurred. Please try again later."}},
-        "not_enough_credits": {"status_code": status.HTTP_400_BAD_REQUEST, "content": {"message": "Not enough credits. Please top up your credits."}},
-        "invalid_user": {"status_code": status.HTTP_400_BAD_REQUEST, "content": {"message": "Invalid user."}}
-    }
-
-    ## these models don't listen to translation instructions well, so we need to do something different
-    ## what we do is put the instructions in the text to translate
-    unsophisticated_models_whitelist = [
-        "gpt-3.5-turbo",
-        "claude-3-haiku-20240307", 
-        "claude-3-sonnet-20240229", 
-        "claude-3-opus-20240229"
-    ]
 
     if(api_key not in [V1_EASYTL_ROOT_KEY, V1_EASYTL_PUBLIC_API_KEY] and not is_admin):
         return JSONResponse(**ERRORS["invalid_api_key"])
@@ -202,3 +203,133 @@ async def proxy_easytl(request_data:EasyTLRequest, request:Request):
         response = await client.post(f"{await get_backend_url()}/v1/easytl", json=request_data.model_dump(), headers=headers)
 
         return JSONResponse(status_code=response.status_code, content=response.json())
+    
+@router.post("/proxy/easytl/stream")
+async def proxy_easytl_stream(request_data:EasyTLRequest, request:Request):
+    await check_internal_request(request)
+
+    async with httpx.AsyncClient(timeout=None) as client:
+        headers = {
+            "Content-Type": "application/json",
+            "X-API-Key": V1_EASYTL_ROOT_KEY,
+            "Authorization": request.headers.get("Authorization")
+        }
+        
+        async with client.stream('POST', f"{await get_backend_url()}/v1/easytl/stream", 
+                               json=request_data.model_dump(), 
+                               headers=headers) as response:
+            return StreamingResponse(
+                response.aiter_text(),
+                media_type="text/event-stream",
+                status_code=response.status_code
+            )
+
+@router.post("/v1/easytl/stream")
+async def easytl_stream(request_data:EasyTLRequest, request:Request, is_admin:bool = Depends(check_if_admin_user), db: Session = Depends(get_db), current_user: str = Depends(get_current_user)):
+    text_to_translate = request_data.textToTranslate
+    translation_instructions = request_data.translationInstructions
+    llm_type = request_data.llmType.lower()
+    user_api_key = request_data.userAPIKey
+    model = request_data.model
+    using_credits = request_data.using_credits
+
+    admin_api_key = await get_admin_api_key(llm_type)
+
+    api_key = request.headers.get("X-API-Key")
+
+    if(api_key not in [V1_EASYTL_ROOT_KEY, V1_EASYTL_PUBLIC_API_KEY] and not is_admin):
+        return JSONResponse(**ERRORS["invalid_api_key"])
+
+    if(len(text_to_translate) > MAX_TEXT_LENGTH):
+        return JSONResponse(**ERRORS["text_too_long"])
+    
+    if(len(translation_instructions) > MAX_INSTRUCTIONS_LENGTH):
+        return JSONResponse(**ERRORS["instructions_too_long"])
+        
+    if(llm_type not in VALID_LLM_TYPES):
+        return JSONResponse(**ERRORS["invalid_llm_type"])
+
+    user = None
+    if(using_credits):
+        user_api_key = admin_api_key
+        number_of_characters = len(text_to_translate) + len(translation_instructions)
+        user = db.query(User).filter(User.email == current_user).first()
+        if(not user):
+            return JSONResponse(**ERRORS["invalid_user"])
+        
+        number_of_credits = user.credits
+        if(number_of_credits < number_of_characters): ## type: ignore (IT'S FUCKING LYING)
+            return JSONResponse(**ERRORS["not_enough_credits"])
+
+    async def generate():
+        try:
+            if(is_admin):
+                EasyTL.set_credentials(api_type=llm_type, credentials=admin_api_key) # type: ignore
+            else:
+                EasyTL.set_credentials(api_type=llm_type, credentials=user_api_key) # type: ignore
+            
+            EasyTL.test_credentials(api_type=llm_type) # type: ignore
+
+            if(model in unsophisticated_models_whitelist):
+                text_to_translate_modified = f"{translation_instructions}\n{text_to_translate}"
+                translation_instructions_modified = "Your instructions are in the other text."
+            else:
+                text_to_translate_modified = text_to_translate
+                translation_instructions_modified = translation_instructions
+
+            total_chars = len(text_to_translate) + len(translation_instructions)
+            if(model not in MODEL_COSTS):
+                yield f"data: {json.dumps({'error': 'Invalid model'})}\n\n"
+                return
+            
+            cost = total_chars * MODEL_COSTS.get(model) # type: ignore
+
+            stream = None
+            if llm_type == "openai":
+                stream = await EasyTL.openai_translate_async(
+                    text=text_to_translate_modified,
+                    translation_instructions=translation_instructions_modified,
+                    model=model,
+                    stream=True
+                )
+                async for chunk in stream: # type: ignore
+                    if hasattr(chunk.choices[0].delta, 'content') and chunk.choices[0].delta.content:
+                        yield f"data: {json.dumps({'text': chunk.choices[0].delta.content})}\n\n"
+
+            elif llm_type == "anthropic":
+                stream = await EasyTL.anthropic_translate_async(
+                    text=text_to_translate_modified,
+                    translation_instructions=translation_instructions_modified,
+                    model=model,
+                    stream=True
+                )
+                async for event in stream: # type: ignore
+                    if event.type == "content_block_delta" and hasattr(event.delta, 'text'):
+                        yield f"data: {json.dumps({'text': event.delta.text})}\n\n"
+
+            elif llm_type == "gemini":
+                stream = await EasyTL.gemini_translate_async(
+                    text=text_to_translate_modified,
+                    translation_instructions=translation_instructions_modified,
+                    model=model,
+                    stream=True
+                )
+                async for chunk in stream: # type: ignore
+                    if hasattr(chunk, 'text') and chunk.text:
+                        yield f"data: {json.dumps({'text': chunk.text})}\n\n"
+
+            ## Update credits after successful translation
+            if using_credits and user:
+                total_chars = len(text_to_translate) + len(translation_instructions)
+                cost = total_chars * MODEL_COSTS.get(model, 0)
+                new_credits = user.credits - cost
+                db.execute(update(User).where(User.id == user.id).values(credits=new_credits))
+                db.commit()
+                yield f"data: {json.dumps({'credits': new_credits})}\n\n"
+
+            yield "data: [DONE]\n\n"
+
+        except Exception as e:
+            yield f"data: {json.dumps({'error': str(e)})}\n\n"
+
+    return StreamingResponse(generate(), media_type="text/event-stream")
