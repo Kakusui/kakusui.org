@@ -13,7 +13,7 @@ from easytl import EasyTL
 import httpx
 
 ## custom imports
-from routes.models import EasyTLRequest, TokenCostRequest
+from routes.models import EasyTLRequest, TokenCostRequest, LanguageDetectionRequest
 
 from constants import V1_EASYTL_ROOT_KEY, V1_EASYTL_PUBLIC_API_KEY
 
@@ -333,3 +333,99 @@ async def easytl_stream(request_data:EasyTLRequest, request:Request, is_admin:bo
             yield f"data: {json.dumps({'error': str(e)})}\n\n"
 
     return StreamingResponse(generate(), media_type="text/event-stream")
+
+@router.post("/v1/easytl/detect-language")
+async def detect_language(request_data:LanguageDetectionRequest, request:Request, is_admin:bool = Depends(check_if_admin_user), db: Session = Depends(get_db), current_user: str = Depends(get_current_user)):
+    text = request_data.text
+    llm_type = request_data.llmType.lower()
+    user_api_key = request_data.userAPIKey
+    model = request_data.model
+    using_credits = request_data.using_credits
+
+    admin_api_key = await get_admin_api_key(llm_type)
+
+    api_key = request.headers.get("X-API-Key")
+
+    if(api_key not in [V1_EASYTL_ROOT_KEY, V1_EASYTL_PUBLIC_API_KEY] and not is_admin):
+        return JSONResponse(**ERRORS["invalid_api_key"])
+    
+    if(len(text) > MAX_TEXT_LENGTH):
+        return JSONResponse(**ERRORS["text_too_long"])
+        
+    if(llm_type not in VALID_LLM_TYPES):
+        return JSONResponse(**ERRORS["invalid_llm_type"])
+    
+    user = None
+    number_of_characters = 0
+    
+    if(using_credits):
+        user_api_key = admin_api_key
+        number_of_characters = len(text)
+        user = db.query(User).filter(User.email == current_user).first()
+        if(not user):
+            return JSONResponse(**ERRORS["invalid_user"])
+        
+        number_of_credits = user.credits
+        if(number_of_credits < number_of_characters): # type: ignore (IT'S FUCKING LYING)
+            return JSONResponse(**ERRORS["not_enough_credits"])
+
+    try:
+        if(is_admin):
+            EasyTL.set_credentials(api_type=llm_type, credentials=admin_api_key) # type: ignore
+        else:
+            EasyTL.set_credentials(api_type=llm_type, credentials=user_api_key) # type: ignore
+        
+        EasyTL.test_credentials(api_type=llm_type) # type: ignore
+
+    except:
+        return JSONResponse(**ERRORS["invalid_user_api_key"])
+    
+    if(not is_admin):
+        db.execute(update(EndpointStats).where(EndpointStats.endpoint == "EasyTL").values(count=EndpointStats.count + 1))
+        db.commit()
+
+    try:
+        total_chars = len(text)
+        if(model not in MODEL_COSTS):
+            return JSONResponse(**ERRORS["invalid_model"])
+
+        cost = total_chars * MODEL_COSTS.get(model) # type: ignore
+
+        detection_prompt = "You are a language detection expert. Your only task is to detect the language of the following text and respond with ONLY the language name in English. For example, if the text is in Japanese, just respond with 'Japanese'. Here's the text:\n\n"
+        
+        detected_language = await EasyTL.translate_async(
+            text=f"{detection_prompt}{text}", 
+            service=llm_type, # type: ignore 
+            translation_instructions="Respond with ONLY the language name in English. No additional text.",
+            model=model
+        )
+
+        if(using_credits and user):
+            new_credits = user.credits - cost
+            db.execute(update(User).where(User.id == user.id).values(credits=new_credits))
+            db.commit()
+
+    except:
+        return JSONResponse(**ERRORS["internal_error"])
+
+    return JSONResponse(status_code=status.HTTP_200_OK, content={
+        "detectedLanguage": detected_language.strip(), # type: ignore (IT'S FUCKING LYING)
+        "credits": user.credits if user else -1,
+        "cost": cost
+    })
+
+@router.post("/proxy/easytl/detect-language")
+async def proxy_detect_language(request_data:LanguageDetectionRequest, request:Request):
+    await check_internal_request(request)
+
+    async with httpx.AsyncClient(timeout=None) as client:
+        headers = {
+            "Content-Type": "application/json",
+            "X-API-Key": V1_EASYTL_ROOT_KEY,
+            "Authorization": request.headers.get("Authorization")
+        }
+        response = await client.post(f"{await get_backend_url()}/v1/easytl/detect-language", 
+                                   json=request_data.model_dump(), 
+                                   headers=headers)
+
+        return JSONResponse(status_code=response.status_code, content=response.json())
