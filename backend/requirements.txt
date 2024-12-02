@@ -13,7 +13,7 @@ python-gnupg==0.5.2
 apscheduler==3.10.4
 pyjwt==2.8.0
 python-multipart==0.0.18
-werkzeug==3.0.4
+werkzeug==3.0.6
 stripe==10.12.0
 pydantic[email]
 filelock
