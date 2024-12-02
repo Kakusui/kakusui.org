@@ -7,6 +7,7 @@ from fastapi import APIRouter, Request, status, Depends
 from fastapi.responses import JSONResponse, StreamingResponse
 import logging
 import json
+import traceback
 
 from easytl import EasyTL
 
@@ -330,7 +331,8 @@ async def easytl_stream(request_data:EasyTLRequest, request:Request, is_admin:bo
             yield "data: [DONE]\n\n"
 
         except Exception as e:
-            yield f"data: {json.dumps({'error': str(e)})}\n\n"
+            logging.error(traceback.format_exc())
+            yield f"data: {json.dumps({'error': 'An internal error has occurred!'})}\n\n"
 
     return StreamingResponse(generate(), media_type="text/event-stream")
 
