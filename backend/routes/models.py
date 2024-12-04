@@ -72,3 +72,6 @@ class LanguageDetectionRequest(BaseModel):
     userAPIKey:str
     model:str
     using_credits:bool
+
+class StripeCheckoutRequest(BaseModel):
+    is_home_page:bool = True

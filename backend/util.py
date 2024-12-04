@@ -16,7 +16,7 @@ async def get_backend_url() -> str:
     
     return "https://api.kakusui.org"
 
-async def get_frontend_url() -> str:
+async def get_frontend_url(is_home_page:bool = True) -> str:
 
     """
     Returns the URL of the frontend based on the environment.
@@ -24,6 +24,9 @@ async def get_frontend_url() -> str:
 
     if(ENVIRONMENT == "development"):
         return "http://localhost:5173"
+    
+    if(not is_home_page):
+        return "https://easytl-frontend.pages.dev"
     
     return "https://kakusui.org"
 

@@ -13,14 +13,28 @@ from db.models import User
 from auth.func import get_current_user
 from util import get_frontend_url
 from auth.util import check_internal_request
+from .models import StripeCheckoutRequest
+
 router = APIRouter()
 
 @router.post("/stripe/create-checkout-session")
-async def create_checkout_session(request: Request, current_user: str = Depends(get_current_user)):
-    
+async def create_checkout_session(
+    request: Request, 
+    checkout_request: StripeCheckoutRequest,
+    current_user: str = Depends(get_current_user)
+):
     await check_internal_request(request)
 
-    FRONTEND_URL = await get_frontend_url()
+    FRONTEND_URL = await get_frontend_url(is_home_page=checkout_request.is_home_page)
+
+    if(checkout_request.is_home_page):
+
+        success_url = f'{FRONTEND_URL}/success?session_id={{CHECKOUT_SESSION_ID}}'
+        cancel_url = f'{FRONTEND_URL}/pricing'
+
+    else:
+        success_url = f'{FRONTEND_URL}?verify_session_id={{CHECKOUT_SESSION_ID}}'
+        cancel_url = f'{FRONTEND_URL}'
 
     if(not current_user):
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="User not logged in")
@@ -42,8 +56,8 @@ async def create_checkout_session(request: Request, current_user: str = Depends(
                 },
             ],
             mode='payment',
-            success_url=f'{FRONTEND_URL}/success?session_id={{CHECKOUT_SESSION_ID}}',
-            cancel_url=f'{FRONTEND_URL}/pricing',
+            success_url=success_url,
+            cancel_url=cancel_url,
             client_reference_id=current_user,
             metadata={
                 'credits_to_add': '50000'
