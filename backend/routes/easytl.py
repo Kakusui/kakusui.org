@@ -209,21 +209,25 @@ async def proxy_easytl(request_data:EasyTLRequest, request:Request):
 async def proxy_easytl_stream(request_data:EasyTLRequest, request:Request):
     await check_internal_request(request)
 
-    async with httpx.AsyncClient(timeout=None) as client:
-        headers = {
-            "Content-Type": "application/json",
-            "X-API-Key": V1_EASYTL_ROOT_KEY,
-            "Authorization": request.headers.get("Authorization")
-        }
-        
-        async with client.stream('POST', f"{await get_backend_url()}/v1/easytl/stream", 
-                               json=request_data.model_dump(), 
-                               headers=headers) as response:
-            return StreamingResponse(
-                response.aiter_text(),
-                media_type="text/event-stream",
-                status_code=response.status_code
-            )
+    async def generate():
+        async with httpx.AsyncClient(timeout=None) as client:
+            headers = {
+                "Content-Type": "application/json",
+                "X-API-Key": V1_EASYTL_ROOT_KEY,
+                "Authorization": request.headers.get("Authorization")
+            }
+            
+            async with client.stream('POST', f"{await get_backend_url()}/v1/easytl/stream", 
+                                   json=request_data.model_dump(), 
+                                   headers=headers) as response:
+                async for line in response.aiter_lines():
+                    if(line):
+                        yield f"{line}\n"
+
+    return StreamingResponse(
+        generate(),
+        media_type="text/event-stream"
+    )
 
 @router.post("/v1/easytl/stream")
 async def easytl_stream(request_data:EasyTLRequest, request:Request, is_admin:bool = Depends(check_if_admin_user), db: Session = Depends(get_db), current_user: str = Depends(get_current_user)):
