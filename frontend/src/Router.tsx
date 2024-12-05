@@ -9,7 +9,7 @@ import { Routes, Route, Navigate } from 'react-router-dom';
 import { useState, useEffect, ReactNode } from 'react';
 
 // chakra-ui
-import { Spinner, Center } from "@chakra-ui/react";
+import { Spinner, Center, VStack, Text } from "@chakra-ui/react";
 
 // pages
 import HomePage from "./pages/HomePage.tsx";
@@ -18,7 +18,7 @@ import ElucidatePage from './pages/ElucidatePage.tsx';
 import ElucidateTermsOfServicePage from './pages/elucidate_mds/ElucidateTosPage.tsx';
 import ElucidatePrivacyPolicyPage from './pages/elucidate_mds/ElucidatePrivacyPolicyPage.tsx';
 import ElucidateLicensePage from './pages/elucidate_mds/ElucidateLicensePage.tsx';
-import EasyTLPage from './pages/EasyTLPage.tsx';
+/*import EasyTLPage from './pages/EasyTLPage.tsx';*/
 import EasyTLTermsOfServicePage from './pages/easytl_mds/EasyTLTosPage.tsx';
 import EasyTLPrivacyPolicyPage from './pages/easytl_mds/EasyTLPrivacyPolicyPage.tsx';
 import EasyTLLicensePage from './pages/easytl_mds/EasyTLLicensePage.tsx';
@@ -115,6 +115,42 @@ const ProtectedAdminRoute = ({ children }: { children: ReactNode }) =>
     return <>{children}</>;
 };
 
+const EasyTLRedirect = () =>
+{
+    useEffect(() =>
+    {
+        // Store the referrer before redirecting
+        const referrer = document.referrer;
+        window.location.replace('https://easytl.org');
+        
+        // If user clicks back, they'll go to the referrer or home
+        if(referrer && referrer.includes(window.location.origin))
+        {
+            window.history.replaceState(null, '', referrer);
+        }
+        else
+        {
+            window.history.replaceState(null, '', '/');
+        }
+    }, []);
+
+    // Show a loading state while redirecting
+    return (
+        <Center height="100vh">
+            <VStack spacing={4}>
+                <Spinner 
+                    thickness="4px"
+                    speed="0.65s"
+                    emptyColor="gray.200"
+                    color="orange.500"
+                    size="xl"
+                />
+                <Text>Redirecting to EasyTL...</Text>
+            </VStack>
+        </Center>
+    );
+};
+
 function Router() 
 {
     return (
@@ -125,7 +161,7 @@ function Router()
             <Route path="/elucidate/tos" element={<ElucidateTermsOfServicePage />} />
             <Route path="/elucidate/privacy" element={<ElucidatePrivacyPolicyPage />} />
             <Route path="/elucidate/license" element={<ElucidateLicensePage />} />
-            <Route path="/easytl" element={<EasyTLPage />} />
+            <Route path="/easytl/*" element={<EasyTLRedirect />} />
             <Route path="/easytl/tos" element={<EasyTLTermsOfServicePage />} />
             <Route path="/easytl/privacy" element={<EasyTLPrivacyPolicyPage />} />
             <Route path="/easytl/license" element={<EasyTLLicensePage />} />

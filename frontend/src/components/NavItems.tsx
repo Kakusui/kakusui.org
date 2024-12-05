@@ -38,7 +38,7 @@ const NAV_ITEMS: Array<NavItem> = [
             {
                 label: 'EasyTL',
                 subLabel: 'A simple and easy to use custom translator.',
-                href: '/easytl',
+                href: 'https://easytl.org',
             },
             {
                 label: 'Kairyou',
