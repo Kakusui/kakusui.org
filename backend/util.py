@@ -26,7 +26,7 @@ async def get_frontend_url(is_home_page:bool = True) -> str:
         return "http://localhost:5173"
     
     if(not is_home_page):
-        return "https://easytl-frontend.pages.dev"
+        return "https://easytl.org"
     
     return "https://kakusui.org"
 

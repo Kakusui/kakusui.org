@@ -33,7 +33,8 @@ async def check_internal_request(request:Request) -> None:
     allowed_domains = {
         "https://kakusui.org", 
         ".kakusui-org.pages.dev",
-        "https://easytl-frontend.pages.dev"
+        "https://easytl-frontend.pages.dev",
+        "https://easytl.org"
     }
 
     origin = request.headers.get('origin')
