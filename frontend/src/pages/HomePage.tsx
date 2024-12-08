@@ -129,7 +129,7 @@ function HomePage()
                     description="EasyTL is a user-friendly translation tool that leverages AI and LLMs to provide high-quality translations across multiple languages. The only limit to customization is your imagination, making it a versatile tool for all your translation needs."
                     imageUrl={easytl_logo}
                     imageAlt="EasyTL Logo"
-                    linkUrl="/easytl"
+                    linkUrl="https://easytl.org"
                     githubUrl="https://github.com/Bikatr7/EasyTL"
                     features={[
                         { heading: "Powered by AI and LLMs", text: "EasyTL is powered by AI and LLMs, enabling high-quality superior translations across multiple languages." },

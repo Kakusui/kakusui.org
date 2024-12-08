@@ -65,3 +65,13 @@ class TokenCostRequest(BaseModel):
 
 class GoogleLoginRequest(BaseModel):
     token:str
+
+class LanguageDetectionRequest(BaseModel):
+    text:str
+    llmType:str
+    userAPIKey:str
+    model:str
+    using_credits:bool
+
+class StripeCheckoutRequest(BaseModel):
+    is_home_page:bool = True
