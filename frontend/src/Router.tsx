@@ -36,6 +36,7 @@ import PrivacyPolicyPage from './pages/PrivacyPolicyPage.tsx';
 import PricingPage from './pages/PricingPage';
 import ProfilePage from './pages/ProfilePage';
 import CharToTokenPage from './pages/CharToTokenPage';
+import KudasaiPage from './pages/KudasaiPage.tsx';
 
 // auth
 import { useAuth } from './contexts/AuthContext';
@@ -157,6 +158,7 @@ function Router()
         <Routes>
             <Route path="/" element={<LandingPage />} />
             <Route path="/home" element={<HomePage />} />
+            <Route path="/kudasai" element={<KudasaiPage />} />
             <Route path="/elucidate" element={<ElucidatePage />} />
             <Route path="/elucidate/tos" element={<ElucidateTermsOfServicePage />} />
             <Route path="/elucidate/privacy" element={<ElucidatePrivacyPolicyPage />} />
