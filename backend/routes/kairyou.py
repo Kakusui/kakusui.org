@@ -70,21 +70,39 @@ async def kairyou(request_data:KairyouRequest, request:Request, db: Session = De
     try:
         replacements_json = await asyncio.to_thread(json.loads, replacements_json)
 
-        should_save_memory = True
-        
-        logging.info(f"Starting Kairyou processing with save_memory={should_save_memory}")
-        
+        if(KairyouCache.should_unload_model()):
+            logging.info("Kairyou model timeout reached – unloading SpaCy model from memory")
+            try:
+                from kairyou import Kairyou as _K
+                if(hasattr(_K, "_ner")):
+                    _K._ner = None
+                    logging.info("SpaCy model reference cleared")
+            except Exception as unload_err:
+                logging.error(f"Error while unloading SpaCy model: {unload_err}")
+            KairyouCache.mark_model_unloaded()
+
+        # Always keep the model resident once loaded to avoid AttributeError on second call
+        persist_model = True
+        discard_ner = False
+
+        cache_status = KairyouCache.get_status()
+        logging.info(f"Starting Kairyou processing – Cache status: {cache_status}")
+        logging.info(f"Calling Kairyou.preprocess(persist={persist_model}, discard_ner_objects={discard_ner})")
+
         preprocessed_text, preprocessing_log, error_log = await asyncio.to_thread(
-            Kairyou.preprocess, 
-            text_to_preprocess, 
-            replacements_json, 
-            should_save_memory
+            Kairyou.preprocess,
+            text_to_preprocess,
+            replacements_json,
+            persist=persist_model,
+            discard_ner_objects=discard_ner
         )
 
-        KairyouCache.update_last_used()
+        KairyouCache.mark_request_processed()
+        KairyouCache.mark_model_loaded()
         
         memory_after = get_memory_usage()
         logging.info(f"Memory usage after Kairyou processing: {memory_after:.2f} MB")
+        logging.info(f"Processing completed successfully without model persistence")
 
         return JSONResponse(
             status_code=status.HTTP_200_OK,
@@ -122,11 +140,18 @@ async def kairyou(request_data:KairyouRequest, request:Request, db: Session = De
     
     except Exception as e:
         logging.error(f"Unexpected error in Kairyou processing: {str(e)}")
+        logging.error(f"Exception type: {type(e).__name__}")
+        logging.error(f"Exception args: {e.args}")
+        
+        import traceback
+        logging.error(f"Full traceback: {traceback.format_exc()}")
+        
         return JSONResponse(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             content={
                 "message": "An unexpected error occurred during text preprocessing.",
-                "error": str(e) if logging.getLogger().isEnabledFor(logging.DEBUG) else "Internal server error"
+                "error": str(e) if logging.getLogger().isEnabledFor(logging.DEBUG) else "Internal server error",
+                "error_type": type(e).__name__
             }
         )
     

@@ -31,16 +31,45 @@ async def get_frontend_url(is_home_page:bool = True) -> str:
     return "https://kakusui.org"
 
 class KairyouCache:
-    _last_used: datetime | None = None
+    _last_request_time: datetime | None = None
+    _model_loaded: bool = False
+    _model_unload_timeout_minutes: int = 5
     
     @classmethod
-    def update_last_used(cls):
-        cls._last_used = datetime.now()
+    def mark_request_processed(cls):
+        """Mark that a request was processed"""
+        cls._last_request_time = datetime.now()
     
     @classmethod
-    def should_save_memory(cls) -> bool:
-        if cls._last_used is None:
-            return True
+    def mark_model_loaded(cls):
+        """Mark that the NLP model is loaded in memory"""
+        cls._model_loaded = True
+    
+    @classmethod
+    def mark_model_unloaded(cls):
+        """Mark that the NLP model has been unloaded from memory"""
+        cls._model_loaded = False
+    
+    @classmethod
+    def should_unload_model(cls) -> bool:
+        """Check if model should be unloaded due to timeout"""
+        if cls._last_request_time is None or not cls._model_loaded:
+            return False
         
-        time_since_last_use = datetime.now() - cls._last_used
-        return time_since_last_use > timedelta(seconds=30)
+        time_since_last_request = datetime.now() - cls._last_request_time
+        return time_since_last_request > timedelta(minutes=cls._model_unload_timeout_minutes)
+    
+    @classmethod
+    def is_model_loaded(cls) -> bool:
+        """Check if model is currently loaded"""
+        return cls._model_loaded
+    
+    @classmethod
+    def get_status(cls) -> dict:
+        """Get current cache status for debugging"""
+        return {
+            "model_loaded": cls._model_loaded,
+            "last_request": cls._last_request_time.isoformat() if cls._last_request_time else None,
+            "should_unload": cls.should_unload_model(),
+            "timeout_minutes": cls._model_unload_timeout_minutes
+        }
