@@ -17,3 +17,4 @@ werkzeug==3.0.6
 stripe==10.12.0
 pydantic[email]
 filelock
+psutil
