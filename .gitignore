@@ -39,3 +39,5 @@ database/
 .cursorrules
 
 .venv/
+
+*.lock

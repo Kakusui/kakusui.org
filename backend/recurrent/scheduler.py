@@ -14,6 +14,9 @@ from filelock import FileLock, Timeout
 from email_util.backup import perform_backup_scheduled
 from auth.func import cleanup_expired_verification_data
 from rate_limit.func import cleanup_old_rate_limit_data
+from util import KairyouCache
+
+import logging
 
 ## In-memory storage
 last_backup_run = None
@@ -51,10 +54,29 @@ async def start_scheduler(db:Session) -> AsyncIOScheduler:
     scheduler.add_job(perform_backup_and_update_time, 'interval', hours=6, args=[db])
     scheduler.add_job(cleanup_expired_verification_data, 'interval', minutes=5)
     scheduler.add_job(cleanup_old_rate_limit_data, 'interval', minutes=5)
+    scheduler.add_job(cleanup_kairyou_model_cache, 'interval', minutes=1)  # Check every minute for model timeout
 
     scheduler.start()
 
     return scheduler
+
+async def cleanup_kairyou_model_cache() -> None:
+    """
+    Cleanup Kairyou model cache if timeout has been reached.
+    This helps free up memory when the model hasn't been used for a while.
+    """
+    if(KairyouCache.should_unload_model()):
+        logging.info(f"Kairyou model timeout reached – unloading model. Cache status: {KairyouCache.get_status()}")
+        try:
+            from kairyou import Kairyou as _K
+            if(hasattr(_K, "_ner")):
+                _K._ner = None
+                logging.info("SpaCy model reference cleared by scheduler")
+        except Exception as e:
+            logging.error(f"Error while clearing SpaCy model in scheduler: {e}")
+
+        KairyouCache.mark_model_unloaded()
+        logging.info("Kairyou model marked as unloaded to save memory")
 
 async def perform_backup_and_update_time(db:Session) -> None:
     """

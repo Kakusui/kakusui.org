@@ -13,7 +13,7 @@ import { getURL } from "../utils";
 
 // chakra things
 import {
-    Box, Button, Flex, FormErrorMessage, FormControl, FormLabel, IconButton, Text, Textarea, useToast, Center
+    Box, Button, Flex, FormErrorMessage, FormControl, FormLabel, IconButton, Text, Textarea, useToast, Center, Alert, AlertIcon, AlertTitle, AlertDescription, Progress, VStack,
 } from "@chakra-ui/react";
 
 import { ArrowUpIcon } from "@chakra-ui/icons";
@@ -53,21 +53,23 @@ function KairyouPage()
     const [resetTurnstile, setResetTurnstile] = useState(false);
     const { register, handleSubmit, setValue, formState: { isSubmitting, errors } } = useForm<FormInput>();
     const [response, setResponse] = useState<ResponseValues>();
+    const [processingPhase, setProcessingPhase] = useState<string>('');
     const toast = useToast();
 
     useEffect(() => 
     {
         const warmUpAPI = async () => 
         {
-            try
+            try 
             {
-                await fetch(getURL("/v1/kairyou"), { method: "GET" });
-            }
-            catch
+                await fetch(getURL("/v1/kairyou"));
+            } 
+            catch (error) 
             {
-                // ignore
+                console.error("API warm-up failed:", error);
             }
         };
+
         warmUpAPI();
     }, []);
 
@@ -118,6 +120,10 @@ function KairyouPage()
         return verificationResult.success;
     };
 
+    const updateProcessingPhase = (phase: string) => {
+        setProcessingPhase(phase);
+    };
+
     const onSubmit = async (data: FormInput) => 
     {
         setResetTurnstile(false);
@@ -147,6 +153,11 @@ function KairyouPage()
                 throw new Error("Turnstile verification failed");
             }
 
+            // Start processing phases
+            updateProcessingPhase('Initializing request...');
+            setTimeout(() => updateProcessingPhase('Processing text...'), 1000);
+            setTimeout(() => updateProcessingPhase('Finalizing results...'), 30000); // After 30 seconds
+
             const response = await fetch(getURL("/proxy/kairyou"), {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
@@ -166,6 +177,7 @@ function KairyouPage()
         finally
         {
             setResetTurnstile(true);
+            setProcessingPhase('');
         }
     };
 
@@ -189,6 +201,24 @@ function KairyouPage()
 
     return (
         <>
+            {/* Performance Notice Banner */}
+            <Alert status="warning" mb={6} borderRadius="lg" variant="left-accent">
+                <AlertIcon />
+                <Box flex="1">
+                    <AlertTitle mb={1} fontSize="lg">
+                        Processing Notice
+                    </AlertTitle>
+                    <AlertDescription fontSize="sm" lineHeight="base">
+                        Due to server resource constraints, Kairyou processing may take longer than usual.{' '}
+                        <Text as="strong" color="orange.600">
+                            Processing typically takes 1-3 minutes
+                        </Text>{' '}
+                        depending on text size, JSON complexity, and current server load.{' '}
+                        Thank you for your patience.
+                    </AlertDescription>
+                </Box>
+            </Alert>
+
             <input onChange={onUpload} ref={textRef} type="file" accept=".txt" hidden />
             <input onChange={onUpload} ref={jsonRef} type="file" accept=".json" hidden />
             <form onSubmit={handleSubmit(onSubmit)}>
@@ -216,10 +246,30 @@ function KairyouPage()
                     bg="orange.400" color="white"
                     _hover={{ bg: "orange.500" }}
                     isLoading={isSubmitting}
+                    loadingText={processingPhase || "Processing..."}
                 >
                     Submit
                 </Button>
             </form>
+
+            {/* Processing Progress Indicator */}
+            {isSubmitting && (
+                <VStack spacing={3} mb={4}>
+                    <Progress 
+                        size="lg" 
+                        isIndeterminate 
+                        colorScheme="orange" 
+                        width="100%" 
+                        borderRadius="md"
+                    />
+                    <Text fontSize="sm" color="gray.600" textAlign="center">
+                        {processingPhase}
+                        <Text as="span" display="block" fontSize="xs" mt={1} color="orange.500">
+                            ⏱️ Processing may take 1-3 minutes - please be patient
+                        </Text>
+                    </Text>
+                </VStack>
+            )}
 
             {!isBlacklistedDomain && (
                 <Center mt={4}>
@@ -277,7 +327,8 @@ function KairyouPage()
                 ]}
                 notes={[
                     "Please note that the Turnstile verification is required to use this tool. This is in place to prevent abuse and ensure fair usage. You must complete the verification for every submission.",
-                    "The Kairyou endpoint access is provided for free here, but please be mindful of the usage and do not abuse the service."
+                    "The Kairyou endpoint access is provided for free here, but please be mindful of the usage and do not abuse the service.",
+                    "Due to server constraints, processing times may vary. First requests typically take longer as the NLP model needs to be loaded into memory."
                 ]}
                 contactEmail="contact@kakusui.org"
             />
