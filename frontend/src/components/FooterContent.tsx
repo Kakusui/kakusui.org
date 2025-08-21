@@ -48,7 +48,7 @@ const FooterContent = ({ color = "gray.300" }) =>
                             <Image src={logo} boxSize='30px' alt='Kakusui Logo' />
                         </Link>
                     </Flex>
-                    <Text textAlign="center" mb={2}>© 2024 Kakusui LLC. All rights reserved</Text>
+                    <Text textAlign="center" mb={2}>© 2024-2025 Tetra Group LLC DBA Kakusui LLC. All rights reserved</Text>
                     <HStack spacing={4} justify="center">
                         <Link href="/tos" fontSize="sm" color="orange.400">Terms of Service</Link>
                         <Link href="/privacy" fontSize="sm" color="orange.400">Privacy Policy</Link>
