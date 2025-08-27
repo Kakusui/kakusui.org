@@ -267,7 +267,7 @@ function LandingPage()
                     color="white"
                     fontSize="sm"
                 >
-                    © Copyright 2024 Kakusui LLC
+                    © Copyright Tetra Group DBA Kakusui LLC 2024-{new Date().getFullYear()}
                 </Text>
                 <HStack
                     position="absolute"
