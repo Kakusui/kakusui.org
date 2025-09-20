@@ -16,10 +16,10 @@ from email import encoders
 
 ##----------------------------------/----------------------------------##
 
-async def get_smtp_envs() -> typing.Tuple[str, str, int, str, str, str, str]:
+async def get_smtp_envs() -> typing.Tuple[str, str, int, str, str, str, str, bool]:
 
     """
-    
+
     Get the environment variables from the .env file
 
     Returns:
@@ -30,6 +30,7 @@ async def get_smtp_envs() -> typing.Tuple[str, str, int, str, str, str, str]:
     SMTP_PASSWORD (str): The SMTP password to send the email
     FROM_EMAIL (str): The email address to send the email from
     TO_EMAIL (str): The email address to send the email to
+    ENABLE_BACKUP_EMAILS (bool): Whether to enable backup emails (default: True)
 
     """
 
@@ -49,6 +50,10 @@ async def get_smtp_envs() -> typing.Tuple[str, str, int, str, str, str, str]:
     FROM_EMAIL = os.getenv('FROM_EMAIL') or ""
     TO_EMAIL = os.getenv('TO_EMAIL') or ""
 
+    # ENABLE_BACKUP_EMAILS defaults to True if not set (backwards compatibility)
+    ENABLE_BACKUP_EMAILS:str = os.getenv('ENABLE_BACKUP_EMAILS', 'true').lower()
+    enable_emails:bool = ENABLE_BACKUP_EMAILS not in ('false', '0', 'no', 'off', 'disabled')
+
     assert(ENCRYPTION_KEY != ""), "ENCRYPTION_KEY is required"
     assert(SMTP_SERVER != ""), "SMTP_SERVER is required"
     assert(SMTP_PORT != 0), "SMTP_PORT is required"
@@ -57,7 +62,7 @@ async def get_smtp_envs() -> typing.Tuple[str, str, int, str, str, str, str]:
     assert(FROM_EMAIL != ""), "FROM_EMAIL is required"
     assert(TO_EMAIL != ""), "TO_EMAIL is required"
 
-    return ENCRYPTION_KEY, SMTP_SERVER, SMTP_PORT, SMTP_USER, SMTP_PASSWORD, FROM_EMAIL, TO_EMAIL
+    return ENCRYPTION_KEY, SMTP_SERVER, SMTP_PORT, SMTP_USER, SMTP_PASSWORD, FROM_EMAIL, TO_EMAIL, enable_emails
 
 ##----------------------------------/----------------------------------##
 

@@ -36,7 +36,7 @@ async def send_email_to_all(request: Request, email_request: EmailRequest, db: S
     try:
         recipients = db.query(EmailAlertModel.email).all()
         smtp_envs = await get_smtp_envs()
-        _, SMTP_SERVER, SMTP_PORT, SMTP_USER, SMTP_PASSWORD, FROM_EMAIL, _ = smtp_envs
+        _, SMTP_SERVER, SMTP_PORT, SMTP_USER, SMTP_PASSWORD, FROM_EMAIL, _, _ = smtp_envs
         
         tasks = [
             send_email(
@@ -66,7 +66,7 @@ async def send_feedback_email(request: Request, feedback:FeedbackEmailRequest):
     
     try:
         smtp_envs = await get_smtp_envs()
-        _, SMTP_SERVER, SMTP_PORT, SMTP_USER, SMTP_PASSWORD, FROM_EMAIL, _ = smtp_envs
+        _, SMTP_SERVER, SMTP_PORT, SMTP_USER, SMTP_PASSWORD, FROM_EMAIL, _, _ = smtp_envs
         
         subject = "Feedback from Kakusui User"
         body = f"User Email: {feedback.email}\n\nFeedback: {feedback.text}"
