@@ -52,6 +52,7 @@ const FooterContent = ({ color = "gray.300" }) =>
                     <HStack spacing={4} justify="center">
                         <Link href="/tos" fontSize="sm" color="orange.400">Terms of Service</Link>
                         <Link href="/privacy" fontSize="sm" color="orange.400">Privacy Policy</Link>
+                        <Link href="https://status.kakusui.org" fontSize="sm" color="orange.400" target="_blank" rel="noopener noreferrer">Status</Link>
                         <Link onClick={onOpen} fontSize="sm" color="orange.400">Send Feedback</Link>
                     </HStack>
                 </Flex>
@@ -66,6 +67,7 @@ const FooterContent = ({ color = "gray.300" }) =>
                         <HStack spacing={4} mt={1}>
                             <Link href="/tos" fontSize="sm" color="orange.400">Terms of Service</Link>
                             <Link href="/privacy" fontSize="sm" color="orange.400">Privacy Policy</Link>
+                            <Link href="https://status.kakusui.org" fontSize="sm" color="orange.400" target="_blank" rel="noopener noreferrer">Status</Link>
                             <Link onClick={onOpen} fontSize="sm" color="orange.400">Send Feedback</Link>
                         </HStack>
                     </Flex>

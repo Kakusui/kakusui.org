@@ -279,6 +279,7 @@ function LandingPage()
                 >
                     <Link href="/tos" fontSize="sm" color="orange.400">Terms of Service</Link>
                     <Link href="/privacy" fontSize="sm" color="orange.400">Privacy Policy</Link>
+                    <Link href="https://status.kakusui.org" fontSize="sm" color="orange.400" target="_blank" rel="noopener noreferrer">Status</Link>
                 </HStack>
             </Flex>
 
