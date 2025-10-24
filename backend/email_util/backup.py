@@ -169,7 +169,7 @@ async def perform_backup(db:Session) -> None:
 
     logging.info("Starting database backup process")
 
-    ENCRYPTION_KEY, SMTP_SERVER, SMTP_PORT, SMTP_USER, SMTP_PASSWORD, FROM_EMAIL, TO_EMAIL = await get_smtp_envs()
+    ENCRYPTION_KEY, SMTP_SERVER, SMTP_PORT, SMTP_USER, SMTP_PASSWORD, FROM_EMAIL, TO_EMAIL, enable_emails = await get_smtp_envs()
 
     timestamp = datetime.now().strftime("%Y-%m-%d %H_%M_%S")
 
@@ -191,7 +191,7 @@ async def perform_backup(db:Session) -> None:
     encrypted_path = await encrypt_file(compressed_path, ENCRYPTION_KEY)
     await asyncio.to_thread(os.remove, compressed_path)
 
-    if(ENVIRONMENT == 'production'):
+    if(ENVIRONMENT == 'production' and enable_emails):
 
         logging.info("Sending backup email")
         await send_email(
@@ -212,7 +212,12 @@ async def perform_backup(db:Session) -> None:
         )
 
     else:
-        logging.info("Email was prepped for production, but environment is not production. Email not sent.")
+        if(ENVIRONMENT != 'production'):
+            logging.info("Email was prepped for production, but environment is not production. Email not sent.")
+        elif(not enable_emails):
+            logging.info("Backup email disabled by ENABLE_BACKUP_EMAILS environment variable. Email not sent.")
+        else:
+            logging.info("Email not sent due to environment or configuration settings.")
 
     logging.info("Cleaning up temporary files")
     await asyncio.to_thread(os.remove, encrypted_path)

@@ -44,8 +44,19 @@ async def start_scheduler(db:Session) -> AsyncIOScheduler:
             with lock:
                 await cleanup_expired_verification_data()
                 await cleanup_old_rate_limit_data()
-                await perform_backup_scheduled(db)
-                last_backup_run = datetime.now()
+
+                # Check if backup emails are enabled before running backup
+                try:
+                    from email_util.common import get_smtp_envs
+                    _, _, _, _, _, _, _, enable_emails = await get_smtp_envs()
+                    if enable_emails:
+                        await perform_backup_scheduled(db)
+                        last_backup_run = datetime.now()
+                    else:
+                        logging.info("Backup emails disabled by ENABLE_BACKUP_EMAILS environment variable. Skipping initial backup.")
+                except Exception as e:
+                    logging.error(f"Error checking backup email settings: {e}")
+
         except Timeout:
             print("Another instance is already running the initial tasks.")
 
@@ -88,7 +99,16 @@ async def perform_backup_and_update_time(db:Session) -> None:
     global last_backup_run
     try:
         with lock:
-            await perform_backup_scheduled(db)
-            last_backup_run = datetime.now()
+            # Check if backup emails are enabled before running backup
+            try:
+                from email_util.common import get_smtp_envs
+                _, _, _, _, _, _, _, enable_emails = await get_smtp_envs()
+                if enable_emails:
+                    await perform_backup_scheduled(db)
+                    last_backup_run = datetime.now()
+                else:
+                    logging.info("Backup emails disabled by ENABLE_BACKUP_EMAILS environment variable. Skipping scheduled backup.")
+            except Exception as e:
+                logging.error(f"Error checking backup email settings during scheduled backup: {e}")
     except Timeout:
         print("Another instance is already performing the backup.")

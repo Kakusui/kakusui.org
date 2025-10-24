@@ -77,6 +77,7 @@ def setup_local_environment() -> None:
         "SMTP_PASSWORD": "none",
         "FROM_EMAIL": "none",
         "TO_EMAIL": "none",
+        "ENABLE_BACKUP_EMAILS": "true",
         "V1_KAIRYOU_ROOT_KEY": "test",
         "V1_EASYTL_ROOT_KEY": "test",
         "V1_EASYTL_PUBLIC_API_KEY": "test",
@@ -110,6 +111,7 @@ def setup_local_environment() -> None:
                 f"SMTP_PASSWORD={env_to_key_local['SMTP_PASSWORD']}\n"
                 f"FROM_EMAIL={env_to_key_local['FROM_EMAIL']}\n"
                 f"TO_EMAIL={env_to_key_local['TO_EMAIL']}\n"
+                f"ENABLE_BACKUP_EMAILS={env_to_key_local['ENABLE_BACKUP_EMAILS']}\n"
                 f"V1_KAIRYOU_ROOT_KEY={env_to_key_local['V1_KAIRYOU_ROOT_KEY']}\n"
                 f"V1_EASYTL_ROOT_KEY={env_to_key_local['V1_EASYTL_ROOT_KEY']}\n"
                 f"V1_EASYTL_PUBLIC_API_KEY={env_to_key_local['V1_EASYTL_PUBLIC_API_KEY']}\n"
