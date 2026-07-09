@@ -124,7 +124,7 @@ function CharToTokenPage()
                     color="white"
                     fontSize="sm"
                 >
-                    © Copyright 2024 Kakusui LLC
+                    © Copyright 2024-{new Date().getFullYear()} Kakusui LLC
                 </Text>
             </Flex>
         </Box>
