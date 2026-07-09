@@ -11,6 +11,7 @@ import logging
 import os
 import threading
 import asyncio
+from urllib.parse import urlparse
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
@@ -84,12 +85,40 @@ migrate_database(engine)
 
 ##-----------------------------------------start-of-main----------------------------------------------------------------------------------------------------------------------------------------------------------
 
-app = FastAPI()
+app = FastAPI(docs_url=None, redoc_url=None, openapi_url=None)
+
+ALLOWED_CORS_ORIGINS = [
+    "https://kakusui.org",
+    "https://kakusui-org.pages.dev",
+    "https://easytl-frontend.pages.dev",
+    "https://easytl.org",
+]
+
+if ENVIRONMENT == "development":
+    ALLOWED_CORS_ORIGINS.append("http://localhost:5173")
+
+
+def is_allowed_cors_origin(origin: str | None) -> bool:
+    if not origin:
+        return False
+
+    try:
+        parsed = urlparse(origin)
+    except Exception:
+        return False
+
+    host = parsed.netloc.lower()
+    if origin in ALLOWED_CORS_ORIGINS:
+        return True
+
+    return parsed.scheme == "https" and host.endswith(".kakusui-org.pages.dev")
+
 
 ## CORS setup
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=ALLOWED_CORS_ORIGINS,
+    allow_origin_regex=r"^https://([a-z0-9-]+\.)?kakusui-org\.pages\.dev$",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -109,11 +138,12 @@ async def maintenance_middleware(request:Request, call_next):
 async def dynamic_cors(request: Request, call_next):
     origin = request.headers.get("Origin")
     response = await call_next(request)
-    if(origin):
+    if is_allowed_cors_origin(origin):
         response.headers["Access-Control-Allow-Origin"] = origin
-    response.headers["Access-Control-Allow-Credentials"] = "true"
-    response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, OPTIONS"
-    response.headers["Access-Control-Allow-Headers"] = "Authorization, Content-Type"
+        response.headers["Access-Control-Allow-Credentials"] = "true"
+        response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, OPTIONS"
+        response.headers["Access-Control-Allow-Headers"] = "Authorization, Content-Type"
+        response.headers.add_vary_header("Origin")
     return response
 
 class XFrameOptionsMiddleware(BaseHTTPMiddleware):
