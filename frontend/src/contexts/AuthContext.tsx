@@ -39,18 +39,39 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         const token = localStorage.getItem('access_token');
         if(token) 
         {
-            const payload = JSON.parse(atob(token.split('.')[1]));
-            if(payload.exp * 1000 > Date.now()) 
+            try
             {
-                return true;
+                const encodedPayload = token.split('.')[1];
+                if(!encodedPayload) return false;
+
+                const normalizedPayload = encodedPayload.replace(/-/g, '+').replace(/_/g, '/');
+                const paddedPayload = normalizedPayload.padEnd(
+                    normalizedPayload.length + (4 - normalizedPayload.length % 4) % 4,
+                    '='
+                );
+                const payload = JSON.parse(atob(paddedPayload));
+                return typeof payload.exp === 'number' && payload.exp * 1000 > Date.now();
+            }
+            catch
+            {
+                return false;
             }
         }
         return false;
     };
 
+    const clearAuthState = () =>
+    {
+        setIsLoggedIn(false);
+        setUserEmail(null);
+        setIsPrivilegedUser(false);
+        setCredits(0);
+        lastFullCheckRef.current = 0;
+    };
+
     const refreshAccessToken = async () => 
     {
-        try 
+        try
         {
             const response = await fetch(getURL('/auth/refresh-access-token'), 
             {
@@ -78,49 +99,60 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     const performFullCheck = async () => 
     {
-        const access_token = localStorage.getItem('access_token');
-        if(access_token) 
-        {
-            try 
-            {
-                // Fetch user info including credits
-                const response = await fetch(getURL('/user/info'), 
-                {
-                    method: 'GET',
-                    headers: 
-                    {
-                        'Authorization': `Bearer ${access_token}`,
-                        'Content-Type': 'application/json'
-                    },
-                    credentials: 'include'
-                });
+        let accessToken = localStorage.getItem('access_token');
 
-                if(response.ok) 
-                {
-                    const data = await response.json();
-                    setIsLoggedIn(true);
-                    setUserEmail(data.email);
-                    setCredits(data.credits);
-                    setIsPrivilegedUser(data.email === 'kbilyeu@kakusui.org');
-                    lastFullCheckRef.current = Date.now();
-                } 
-                else 
-                {
-                    throw new Error('Failed to fetch user info');
-                }
-            } 
-            catch (error) 
-            {
-                console.error('Error fetching user info:', error);
-                await refreshAccessToken();
-            }
-        } 
-        else 
+        if(!accessToken || !checkTokenExpiration())
         {
-            setIsLoggedIn(false);
-            setUserEmail(null);
-            setIsPrivilegedUser(false);
-            setCredits(0);
+            if(!await refreshAccessToken())
+            {
+                clearAuthState();
+                return;
+            }
+            accessToken = localStorage.getItem('access_token');
+        }
+
+        if(!accessToken)
+        {
+            clearAuthState();
+            return;
+        }
+
+        try
+        {
+            const getUserInfo = (token: string) => fetch(getURL('/user/info'),
+            {
+                method: 'GET',
+                headers:
+                {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                },
+                credentials: 'include'
+            });
+
+            let response = await getUserInfo(accessToken);
+            if(response.status === 401 && await refreshAccessToken())
+            {
+                accessToken = localStorage.getItem('access_token');
+                if(accessToken) response = await getUserInfo(accessToken);
+            }
+
+            if(!response.ok)
+            {
+                throw new Error('Failed to fetch user info');
+            }
+
+            const data = await response.json();
+            setIsLoggedIn(true);
+            setUserEmail(data.email);
+            setCredits(data.credits);
+            setIsPrivilegedUser(data.email === 'kbilyeu@kakusui.org');
+            lastFullCheckRef.current = Date.now();
+        }
+        catch (error)
+        {
+            console.error('Error fetching user info:', error);
+            clearAuthState();
         }
     };
 
@@ -171,13 +203,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     const logout = () => 
     {
+        void fetch(getURL('/auth/logout'),
+        {
+            method: 'POST',
+            credentials: 'include',
+        }).catch(() => undefined);
         localStorage.removeItem('access_token');
-        document.cookie = 'refresh_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; secure; HttpOnly; SameSite=Strict';
-        setIsLoggedIn(false);
-        setUserEmail(null);
-        setIsPrivilegedUser(false);
-        setCredits(0);
-        lastFullCheckRef.current = 0;
+        clearAuthState();
     };
 
     const updateCredits = (newCredits: number) => 

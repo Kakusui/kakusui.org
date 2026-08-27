@@ -109,56 +109,23 @@ const Login: React.FC<LoginProps> = ({ isOpen: propIsOpen, onClose: propOnClose,
 
         try 
         {
-            const checkUserResponse = await fetch(getURL('/auth/check-email-registration'), 
+            setIsLoginStep(true);
+
+            const response = await fetch(getURL('/auth/send-verification-email'),
             {
                 method: 'POST',
                 headers: 
                 {
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify({ email, clientID: clientId }),
+                body: JSON.stringify({ email, clientID: clientId, turnstile_token: turnstileToken }),
                 credentials: 'include'
             });
 
-            if(checkUserResponse.ok) 
+            if(!response.ok)
             {
-                const userData = await checkUserResponse.json();
-                if(!userData.registered && !isSignUp)
-                {
-                    showToast("Not Registered", "This email is not registered. Please sign up first.", "error");
-                    setIsLoginStep(false);
-                    return;
-                }
-                if(userData.registered && isSignUp)
-                {
-                    setIsLoginStep(false);
-                    showToast("Already Registered", "This email is already registered. Please log in instead.", "error");
-                    return;
-                }
-
-                setIsLoginStep(true);
-
-                const response = await fetch(getURL('/auth/send-verification-email'), 
-                {
-                    method: 'POST',
-                    headers: 
-                    {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({ email, clientID: clientId, turnstile_token: turnstileToken }),
-                    credentials: 'include'
-                });
-
-                if(!response.ok) 
-                {
-                    const errorData = await response.json();
-                    showToast("Error", errorData.message || 'Failed to send login code', "error");
-                    setIsLoginStep(false);
-                }
-            } 
-            else 
-            {
-                showToast("Error", "Failed to check user registration", "error");
+                const errorData = await response.json();
+                showToast("Error", errorData.message || 'Failed to send login code', "error");
                 setIsLoginStep(false);
             }
         } 
