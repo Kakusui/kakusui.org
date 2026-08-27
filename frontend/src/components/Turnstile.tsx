@@ -4,82 +4,132 @@
 
 // maintain allman bracket style for consistency
 
-// react
-import React, { useEffect, useRef } from "react";
+import { useEffect, useRef } from "react";
 
-declare global 
+type TurnstileWidgetOptions =
 {
-    interface Window 
+    sitekey: string;
+    action?: string;
+    callback: (token: string) => void;
+    "expired-callback": () => void;
+    "error-callback": () => void;
+};
+
+type TurnstileApi =
+{
+    render: (container: HTMLElement, options: TurnstileWidgetOptions) => string;
+    remove: (widgetId: string) => void;
+    reset: (widgetId: string) => void;
+};
+
+declare global
+{
+    interface Window
     {
-        turnstile: any;
+        turnstile?: TurnstileApi;
     }
 }
 
-type TurnstileProps = 
+type TurnstileProps =
 {
     siteKey: string;
+    action?: string;
     onVerify: (token: string) => void;
-    resetKey: boolean;
+    onExpire?: () => void;
+    onError?: () => void;
+    resetKey?: number | boolean;
 };
 
-const Turnstile: React.FC<TurnstileProps> = ({ siteKey, onVerify, resetKey }) => 
+const SCRIPT_ID = "cloudflare-turnstile-script";
+const SCRIPT_URL = "https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit";
+
+const Turnstile = ({ siteKey, action, onVerify, onExpire, onError, resetKey = 0 }: TurnstileProps) =>
 {
-    const turnstileRef = useRef<HTMLDivElement>(null);
-    const widgetId = useRef<number>();
+    const containerRef = useRef<HTMLDivElement>(null);
+    const widgetIdRef = useRef<string>();
+    const previousResetKeyRef = useRef(resetKey);
+    const onVerifyRef = useRef(onVerify);
+    const onExpireRef = useRef(onExpire);
+    const onErrorRef = useRef(onError);
 
-    useEffect(() => 
+    onVerifyRef.current = onVerify;
+    onExpireRef.current = onExpire;
+    onErrorRef.current = onError;
+
+    useEffect(() =>
     {
-        const loadTurnstile = () => 
+        let cancelled = false;
+
+        const renderWidget = () =>
         {
-            if (!window.turnstile) 
+            if(cancelled || !containerRef.current || !window.turnstile || widgetIdRef.current)
             {
-                const script = document.createElement("script");
-                script.src = "https://challenges.cloudflare.com/turnstile/v0/api.js";
+                return;
+            }
+
+            widgetIdRef.current = window.turnstile.render(containerRef.current,
+            {
+                sitekey: siteKey,
+                action,
+                callback: (token: string) => onVerifyRef.current(token),
+                "expired-callback": () => onExpireRef.current?.(),
+                "error-callback": () => onErrorRef.current?.(),
+            });
+        };
+
+        const handleScriptError = () => onErrorRef.current?.();
+
+        if(window.turnstile)
+        {
+            renderWidget();
+        }
+        else
+        {
+            let script = document.getElementById(SCRIPT_ID) as HTMLScriptElement | null;
+            if(!script)
+            {
+                script = document.createElement("script");
+                script.id = SCRIPT_ID;
+                script.src = SCRIPT_URL;
                 script.async = true;
-                script.onload = () => renderTurnstile();
-                document.body.appendChild(script);
-            } 
-            else 
-            {
-                renderTurnstile();
+                script.defer = true;
+                document.head.appendChild(script);
             }
-        };
 
-        const renderTurnstile = () => 
+            script.addEventListener("load", renderWidget);
+            script.addEventListener("error", handleScriptError);
+        }
+
+        return () =>
         {
-            if (turnstileRef.current) 
+            cancelled = true;
+            const script = document.getElementById(SCRIPT_ID);
+            script?.removeEventListener("load", renderWidget);
+            script?.removeEventListener("error", handleScriptError);
+
+            if(widgetIdRef.current && window.turnstile)
             {
-                // Store the widget ID for cleanup
-                widgetId.current = window.turnstile.render(turnstileRef.current, 
-                {
-                    sitekey: siteKey,
-                    callback: (token: string) => 
-                    {
-                        onVerify(token);
-                    },
-                });
+                window.turnstile.remove(widgetIdRef.current);
+                widgetIdRef.current = undefined;
             }
         };
+    }, [siteKey, action]);
 
-        loadTurnstile();
-
-        // Cleanup function
-        return () => {
-            if (widgetId.current !== undefined) {
-                window.turnstile.remove(widgetId.current);
-            }
-        };
-    }, [siteKey, onVerify]);
-
-    useEffect(() => 
+    useEffect(() =>
     {
-        if (resetKey && widgetId.current !== undefined) 
+        if(previousResetKeyRef.current === resetKey)
         {
-            window.turnstile.reset(widgetId.current);
+            return;
+        }
+
+        previousResetKeyRef.current = resetKey;
+        if(widgetIdRef.current && window.turnstile)
+        {
+            window.turnstile.reset(widgetIdRef.current);
         }
     }, [resetKey]);
 
-    return <div ref={turnstileRef}></div>;
+    return <div ref={containerRef}></div>;
 };
 
 export default Turnstile;

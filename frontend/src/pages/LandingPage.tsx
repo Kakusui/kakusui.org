@@ -9,7 +9,7 @@ import { useState, useEffect } from 'react';
 import { Link as RouterLink } from 'react-router-dom';
 
 // chakra-ui
-import { Box, Button, Flex, Heading, Text, Input, useToast, Modal, ModalOverlay, ModalContent, ModalHeader, ModalFooter, ModalBody, ModalCloseButton, Link, HStack } from "@chakra-ui/react";
+import { Box, Button, Center, Flex, Heading, Text, Input, useToast, Modal, ModalOverlay, ModalContent, ModalHeader, ModalFooter, ModalBody, ModalCloseButton, Link, HStack } from "@chakra-ui/react";
 
 // icons
 import { IconBrandGithub } from '@tabler/icons-react';
@@ -19,6 +19,8 @@ import landingPageBg from '../assets/images/landing_page.webp';
 
 // util
 import { getURL } from '../utils';
+import { requiresTurnstile, TURNSTILE_SITE_KEY } from '../utils/turnstile';
+import Turnstile from '../components/Turnstile';
 
 function LandingPage()
 {
@@ -27,6 +29,9 @@ function LandingPage()
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isVerificationStep, setIsVerificationStep] = useState(false);
     const [clientId, setClientId] = useState('');
+    const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
+    const [resetTurnstile, setResetTurnstile] = useState(0);
+    const [isSendingVerification, setIsSendingVerification] = useState(false);
     const toast = useToast();
 
     useEffect(() =>
@@ -53,6 +58,16 @@ function LandingPage()
     {
         setIsModalOpen(true);
         setIsVerificationStep(false);
+        setTurnstileToken(null);
+        setResetTurnstile((current) => current + 1);
+    };
+
+    const handleModalClose = () =>
+    {
+        setIsModalOpen(false);
+        setIsVerificationStep(false);
+        setTurnstileToken(null);
+        setResetTurnstile((current) => current + 1);
     };
 
     const handleEmailSubmit = async () =>
@@ -70,8 +85,19 @@ function LandingPage()
             return;
         }
 
-        setIsVerificationStep(true); // Move to the next step immediately
+        if(requiresTurnstile() && !turnstileToken)
+        {
+            toast({
+                title: "Verification required",
+                description: "Please complete the verification.",
+                status: "error",
+                duration: 3000,
+                isClosable: true,
+            });
+            return;
+        }
 
+        setIsSendingVerification(true);
         try
         {
             const response = await fetch(getURL('/auth/send-verification-email'), {
@@ -79,13 +105,14 @@ function LandingPage()
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({ email, clientID: clientId }),
+                body: JSON.stringify({ email, clientID: clientId, turnstile_token: turnstileToken }),
             });
 
             const data = await response.json();
 
             if(response.ok)
             {
+                setIsVerificationStep(true);
                 toast({
                     title: "Verification Email Sent",
                     description: "A verification code has been sent to your email.",
@@ -114,6 +141,12 @@ function LandingPage()
                 duration: 5000,
                 isClosable: true,
             });
+        }
+        finally
+        {
+            setIsSendingVerification(false);
+            setTurnstileToken(null);
+            setResetTurnstile((current) => current + 1);
         }
     };
 
@@ -151,7 +184,7 @@ function LandingPage()
                     duration: 5000,
                     isClosable: true,
                 });
-                setIsModalOpen(false);
+                handleModalClose();
             }
             else
             {
@@ -285,7 +318,7 @@ function LandingPage()
 
             <Modal 
                 isOpen={isModalOpen} 
-                onClose={() => setIsModalOpen(false)}
+                onClose={handleModalClose}
                 isCentered
                 motionPreset="slideInBottom"
                 closeOnOverlayClick={false}
@@ -325,6 +358,18 @@ function LandingPage()
                                     border="none"
                                     _focus={{ bg: "whiteAlpha.300" }}
                                 />
+                                {requiresTurnstile() && (
+                                    <Center mt={4}>
+                                        <Turnstile
+                                            siteKey={TURNSTILE_SITE_KEY}
+                                            action="verification_email"
+                                            onVerify={setTurnstileToken}
+                                            onExpire={() => setTurnstileToken(null)}
+                                            onError={() => setTurnstileToken(null)}
+                                            resetKey={resetTurnstile}
+                                        />
+                                    </Center>
+                                )}
                             </>
                         )}
                     </ModalBody>
@@ -334,11 +379,11 @@ function LandingPage()
                                 Verify
                             </Button>
                         ) : (
-                            <Button colorScheme="orange" mr={3} onClick={handleEmailSubmit}>
+                            <Button colorScheme="orange" mr={3} onClick={handleEmailSubmit} isLoading={isSendingVerification}>
                                 Submit
                             </Button>
                         )}
-                        <Button variant="ghost" onClick={() => setIsModalOpen(false)}>Cancel</Button>
+                        <Button variant="ghost" onClick={handleModalClose}>Cancel</Button>
                     </ModalFooter>
                 </ModalContent>
             </Modal>

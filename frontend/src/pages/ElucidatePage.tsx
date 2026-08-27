@@ -5,7 +5,7 @@
 // maintain allman bracket style for consistency
 
 // react
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 
 // chakra-ui
@@ -40,6 +40,7 @@ import DownloadButton from "../components/DownloadButton";
 import HowToUseSection from "../components/HowToUseSection";
 import LegalLinks from "../components/LegalLinks";
 import { getURL, encryptWithAccessToken, decryptWithAccessToken } from "../utils";
+import { requiresTurnstile, TURNSTILE_SITE_KEY } from "../utils/turnstile";
 
 type FormInput = 
 {
@@ -86,8 +87,7 @@ Evaluation Instructions:
 
   const [showApiKey, setShowApiKey] = useState(false);
   const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
-  const [isBlacklistedDomain, setBlacklistedDomain] = useState(false);
-  const [resetTurnstile, setResetTurnstile] = useState(false);
+  const [resetTurnstile, setResetTurnstile] = useState(0);
   const [response, setResponse] = useState<ResponseValues | null>(null);
   const [modelOptions, setModelOptions] = useState<string[]>([]);
   const [isAdvancedSettingsVisible, setAdvancedSettingsVisible] = useState(false);
@@ -108,12 +108,6 @@ Evaluation Instructions:
       }
     };
     warmUpAPI();
-  }, []);
-
-  useEffect(() => 
-  {
-    const currentDomain = window.location.hostname;
-    setBlacklistedDomain(currentDomain !== "kakusui.org");
   }, []);
 
   useEffect(() => 
@@ -169,7 +163,7 @@ Evaluation Instructions:
 
     updateModelOptions();
     updateApiKey();
-  }, [selectedLLM, setValue, access_token]);
+  }, [selectedLLM, selectedModel, setValue, access_token]);
 
   useEffect(() => {
     if (selectedInstructionPreset === "minimal") 
@@ -228,26 +222,6 @@ Evaluation Instructions:
     });
   };
 
-  const handleVerification = async () => 
-  {
-    try 
-    {
-      const verificationResponse = await fetch(getURL("/auth/verify-turnstile"), 
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ token: turnstileToken }),
-      });
-
-      const verificationResult = await verificationResponse.json();
-      return verificationResult.success;
-    } 
-    catch 
-    {
-      return false;
-    }
-  };
-
   const validateInstructions = (instructions: string) => 
   {
     const requiredPlaceholders = ["{{untranslatedText}}", "{{translatedText}}", "{{evaluationInstructions}}"];
@@ -256,15 +230,7 @@ Evaluation Instructions:
 
   const onSubmit = async (data: FormInput) => 
   {
-    setResetTurnstile(false);
-
-    if (window.location.hostname === "kakusui-org.pages.dev") 
-    {
-      showToast("Access Denied", "This domain is not for end user usage, please use kakusui.org", "error");
-      return;
-    }
-
-    if (!turnstileToken && window.location.hostname === "kakusui.org") 
+    if (requiresTurnstile() && !turnstileToken)
     {
       showToast("Verification failed", "Please complete the verification", "error");
       return;
@@ -277,11 +243,6 @@ Evaluation Instructions:
     }
 
     try {
-      if (window.location.hostname === "kakusui.org" && !(await handleVerification())) 
-      {
-        throw new Error("Turnstile verification failed. Please try again.");
-      }
-
       localStorage.setItem(`elucidate_${data.llmType}_apiKey`, data.userAPIKey);
       localStorage.setItem('elucidate_evaluationInstructions', data.evaluationInstructions);
       localStorage.setItem('elucidate_customInstructionFormat', data.elucidateCustomInstructionFormat);
@@ -307,7 +268,7 @@ Evaluation Instructions:
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...data, textToEvaluate, evaluationInstructions }),
+        body: JSON.stringify({ ...data, textToEvaluate, evaluationInstructions, turnstile_token: turnstileToken }),
       });
 
       const result = await response.json();
@@ -330,7 +291,8 @@ Evaluation Instructions:
     } 
     finally 
     {
-      setResetTurnstile(true);
+      setTurnstileToken(null);
+      setResetTurnstile((current) => current + 1);
     }
   };
 
@@ -354,11 +316,6 @@ Evaluation Instructions:
     setValue("untranslatedText", currentOutput);
     setResponse({ evaluatedText: currentInput });
   };
-
-  const memoizedTurnstile = useMemo(() =>
-    // Meant for client side code
-    <Turnstile siteKey="0x4AAAAAAAbu-SlGyNF03684" onVerify={setTurnstileToken} resetKey={resetTurnstile} />
-    , [resetTurnstile]);
 
   return (
     <>
@@ -482,9 +439,16 @@ Evaluation Instructions:
           </Button>
         </VStack>
 
-        {!isBlacklistedDomain && (
+        {requiresTurnstile() && (
           <Center mt={4}>
-            {memoizedTurnstile}
+            <Turnstile
+              siteKey={TURNSTILE_SITE_KEY}
+              action="elucidate"
+              onVerify={setTurnstileToken}
+              onExpire={() => setTurnstileToken(null)}
+              onError={() => setTurnstileToken(null)}
+              resetKey={resetTurnstile}
+            />
           </Center>
         )}
 

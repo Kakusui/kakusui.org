@@ -12,6 +12,7 @@ import { Box, Button, Input, Modal, ModalOverlay, ModalContent, ModalHeader, Mod
 
 // util
 import { getURL } from '../utils';
+import { requiresTurnstile, TURNSTILE_SITE_KEY } from '../utils/turnstile';
 
 // motion
 import { motion } from 'framer-motion';
@@ -23,7 +24,8 @@ import { buttonVariants } from '../animations/commonAnimations';
 import { useAuth } from '../contexts/AuthContext';
 
 // google oauth
-import { GoogleLogin } from '@react-oauth/google';
+import { CredentialResponse, GoogleLogin } from '@react-oauth/google';
+import Turnstile from './Turnstile';
 
 interface LoginProps {
     isOpen?: boolean;
@@ -40,6 +42,8 @@ const Login: React.FC<LoginProps> = ({ isOpen: propIsOpen, onClose: propOnClose,
     const [isLoginStep, setIsLoginStep] = useState(false);
     const [isSignUp, setIsSignUp] = useState(false);
     const [clientId, setClientId] = useState('');
+    const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
+    const [resetTurnstile, setResetTurnstile] = useState(0);
     const toast = useToast();
     const { isLoggedIn, login, logout, isLoading } = useAuth();
 
@@ -62,7 +66,7 @@ const Login: React.FC<LoginProps> = ({ isOpen: propIsOpen, onClose: propOnClose,
     {
         return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) 
         {
-            var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
+            const r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
             return v.toString(16);
         });
     };
@@ -72,6 +76,8 @@ const Login: React.FC<LoginProps> = ({ isOpen: propIsOpen, onClose: propOnClose,
         setEmail('');
         setLoginCode('');
         setIsLoginStep(false);
+        setTurnstileToken(null);
+        setResetTurnstile((current) => current + 1);
         if (onClose) onClose();
     };
 
@@ -92,6 +98,12 @@ const Login: React.FC<LoginProps> = ({ isOpen: propIsOpen, onClose: propOnClose,
         if(!email || !emailRegex.test(email)) 
         {
             showToast("Invalid Email", "Please enter a valid email address", "error");
+            return;
+        }
+
+        if(requiresTurnstile() && !turnstileToken)
+        {
+            showToast("Verification Required", "Please complete the verification.", "error");
             return;
         }
 
@@ -133,7 +145,7 @@ const Login: React.FC<LoginProps> = ({ isOpen: propIsOpen, onClose: propOnClose,
                     {
                         'Content-Type': 'application/json'
                     },
-                    body: JSON.stringify({ email, clientID: clientId }),
+                    body: JSON.stringify({ email, clientID: clientId, turnstile_token: turnstileToken }),
                     credentials: 'include'
                 });
 
@@ -154,6 +166,11 @@ const Login: React.FC<LoginProps> = ({ isOpen: propIsOpen, onClose: propOnClose,
         {
             showToast("Error", "An error occurred. Please try again.", "error");
             setIsLoginStep(false);
+        }
+        finally
+        {
+            setTurnstileToken(null);
+            setResetTurnstile((current) => current + 1);
         }
     };
 
@@ -205,6 +222,8 @@ const Login: React.FC<LoginProps> = ({ isOpen: propIsOpen, onClose: propOnClose,
         setIsLoginStep(false);
         setEmail('');
         setLoginCode('');
+        setTurnstileToken(null);
+        setResetTurnstile((current) => current + 1);
     };
 
     const handleKeyPress = (event: React.KeyboardEvent) => 
@@ -222,7 +241,7 @@ const Login: React.FC<LoginProps> = ({ isOpen: propIsOpen, onClose: propOnClose,
         }
     };
 
-    const handleGoogleLogin = async (credentialResponse: any) =>
+    const handleGoogleLogin = async (credentialResponse: CredentialResponse) =>
     {
         try
         {
@@ -347,6 +366,18 @@ const Login: React.FC<LoginProps> = ({ isOpen: propIsOpen, onClose: propOnClose,
                                         border="none"
                                         _focus={{ bg: "whiteAlpha.300" }}
                                     />
+                                    {requiresTurnstile() && (
+                                        <Center>
+                                            <Turnstile
+                                                siteKey={TURNSTILE_SITE_KEY}
+                                                action="verification_email"
+                                                onVerify={setTurnstileToken}
+                                                onExpire={() => setTurnstileToken(null)}
+                                                onError={() => setTurnstileToken(null)}
+                                                resetKey={resetTurnstile}
+                                            />
+                                        </Center>
+                                    )}
                                 </>
                             )}
                             <Divider my={4} />

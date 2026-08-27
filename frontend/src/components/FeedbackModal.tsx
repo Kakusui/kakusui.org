@@ -27,9 +27,11 @@ import {
 
 // utils
 import { getURL } from '../utils';
+import { requiresTurnstile, TURNSTILE_SITE_KEY } from '../utils/turnstile';
 
 // auth
 import { useAuth } from '../contexts/AuthContext';
+import Turnstile from './Turnstile';
 
 interface FeedbackModalProps
 {
@@ -42,6 +44,8 @@ const FeedbackModal: React.FC<FeedbackModalProps> = ({ isOpen, onClose }) =>
     const [email, setEmail] = useState('');
     const [feedback, setFeedback] = useState('');
     const [agreeToContact, setAgreeToContact] = useState(true);
+    const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
+    const [resetTurnstile, setResetTurnstile] = useState(0);
     const toast = useToast();
     const { isLoggedIn, userEmail } = useAuth();
 
@@ -60,6 +64,18 @@ const FeedbackModal: React.FC<FeedbackModalProps> = ({ isOpen, onClose }) =>
             toast({
                 title: "Error",
                 description: "Please fill in both email and feedback fields.",
+                status: "error",
+                duration: 3000,
+                isClosable: true,
+            });
+            return;
+        }
+
+        if(requiresTurnstile() && !turnstileToken)
+        {
+            toast({
+                title: "Verification required",
+                description: "Please complete the verification.",
                 status: "error",
                 duration: 3000,
                 isClosable: true,
@@ -87,6 +103,7 @@ const FeedbackModal: React.FC<FeedbackModalProps> = ({ isOpen, onClose }) =>
                 body: JSON.stringify({
                     email,
                     text: `${feedback}\n\nAgree to contact: ${agreeToContact ? 'Yes' : 'No'}`,
+                    turnstile_token: turnstileToken,
                 }),
             });
 
@@ -118,6 +135,11 @@ const FeedbackModal: React.FC<FeedbackModalProps> = ({ isOpen, onClose }) =>
                 duration: 3000,
                 isClosable: true,
             });
+        }
+        finally
+        {
+            setTurnstileToken(null);
+            setResetTurnstile((current) => current + 1);
         }
     };
 
@@ -162,6 +184,16 @@ const FeedbackModal: React.FC<FeedbackModalProps> = ({ isOpen, onClose }) =>
                         <Text fontSize="sm" color="gray.400">
                             Your email is being recorded. By filling this out, you agree to our terms of service and privacy policy.
                         </Text>
+                        {requiresTurnstile() && (
+                            <Turnstile
+                                siteKey={TURNSTILE_SITE_KEY}
+                                action="feedback"
+                                onVerify={setTurnstileToken}
+                                onExpire={() => setTurnstileToken(null)}
+                                onError={() => setTurnstileToken(null)}
+                                resetKey={resetTurnstile}
+                            />
+                        )}
                     </VStack>
                 </ModalBody>
                 <ModalFooter>

@@ -5,7 +5,7 @@
 // maintain allman bracket style for consistency
 
 // react things
-import React, { useEffect, useMemo, useState, useRef } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { useForm } from "react-hook-form";
 
 // custom things
@@ -24,6 +24,7 @@ import DownloadButton from "../components/DownloadButton";
 import HowToUseSection from "../components/HowToUseSection";
 import LegalLinks from "../components/LegalLinks";
 import Turnstile from "../components/Turnstile";
+import { requiresTurnstile, TURNSTILE_SITE_KEY } from "../utils/turnstile";
 
 type FormInput = 
 {
@@ -49,8 +50,7 @@ function KairyouPage()
     const textRef = useRef<HTMLInputElement>(null);
     const jsonRef = useRef<HTMLInputElement>(null);
     const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
-    const [isBlacklistedDomain, setBlacklistedDomain] = useState(false);
-    const [resetTurnstile, setResetTurnstile] = useState(false);
+    const [resetTurnstile, setResetTurnstile] = useState(0);
     const { register, handleSubmit, setValue, formState: { isSubmitting, errors } } = useForm<FormInput>();
     const [response, setResponse] = useState<ResponseValues>();
     const [processingPhase, setProcessingPhase] = useState<string>('');
@@ -71,12 +71,6 @@ function KairyouPage()
         };
 
         warmUpAPI();
-    }, []);
-
-    useEffect(() => 
-    {
-        const currentDomain = window.location.hostname;
-        setBlacklistedDomain(currentDomain !== "kakusui.org");
     }, []);
 
     const onTurnstileVerify = (token: string) => 
@@ -108,33 +102,13 @@ function KairyouPage()
         }
     };
 
-    const handleVerification = async () => 
-    {
-        const verificationResponse = await fetch(getURL("/auth/verify-turnstile"), {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ token: turnstileToken }),
-        });
-
-        const verificationResult = await verificationResponse.json();
-        return verificationResult.success;
-    };
-
     const updateProcessingPhase = (phase: string) => {
         setProcessingPhase(phase);
     };
 
     const onSubmit = async (data: FormInput) => 
     {
-        setResetTurnstile(false);
-
-        if(window.location.hostname === "kakusui-org.pages.dev")
-        {
-            showToast("Access Denied", "This domain is not for end user usage, please use kakusui.org", "error");
-            return;
-        }
-
-        if(!turnstileToken && window.location.hostname === "kakusui.org")
+        if(requiresTurnstile() && !turnstileToken)
         {
             showToast("Verification failed", "Please complete the verification", "error");
             return;
@@ -148,11 +122,6 @@ function KairyouPage()
 
         try
         {
-            if(window.location.hostname === "kakusui.org" && !(await handleVerification()))
-            {
-                throw new Error("Turnstile verification failed");
-            }
-
             // Start processing phases
             updateProcessingPhase('Initializing request...');
             setTimeout(() => updateProcessingPhase('Processing text...'), 1000);
@@ -161,7 +130,7 @@ function KairyouPage()
             const response = await fetch(getURL("/proxy/kairyou"), {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(data),
+                body: JSON.stringify({ ...data, turnstile_token: turnstileToken }),
             });
 
             const result = await response.json();
@@ -176,7 +145,8 @@ function KairyouPage()
         }
         finally
         {
-            setResetTurnstile(true);
+            setTurnstileToken(null);
+            setResetTurnstile((current) => current + 1);
             setProcessingPhase('');
         }
     };
@@ -194,10 +164,6 @@ function KairyouPage()
 
         fileTypeHandlers[file.type]?.(input);
     };
-
-    const memoizedTurnstile = useMemo(() => 
-        <Turnstile siteKey="0x4AAAAAAAbu-SlGyNF03684" onVerify={onTurnstileVerify} resetKey={resetTurnstile} />
-    , [resetTurnstile]);
 
     return (
         <>
@@ -271,9 +237,16 @@ function KairyouPage()
                 </VStack>
             )}
 
-            {!isBlacklistedDomain && (
+            {requiresTurnstile() && (
                 <Center mt={4}>
-                    {memoizedTurnstile}
+                    <Turnstile
+                        siteKey={TURNSTILE_SITE_KEY}
+                        action="kairyou"
+                        onVerify={onTurnstileVerify}
+                        onExpire={() => setTurnstileToken(null)}
+                        onError={() => setTurnstileToken(null)}
+                        resetKey={resetTurnstile}
+                    />
                 </Center>
             )}
 

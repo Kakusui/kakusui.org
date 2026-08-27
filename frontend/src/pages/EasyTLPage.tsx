@@ -5,7 +5,7 @@
 // maintain allman bracket style for consistency
 
 // react
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 
 // chakra-ui
@@ -42,6 +42,7 @@ import LegalLinks from "../components/LegalLinks";
 import { getURL } from "../utils";
 import { useAuth } from "../contexts/AuthContext";
 import { encryptWithAccessToken, decryptWithAccessToken } from "../utils";
+import { requiresTurnstile, TURNSTILE_SITE_KEY } from "../utils/turnstile";
 import Cookies from 'js-cookie';
 
 type FormInput = 
@@ -89,8 +90,7 @@ Additional instructions:
 
   const [showApiKey, setShowApiKey] = useState(false);
   const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
-  const [isBlacklistedDomain, setBlacklistedDomain] = useState(false);
-  const [resetTurnstile, setResetTurnstile] = useState(false);
+  const [resetTurnstile, setResetTurnstile] = useState(0);
   const [response, setResponse] = useState<ResponseValues | null>(null);
   const [modelOptions, setModelOptions] = useState<string[]>([]);
   const [isAdvancedSettingsVisible, setAdvancedSettingsVisible] = useState(false);
@@ -117,12 +117,6 @@ Additional instructions:
       }
     };
     warmUpAPI();
-  }, []);
-
-  useEffect(() => 
-  {
-    const currentDomain = window.location.hostname;
-    setBlacklistedDomain(currentDomain !== "kakusui.org");
   }, []);
 
   useEffect(() => {
@@ -197,26 +191,6 @@ Additional instructions:
     });
   };
 
-  const handleVerification = async () => 
-  {
-    try 
-    {
-      const verificationResponse = await fetch(getURL("/auth/verify-turnstile"), 
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ token: turnstileToken }),
-      });
-
-      const verificationResult = await verificationResponse.json();
-      return verificationResult.success;
-    } 
-    catch 
-    {
-      return false;
-    }
-  };
-
   const validateInstructions = (instructions: string) => 
   {
     const requiredPlaceholders = ["{{language}}", "{{tone}}"];
@@ -272,15 +246,7 @@ Additional instructions:
 
   const onSubmit = async (data: FormInput) => 
   {
-    setResetTurnstile(false);
-
-    if(window.location.hostname === "kakusui-org.pages.dev")
-    {
-      showToast("Access Denied", "This domain is not for end user usage, please use kakusui.org", "error");
-      return;
-    }
-
-    if(selectedPaymentMethod !== "credits" && window.location.hostname === "kakusui.org" && !turnstileToken)
+    if(requiresTurnstile() && !turnstileToken)
     {
       showToast("Verification failed", "Please complete the verification", "error");
       return;
@@ -294,11 +260,6 @@ Additional instructions:
 
     try 
     {
-      if(window.location.hostname === "kakusui.org" && selectedPaymentMethod !== "credits" && !(await handleVerification()))
-      {
-        throw new Error("Turnstile verification failed. Please try again.");
-      }
-
       const estimatedCost = await calculateTokenCost(data);
       
       if (data.paymentMethod === "credits") 
@@ -341,7 +302,8 @@ Additional instructions:
         llmType: data.llmType.toLowerCase(),
         userAPIKey: isPrivilegedUser || data.paymentMethod === "credits" ? "" : data.userAPIKey,
         model: data.model,
-        using_credits: data.paymentMethod === "credits"
+        using_credits: data.paymentMethod === "credits",
+        turnstile_token: turnstileToken
       };
 
       const response = await fetch(getURL("/proxy/easytl"), 
@@ -383,7 +345,8 @@ Additional instructions:
     } 
     finally 
     {
-      setResetTurnstile(true);
+      setTurnstileToken(null);
+      setResetTurnstile((current) => current + 1);
     }
   };
 
@@ -402,10 +365,6 @@ Additional instructions:
     setValue("textToTranslate", currentOutput);
     setResponse({ translatedText: currentInput });
   };
-
-  const memoizedTurnstile = useMemo(() =>
-    <Turnstile siteKey="0x4AAAAAAAbu-SlGyNF03684" onVerify={setTurnstileToken} resetKey={resetTurnstile} />
-  , [resetTurnstile]);
 
   return (
     <>
@@ -532,9 +491,16 @@ Additional instructions:
           </Button>
         </VStack>
 
-        {selectedPaymentMethod !== "credits" && !isBlacklistedDomain && (
+        {requiresTurnstile() && (
           <Center mt={4}>
-            {memoizedTurnstile}
+            <Turnstile
+              siteKey={TURNSTILE_SITE_KEY}
+              action="easytl"
+              onVerify={setTurnstileToken}
+              onExpire={() => setTurnstileToken(null)}
+              onError={() => setTurnstileToken(null)}
+              resetKey={resetTurnstile}
+            />
           </Center>
         )}
 
