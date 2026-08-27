@@ -9,29 +9,20 @@ from constants import *
 ## built-in libraries
 import logging
 import os
-import threading
-import asyncio
-from urllib.parse import urlparse
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
-maintenance_mode = False
-maintenance_lock = threading.Lock()
-
-verification_data = {}
-verification_lock = asyncio.Lock()
-
 ## third-party libraries
 from fastapi import FastAPI, Request
+from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
-from starlette.middleware.base import BaseHTTPMiddleware
 from fastapi.responses import JSONResponse
+from starlette.middleware.base import BaseHTTPMiddleware
 from fastapi.security import HTTPBasic
 
 ## custom modules
 from db.base import Base, engine, SessionLocal
-from db.common import create_tables_if_not_exist
-from db.migration import migrate_database
+from db.common import initialize_database_schema
 
 from recurrent.scheduler import start_scheduler
 
@@ -45,6 +36,8 @@ from routes.db import router as db_router
 from routes.financial import router as financial_router
 from routes.email import router as email_router
 from routes.personal import router as personal_router
+from kairyou_runtime import shutdown_kairyou_worker
+from request_limits import MAX_REQUEST_BODY_BYTES, RequestBodyLimitMiddleware
 
 ##-----------------------------------------start-of-main----------------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -79,13 +72,28 @@ envs = {
 for key, value in envs.items():
     assert value, f"{key} environment variable not set"
 
-create_tables_if_not_exist(engine, Base)
-
-migrate_database(engine)
+initialize_database_schema(engine, Base, DATABASE_PATH)
 
 ##-----------------------------------------start-of-main----------------------------------------------------------------------------------------------------------------------------------------------------------
 
 app = FastAPI(docs_url=None, redoc_url=None, openapi_url=None)
+
+
+@app.exception_handler(RequestValidationError)
+async def request_validation_error_handler(
+    request: Request,
+    error: RequestValidationError,
+) -> JSONResponse:
+    del request
+    safe_errors = [
+        {
+            key: validation_error[key]
+            for key in ("type", "loc", "msg")
+            if key in validation_error
+        }
+        for validation_error in error.errors()
+    ]
+    return JSONResponse(status_code=422, content={"detail": safe_errors})
 
 ALLOWED_CORS_ORIGINS = [
     "https://kakusui.org",
@@ -99,40 +107,17 @@ if ENVIRONMENT == "development":
 
 
 def is_allowed_cors_origin(origin: str | None) -> bool:
-    if not origin:
-        return False
-
-    try:
-        parsed = urlparse(origin)
-    except Exception:
-        return False
-
-    host = parsed.netloc.lower()
-    if origin in ALLOWED_CORS_ORIGINS:
-        return True
-
-    return parsed.scheme == "https" and host.endswith(".kakusui-org.pages.dev")
+    return origin in ALLOWED_CORS_ORIGINS
 
 
 ## CORS setup
 app.add_middleware(
     CORSMiddleware,
     allow_origins=ALLOWED_CORS_ORIGINS,
-    allow_origin_regex=r"^https://([a-z0-9-]+\.)?kakusui-org\.pages\.dev$",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
-@app.middleware("http")
-async def maintenance_middleware(request:Request, call_next):
-    global maintenance_mode, maintenance_lock
-    with maintenance_lock:
-        if(maintenance_mode):
-            return JSONResponse(status_code=503, content={"message": "Server is in maintenance mode"})
-        
-    response = await call_next(request)
-    return response
 
 @app.middleware("http")
 async def dynamic_cors(request: Request, call_next):
@@ -160,6 +145,10 @@ class CSPMiddleware(BaseHTTPMiddleware):
 
 app.add_middleware(CSPMiddleware)
 app.add_middleware(XFrameOptionsMiddleware)
+app.add_middleware(
+    RequestBodyLimitMiddleware,
+    max_body_size=MAX_REQUEST_BODY_BYTES,
+)
 
 app.include_router(warmups_router)
 app.include_router(kairyou_router)
@@ -176,3 +165,7 @@ app.include_router(email_router)
 async def startup_event():
     db = SessionLocal()
     app.state.scheduler = await start_scheduler(db)
+
+@app.on_event("shutdown")
+async def shutdown_event():
+    shutdown_kairyou_worker()

@@ -15,6 +15,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy import update
 from db.base import get_db
 from db.models import EndpointStats
+from llm_provider_lock import get_llm_provider_lock
 
 ## custom imports
 from routes.models import ElucidateRequest
@@ -22,6 +23,7 @@ from routes.models import ElucidateRequest
 from constants import V1_ELUCIDATE_ROOT_KEY
 
 from auth.util import check_internal_request
+from routes.turnstile import verify_turnstile_token
 
 from util import get_backend_url
 
@@ -71,31 +73,31 @@ async def elucidate(request_data:ElucidateRequest, request:Request, db: Session 
     if(llm_type not in VALID_LLM_TYPES):
         return JSONResponse(**ERRORS["invalid_llm_type"])
     
-    try:
-        EasyTL.set_credentials(api_type=llm_type, credentials=user_api_key) # type: ignore
-        EasyTL.test_credentials(api_type=llm_type) # type: ignore
+    async with get_llm_provider_lock(llm_type):
+        try:
+            EasyTL.set_credentials(api_type=llm_type, credentials=user_api_key) # type: ignore
+            EasyTL.test_credentials(api_type=llm_type) # type: ignore
 
-    except:
-        return JSONResponse(**ERRORS["invalid_user_api_key"])
-    
-    ## Update endpoint stats
-    db.execute(update(EndpointStats).where(EndpointStats.endpoint == "Elucidate").values(count=EndpointStats.count + 1))
-    db.commit()
+        except Exception:
+            return JSONResponse(**ERRORS["invalid_user_api_key"])
 
-    try:
+        ## Update endpoint stats
+        db.execute(update(EndpointStats).where(EndpointStats.endpoint == "Elucidate").values(count=EndpointStats.count + 1))
+        db.commit()
 
-        if(model in unsophisticated_models_whitelist):
-            text_to_evaluate = f"{evaluation_instructions}\n{text_to_evaluate}"
-            evaluation_instructions = "Your instructions are in the other text."
+        try:
+            if(model in unsophisticated_models_whitelist):
+                text_to_evaluate = f"{evaluation_instructions}\n{text_to_evaluate}"
+                evaluation_instructions = "Your instructions are in the other text."
 
-        evaluated_text = await Elucidate.evaluate_async(text=text_to_evaluate,
-                                                       service=llm_type, # type: ignore 
-                                                       evaluation_instructions=evaluation_instructions,
-                                                       model=model
-                                                       ) 
+            evaluated_text = await Elucidate.evaluate_async(text=text_to_evaluate,
+                                                           service=llm_type, # type: ignore
+                                                           evaluation_instructions=evaluation_instructions,
+                                                           model=model
+                                                           )
 
-    except:
-        return JSONResponse(**ERRORS["internal_error"])
+        except Exception:
+            return JSONResponse(**ERRORS["internal_error"])
 
     return JSONResponse(status_code=status.HTTP_200_OK, content={
         "evaluatedText": evaluated_text
@@ -106,12 +108,17 @@ async def elucidate(request_data:ElucidateRequest, request:Request, db: Session 
 async def proxy_elucidate(request_data:ElucidateRequest, request:Request):
 
     await check_internal_request(request)
+    await verify_turnstile_token(request_data.turnstile_token, request, "elucidate")
 
     async with httpx.AsyncClient(timeout=None) as client:
         headers = {
             "Content-Type": "application/json",
             "X-API-Key": V1_ELUCIDATE_ROOT_KEY
         }
-        response = await client.post(f"{await get_backend_url()}/v1/elucidate", json=request_data.model_dump(), headers=headers)
+        response = await client.post(
+            f"{await get_backend_url()}/v1/elucidate",
+            json=request_data.model_dump(exclude={"turnstile_token"}),
+            headers=headers
+        )
 
         return JSONResponse(status_code=response.status_code, content=response.json())

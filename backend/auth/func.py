@@ -6,7 +6,6 @@
 import typing
 import string
 import secrets
-from hmac import compare_digest
 
 from datetime import datetime, timedelta, timezone
 
@@ -19,23 +18,27 @@ import jwt
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 
-## custom imports
-from main import verification_data, verification_lock
-
 from routes.models import TokenData
+from auth.verification import (
+    cleanup_expired_verification_data as cleanup_verification_data,
+    get_verification_data as load_verification_data,
+    remove_verification_data as delete_verification_data,
+    save_verification_data as store_verification_data,
+    verify_verification_code as verify_stored_verification_code,
+)
 
 from email_util.common import send_email, get_smtp_envs
 
 from constants import (
     ACCESS_TOKEN_SECRET,
+    ACCESS_TOKEN_EXPIRE_MINUTES,
     REFRESH_TOKEN_SECRET,
+    REFRESH_TOKEN_EXPIRE_DAYS,
     TOKEN_ALGORITHM,
     ADMIN_USER,
-    VERIFICATION_EXPIRATION_MINUTES,
     OPENAI_API_KEY,
     ANTHROPIC_API_KEY,
     GEMINI_API_KEY,
-    MAX_EMAIL_VERIFICATION_ATTEMPTS
 )
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
@@ -61,9 +64,9 @@ async def create_access_token(data:dict,
     if(expires_delta):
         expire = datetime.now(timezone.utc) + expires_delta
     else:
-        expire = datetime.now(timezone.utc) + timedelta(minutes=15)
+        expire = datetime.now(timezone.utc) + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
 
-    to_encode.update({"exp": expire})
+    to_encode.update({"exp": expire, "typ": "access"})
     encoded_jwt = jwt.encode(to_encode, ACCESS_TOKEN_SECRET, algorithm=TOKEN_ALGORITHM) # type: ignore
 
     return encoded_jwt
@@ -89,9 +92,9 @@ async def create_refresh_token(data:dict,
     if(expires_delta):
         expire = datetime.now(timezone.utc) + expires_delta
     else:
-        expire = datetime.now(timezone.utc) + timedelta(days=1)
+        expire = datetime.now(timezone.utc) + timedelta(days=REFRESH_TOKEN_EXPIRE_DAYS)
 
-    to_encode.update({"exp": expire})
+    to_encode.update({"exp": expire, "typ": "refresh"})
     encoded_jwt = jwt.encode(to_encode, REFRESH_TOKEN_SECRET, algorithm=TOKEN_ALGORITHM) # type: ignore
     return encoded_jwt
 
@@ -111,33 +114,12 @@ async def verify_verification_code(email:str, verification_code:str) -> bool:
 
     """
 
-    verification_data = await get_verification_data(email)
-    if(not verification_data):
-        return False
-    
-    stored_code = verification_data["code"]
-    expiration_time = datetime.fromisoformat(verification_data["expiration"])
-    attempts = verification_data.get("attempts", 0)
-    
-    if(datetime.now() > expiration_time):
-        await remove_verification_data(email)
-        return False
-    
-    if(attempts >= MAX_EMAIL_VERIFICATION_ATTEMPTS):
-        await remove_verification_data(email)
-        return False
-    
-    if(compare_digest(verification_code, stored_code)):
-        await remove_verification_data(email)
-        return True
-    
-    ## Increment attempts and save
-    verification_data["attempts"] = attempts + 1
-    await save_verification_data(email, verification_data["code"], verification_data)
-    
-    return False
+    return verify_stored_verification_code(email, verification_code)
 
-async def func_verify_token(token:str) -> TokenData:
+async def func_verify_token(
+    token:str,
+    token_type:typing.Literal["access", "refresh"] = "access",
+) -> TokenData:
 
     """
 
@@ -152,11 +134,30 @@ async def func_verify_token(token:str) -> TokenData:
     """
 
     try:
-        payload = jwt.decode(token, ACCESS_TOKEN_SECRET, algorithms=[TOKEN_ALGORITHM]) # type: ignore
-        email:str = payload.get("sub")
+        secret = ACCESS_TOKEN_SECRET if token_type == "access" else REFRESH_TOKEN_SECRET
+        payload = jwt.decode(
+            token,
+            secret,
+            algorithms=[TOKEN_ALGORITHM],
+            options={"require": ["exp", "sub"]},
+        ) # type: ignore
+        email = payload.get("sub")
+        encoded_type = payload.get("typ")
 
-        if(email is None):
+        if(not isinstance(email, str) or not email):
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token")
+
+        if(encoded_type is not None and encoded_type != token_type):
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token type")
+
+        # Legacy tokens remain valid only when the signing key itself proves
+        # their type. With a shared key, an untyped refresh and access token are
+        # cryptographically indistinguishable, so both must be invalidated.
+        if(
+            encoded_type is None
+            and ACCESS_TOKEN_SECRET == REFRESH_TOKEN_SECRET
+        ):
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token type")
         
         return TokenData(email=email)
         
@@ -187,7 +188,7 @@ async def get_current_user(token:str = Depends(oauth2_scheme)):
         token_data = await func_verify_token(token)
         return token_data.email
     
-    except HTTPException as e:
+    except HTTPException:
         return ""
 
 async def check_if_admin_user(current_user:str = Depends(get_current_user)):
@@ -215,27 +216,13 @@ async def generate_verification_code() -> str:
     return ''.join(secrets.choice(string.digits) for _ in range(6))
 
 async def save_verification_data(email: str, code: str, existing_data: dict | None = None) -> None:
-    if(existing_data is None):
-        expiration_time = datetime.now() + timedelta(minutes=VERIFICATION_EXPIRATION_MINUTES)
-        data = {
-            "code": code,
-            "expiration": expiration_time.isoformat(),
-            "attempts": 0
-        }
-    else:
-        data = existing_data
-        data["code"] = code
-
-    async with verification_lock:
-        verification_data[email] = data
+    store_verification_data(email, code, existing_data)
 
 async def get_verification_data(email: str) -> dict | None:
-    async with verification_lock:
-        return verification_data.get(email)
+    return load_verification_data(email)
 
 async def remove_verification_data(email: str) -> None:
-    async with verification_lock:
-        verification_data.pop(email, None)
+    delete_verification_data(email)
 
 async def send_verification_email(email:EmailStr, code:str) -> None:
     _, SMTP_SERVER, SMTP_PORT, SMTP_USER, SMTP_PASSWORD, FROM_EMAIL, _ = await get_smtp_envs()
@@ -266,10 +253,4 @@ async def get_admin_api_key(llm_type:str) -> str | None:
         return None
 
 async def cleanup_expired_verification_data():
-    current_time = datetime.now()
-    async with verification_lock:
-        for email in list(verification_data.keys()):
-            data = verification_data[email]
-            expiration_time = datetime.fromisoformat(data["expiration"])
-            if current_time > expiration_time:
-                del verification_data[email]
+    cleanup_verification_data()

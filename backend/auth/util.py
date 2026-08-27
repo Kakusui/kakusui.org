@@ -5,6 +5,7 @@
 ## built-in imports
 import os
 import asyncio
+from urllib.parse import urlsplit
 
 ## third-party imports
 from fastapi import HTTPException, Request
@@ -23,16 +24,15 @@ async def get_secure_filename(filename:str) -> str:
 
 async def check_internal_request(request:Request) -> None:
     """
+    Enforce the browser origin allowlist as a CSRF/CORS defense.
 
-    Check if the request is from an internal source
-
-    Args:
-    origin (str): The origin of the request
-
+    Origin is client-controlled outside a browser and must never be treated as
+    authentication. Sensitive callers need an independent bearer, admin, or
+    Turnstile check.
     """
-    allowed_domains = {
+    allowed_origins = {
         "https://kakusui.org", 
-        ".kakusui-org.pages.dev",
+        "https://kakusui-org.pages.dev",
         "https://easytl-frontend.pages.dev",
         "https://easytl.org"
     }
@@ -40,9 +40,22 @@ async def check_internal_request(request:Request) -> None:
     origin = request.headers.get('origin')
     
     if(ENVIRONMENT == "development"):
-        allowed_domains.add("http://localhost:5173")
+        allowed_origins.add("http://localhost:5173")
 
-    if(origin is None or (origin is not None and not any(origin.endswith(domain) for domain in allowed_domains))):
+    if(origin is None):
+        raise HTTPException(status_code=403, detail="Forbidden")
+
+    try:
+        parsed_origin = urlsplit(origin)
+        parsed_origin.port
+    except ValueError:
+        raise HTTPException(status_code=403, detail="Forbidden")
+
+    if(parsed_origin.path or parsed_origin.query or parsed_origin.fragment or parsed_origin.username or parsed_origin.password):
+        raise HTTPException(status_code=403, detail="Forbidden")
+
+    normalized_origin = f"{parsed_origin.scheme.lower()}://{parsed_origin.netloc.lower()}"
+    if(normalized_origin not in allowed_origins):
         raise HTTPException(status_code=403, detail="Forbidden")
     
 async def is_safe_filename(filename:str) -> bool:

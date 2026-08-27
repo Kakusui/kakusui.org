@@ -1,0 +1,17 @@
+.env
+.env.*
+.git
+.gitignore
+.ruff_cache
+.pytest_cache
+__pycache__
+**/__pycache__
+*.py[cod]
+database
+*.db
+*.db-*
+*.zip
+*.pgp
+tests
+Dockerfile.dev
+entrypoint_dev.sh

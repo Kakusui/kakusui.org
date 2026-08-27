@@ -10,6 +10,8 @@ import zipfile
 import logging
 
 from datetime import datetime
+from tempfile import gettempdir
+from uuid import uuid4
 
 from sqlalchemy.engine import Engine
 from sqlalchemy.orm import close_all_sessions, Session
@@ -178,7 +180,10 @@ async def perform_backup(db:Session) -> None:
 
     logging.info(f"Database stats: {number_of_email_alerts} email alerts, {number_of_users} users")
 
-    export_path = f'exported_db_{timestamp}.db'
+    export_path = os.path.join(
+        gettempdir(),
+        f"kakusui-backup-{timestamp}-{uuid4().hex}.db",
+    )
     
     logging.info(f"Exporting database to {export_path}")
     await export_db(DATABASE_PATH, export_path)

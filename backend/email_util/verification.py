@@ -2,37 +2,29 @@
 ## Use of this source code is governed by an GNU Affero General Public License v3.0
 ## license that can be found in the LICENSE file.
 
-## built-in imports
-import string
-import secrets
-from datetime import datetime, timedelta
-
 ## custom modules
 from constants import VERIFICATION_EXPIRATION_MINUTES
 from email_util.common import send_email, get_smtp_envs
-from main import verification_data, verification_lock
+from auth.verification import (
+    get_verification_data as load_verification_data,
+    remove_verification_data as delete_verification_data,
+    save_verification_data as store_verification_data,
+)
+
+import secrets
+import string
 
 def generate_verification_code() -> str:
     return ''.join(secrets.choice(string.digits) for _ in range(6))
 
 async def save_verification_data(email: str, code: str) -> None:
-    expiration_time = datetime.now() + timedelta(minutes=VERIFICATION_EXPIRATION_MINUTES)
-    data = {
-        "code": code,
-        "expiration": expiration_time.isoformat(),
-        "attempts": 0
-    }
-    
-    async with verification_lock:
-        verification_data[email] = data
+    store_verification_data(email, code)
 
 async def get_verification_data(email: str) -> dict | None:
-    async with verification_lock:
-        return verification_data.get(email)
+    return load_verification_data(email)
 
 async def remove_verification_data(email: str) -> None:
-    async with verification_lock:
-        verification_data.pop(email, None)
+    delete_verification_data(email)
 
 async def send_verification_email(email: str, code: str) -> None:
     _, SMTP_SERVER, SMTP_PORT, SMTP_USER, SMTP_PASSWORD, FROM_EMAIL, _ = await get_smtp_envs()

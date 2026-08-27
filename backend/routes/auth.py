@@ -3,7 +3,8 @@
 ## license that can be found in the LICENSE file.
 
 ## built-in imports
-from datetime import timedelta, datetime
+import asyncio
+from datetime import timedelta
 
 import logging
 
@@ -11,8 +12,6 @@ import logging
 from fastapi import APIRouter, HTTPException, Request, status, Cookie, Depends
 from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
-from google.oauth2 import id_token
-from google.auth.transport import requests
 
 ## custom imports
 from db.base import get_db
@@ -21,52 +20,90 @@ from db.models import User, EmailAlertModel
 from routes.models import LoginModel, LoginToken, RegisterForEmailAlert, SendVerificationEmailRequest, VerifyEmailCodeRequest, GoogleLoginRequest
 
 from auth.func import verify_verification_code, create_access_token, create_refresh_token, func_verify_token, generate_verification_code, save_verification_data, send_verification_email, get_current_user
+from auth.throttle import (
+    enforce_google_login_limits,
+    enforce_otp_issue_limits_after_verification,
+    enforce_otp_issue_source_limit,
+    enforce_otp_verify_limits,
+)
+from auth.google import verify_google_id_token
+from auth.verification import VerificationAttemptsExceeded, canonicalize_email
+from routes.turnstile import verify_turnstile_token
 from auth.util import check_internal_request
 
-from email_util.verification import get_verification_data, remove_verification_data
-
-from rate_limit.func import rate_limit
-
-from constants import TOKEN_EXPIRE_MINUTES, ADMIN_USER, GOOGLE_CLIENT_ID
-
-import typing
+from constants import (
+    ACCESS_TOKEN_EXPIRE_MINUTES,
+    ADMIN_USER,
+    GOOGLE_CLIENT_ID,
+    REFRESH_TOKEN_EXPIRE_DAYS,
+)
 
 router = APIRouter()
 
-@router.post('/auth/google-login')
-async def google_login(request: GoogleLoginRequest, db: Session = Depends(get_db)):
-    try:
-        idinfo = id_token.verify_oauth2_token(request.token, requests.Request(), GOOGLE_CLIENT_ID)
 
-        if(idinfo['iss'] not in ['accounts.google.com', 'https://accounts.google.com']):
+def _find_user_by_email(db: Session, email: str) -> User | None:
+    normalized_email = canonicalize_email(email)
+    return db.query(User).filter(User.email == normalized_email).first()
+
+
+def _set_refresh_cookie(response: JSONResponse, refresh_token: str) -> None:
+    response.set_cookie(
+        key="refresh_token",
+        value=refresh_token,
+        httponly=True,
+        secure=True,
+        samesite="none",
+        path="/",
+        max_age=REFRESH_TOKEN_EXPIRE_DAYS * 24 * 60 * 60,
+    )
+
+@router.post('/auth/google-login')
+async def google_login(
+    request_data: GoogleLoginRequest,
+    request: Request,
+    db: Session = Depends(get_db),
+):
+    await check_internal_request(request)
+    enforce_google_login_limits(request)
+    try:
+        idinfo = await asyncio.to_thread(
+            verify_google_id_token,
+            request_data.token,
+            GOOGLE_CLIENT_ID,
+        )
+
+        if(
+            idinfo['iss'] not in ['accounts.google.com', 'https://accounts.google.com']
+            or not idinfo.get("email_verified")
+        ):
             raise ValueError('Wrong issuer.')
 
-        email = idinfo['email']
+        email = canonicalize_email(idinfo['email'])
         
-        user = db.query(User).filter(User.email == email).first()
+        user = _find_user_by_email(db, email)
         if(not user):
             user = User(email=email)
             db.add(user)
             db.commit()
+        elif(not user.is_active):
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Account is disabled",
+            )
 
-        access_token_expires = timedelta(minutes=TOKEN_EXPIRE_MINUTES)
+        token_email = user.email
+
+        access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
         access_token = await create_access_token(
-            data={"sub": email}, expires_delta=access_token_expires
+            data={"sub": token_email}, expires_delta=access_token_expires
         )
-        refresh_token_expires = timedelta(minutes=TOKEN_EXPIRE_MINUTES)
+        refresh_token_expires = timedelta(days=REFRESH_TOKEN_EXPIRE_DAYS)
         refresh_token = await create_refresh_token(
-            data={"sub": email}, expires_delta=refresh_token_expires
+            data={"sub": token_email}, expires_delta=refresh_token_expires
         )
 
         response = JSONResponse({"access_token": access_token, "token_type": "bearer"})
-        response.set_cookie(
-            key="refresh_token",
-            value=refresh_token,
-            httponly=True,
-            secure=True,
-            samesite="strict",
-            max_age=TOKEN_EXPIRE_MINUTES * 60
-        )
+        _set_refresh_cookie(response, refresh_token)
         return response
 
     except ValueError:
@@ -75,23 +112,14 @@ async def google_login(request: GoogleLoginRequest, db: Session = Depends(get_db
         db.close()
 
 @router.post('/auth/check-email-registration')
-async def check_email_registration(data:RegisterForEmailAlert, request:Request, db:Session = Depends(get_db)):
+async def check_email_registration(data:RegisterForEmailAlert, request:Request):
 
     await check_internal_request(request)
-
-    try:
-        existing_user = db.query(User).filter(User.email == data.email).first()
-        
-        if(existing_user):
-            return JSONResponse(status_code=status.HTTP_200_OK, content={"registered":True})
-        else:
-            return JSONResponse(status_code=status.HTTP_200_OK, content={"registered":False})
-
-    finally:
-        db.close()
+    del data
+    return JSONResponse(status_code=status.HTTP_200_OK, content={"accepted": True})
 
 @router.post("/auth/login", response_model=LoginToken)
-async def login(data:LoginModel, request:Request, db:Session = Depends(get_db)) -> typing.Dict[str, str]:
+async def login(data:LoginModel, request:Request, db:Session = Depends(get_db)) -> JSONResponse:
     
     """
     
@@ -106,33 +134,48 @@ async def login(data:LoginModel, request:Request, db:Session = Depends(get_db)) 
     """
 
     await check_internal_request(request)
+    enforce_otp_verify_limits(request, data.email)
 
     try:
-        existing_user = db.query(User).filter(User.email == data.email).first()
-        if(not existing_user):
+        try:
+            valid_code = await verify_verification_code(data.email, data.verification_code)
+        except VerificationAttemptsExceeded as error:
             raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="User not found",
-                headers={"WWW-Authenticate": "Bearer"},
+                status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+                detail=str(error),
+                headers={"Retry-After": "3600"},
             )
 
-        if(not await verify_verification_code(data.email, data.verification_code)):
+        if(not valid_code):
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Invalid email or verification code",
                 headers={"WWW-Authenticate": "Bearer"},
             )
 
-        access_token_expires = timedelta(minutes=TOKEN_EXPIRE_MINUTES)
+        existing_user = _find_user_by_email(db, data.email)
+        if(not existing_user or not existing_user.is_active):
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid email or verification code",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
+
+        access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
         access_token = await create_access_token(
-            data={"sub": data.email}, expires_delta=access_token_expires
+            data={"sub": existing_user.email}, expires_delta=access_token_expires
         )
-        refresh_token_expires = timedelta(minutes=TOKEN_EXPIRE_MINUTES)
+        refresh_token_expires = timedelta(days=REFRESH_TOKEN_EXPIRE_DAYS)
         refresh_token = await create_refresh_token(
-            data={"sub": data.email}, expires_delta=refresh_token_expires
+            data={"sub": existing_user.email}, expires_delta=refresh_token_expires
         )
 
-        return {"access_token": access_token, "token_type": "bearer", "refresh_token": refresh_token}
+        response = JSONResponse({
+            "access_token": access_token,
+            "token_type": "bearer",
+        })
+        _set_refresh_cookie(response, refresh_token)
+        return response
 
     finally:
         db.close()
@@ -141,37 +184,45 @@ async def login(data:LoginModel, request:Request, db:Session = Depends(get_db)) 
 async def signup(data:LoginModel, request:Request, db:Session = Depends(get_db)) -> JSONResponse:
 
     await check_internal_request(request)
+    enforce_otp_verify_limits(request, data.email)
 
     try:
-
-        existing_user = db.query(User).filter(User.email == data.email).first()
-
-        if(existing_user):
-            return JSONResponse(status_code=status.HTTP_400_BAD_REQUEST, content={"message": "Email already registered."})
-
-        verification_result = await verify_verification_code(data.email, data.verification_code)
+        try:
+            verification_result = await verify_verification_code(data.email, data.verification_code)
+        except VerificationAttemptsExceeded as error:
+            return JSONResponse(
+                status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+                content={"message": str(error)},
+                headers={"Retry-After": "3600"},
+            )
         if(not verification_result):
             return JSONResponse(status_code=status.HTTP_401_UNAUTHORIZED, content={"message": "Invalid email or verification code"})
 
-        new_user = User(email=data.email)
+        normalized_email = canonicalize_email(data.email)
+        existing_user = _find_user_by_email(db, normalized_email)
+        if(existing_user):
+            return JSONResponse(status_code=status.HTTP_400_BAD_REQUEST, content={"message": "Unable to create account."})
+
+        new_user = User(email=normalized_email)
         db.add(new_user)
         db.commit()
 
-        access_token_expires = timedelta(minutes=TOKEN_EXPIRE_MINUTES)
+        access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
         access_token = await create_access_token(
-            data={"sub": data.email}, expires_delta=access_token_expires
+            data={"sub": normalized_email}, expires_delta=access_token_expires
         )
-        refresh_token_expires = timedelta(minutes=TOKEN_EXPIRE_MINUTES)
+        refresh_token_expires = timedelta(days=REFRESH_TOKEN_EXPIRE_DAYS)
         refresh_token = await create_refresh_token(
-            data={"sub": data.email}, expires_delta=refresh_token_expires
+            data={"sub": normalized_email}, expires_delta=refresh_token_expires
         )
 
-        return JSONResponse(status_code=status.HTTP_200_OK, content={
+        response = JSONResponse(status_code=status.HTTP_200_OK, content={
             "message": "User successfully registered.",
             "access_token": access_token,
-            "token_type": "bearer",
-            "refresh_token": refresh_token
+            "token_type": "bearer"
         })
+        _set_refresh_cookie(response, refresh_token)
+        return response
 
     except Exception as e:
         db.rollback()
@@ -182,7 +233,11 @@ async def signup(data:LoginModel, request:Request, db:Session = Depends(get_db))
         db.close()
 
 @router.post("/auth/refresh-access-token", response_model=LoginToken)
-async def refresh_token(request:Request, refresh_token: str = Cookie(None)) -> JSONResponse:
+async def refresh_token(
+    request:Request,
+    refresh_token: str = Cookie(None),
+    db: Session = Depends(get_db),
+) -> JSONResponse:
     
     """
 
@@ -201,53 +256,68 @@ async def refresh_token(request:Request, refresh_token: str = Cookie(None)) -> J
     if(refresh_token is None):
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="No refresh token provided")
 
-    token_data = await func_verify_token(refresh_token)
-    access_token_expires = timedelta(minutes=TOKEN_EXPIRE_MINUTES)
+    token_data = await func_verify_token(refresh_token, token_type="refresh")
+    user = _find_user_by_email(db, token_data.email)
+    if(user is None or not user.is_active):
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid session")
+
+    access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     access_token = await create_access_token(
-        data={"sub": token_data.email}, expires_delta=access_token_expires
-    )
-    refresh_token_expires = timedelta(minutes=TOKEN_EXPIRE_MINUTES)
-    new_refresh_token = await create_refresh_token(
-        data={"sub": token_data.email}, expires_delta=refresh_token_expires
+        data={"sub": user.email}, expires_delta=access_token_expires
     )
 
     response = JSONResponse(content={"access_token": access_token, "token_type": "bearer"})
-    response.set_cookie(
+    return response
+
+
+@router.post("/auth/logout")
+async def logout(request: Request) -> JSONResponse:
+    await check_internal_request(request)
+    response = JSONResponse(content={"message": "Logged out."})
+    response.delete_cookie(
         key="refresh_token",
-        value=new_refresh_token,
-        httponly=True,
+        path="/",
         secure=True,
-        samesite="strict",
-        max_age=TOKEN_EXPIRE_MINUTES
+        httponly=True,
+        samesite="none",
     )
     return response
     
 
 @router.post("/auth/send-verification-email")
-async def send_verification_email_endpoint(request_data: SendVerificationEmailRequest, request: Request, db: Session = Depends(get_db)):
+async def send_verification_email_endpoint(request_data: SendVerificationEmailRequest, request: Request):
 
     await check_internal_request(request)
+    enforce_otp_issue_source_limit(request)
+    await verify_turnstile_token(request_data.turnstile_token, request, "verification_email")
     
-    email = request_data.email
-    client_id = request_data.clientID
+    email = canonicalize_email(request_data.email)
 
     try:
-        existing_user = db.query(User).filter(User.email == email).first()
-        
-        if(not existing_user):
-            try:
-                await rate_limit(email, client_id)
-            except HTTPException as e:
-                return JSONResponse(status_code=e.status_code, content={"message": e.detail})
-        
+        enforce_otp_issue_limits_after_verification(email)
+    except HTTPException as error:
+        return JSONResponse(
+            status_code=error.status_code,
+            content={"message": error.detail},
+            headers=error.headers,
+        )
+
+    try:
         verification_code = await generate_verification_code()
-        await save_verification_data(email, verification_code)
+        try:
+            await save_verification_data(email, verification_code)
+        except VerificationAttemptsExceeded as error:
+            return JSONResponse(
+                status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+                content={"message": str(error)},
+                headers={"Retry-After": "3600"},
+            )
         await send_verification_email(email, verification_code)
 
-        if(existing_user):
-            return JSONResponse(status_code=status.HTTP_200_OK, content={"message": "Verification email sent successfully for login."})
-        else:
-            return JSONResponse(status_code=status.HTTP_200_OK, content={"message": "Verification email sent successfully for signup."})
+        return JSONResponse(
+            status_code=status.HTTP_200_OK,
+            content={"message": "If the address can receive mail, a verification code was sent."},
+        )
     
     except Exception as e:
         logging.error(f"Error sending verification email: {str(e)}")
@@ -286,22 +356,21 @@ async def landing_verify_code_endpoint(request_data:VerifyEmailCodeRequest, requ
 
     await check_internal_request(request)
 
-    email = request_data.email
+    email = canonicalize_email(request_data.email)
     submitted_code = request_data.code
+    enforce_otp_verify_limits(request, email)
 
     try:
-        verification_data = await get_verification_data(email)
-        if(not verification_data):
-            return JSONResponse(status_code=status.HTTP_400_BAD_REQUEST, content={"message": "Verification code not found or expired."})
+        try:
+            valid_code = await verify_verification_code(email, submitted_code)
+        except VerificationAttemptsExceeded as error:
+            return JSONResponse(
+                status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+                content={"message": str(error)},
+                headers={"Retry-After": "3600"},
+            )
 
-        stored_code = verification_data["code"]
-        expiration_time = datetime.fromisoformat(verification_data["expiration"])
-
-        if(datetime.now() > expiration_time):
-            await remove_verification_data(email)
-            return JSONResponse(status_code=status.HTTP_400_BAD_REQUEST, content={"message": "Verification code has expired."})
-
-        if(submitted_code != stored_code):
+        if(not valid_code):
             return JSONResponse(status_code=status.HTTP_400_BAD_REQUEST, content={"message": "Invalid verification code."})
 
         existing_email_alert = db.query(EmailAlertModel).filter(EmailAlertModel.email == email).first()
@@ -314,7 +383,6 @@ async def landing_verify_code_endpoint(request_data:VerifyEmailCodeRequest, requ
             db.add(new_email_alert)
             db.commit()
         
-        await remove_verification_data(email)
         return JSONResponse(status_code=status.HTTP_200_OK, content={"message": "Email successfully verified and registered for alerts.", "token_type": "bearer"})
     
     except Exception as e:

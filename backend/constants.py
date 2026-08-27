@@ -20,7 +20,6 @@ def get_env_variables() -> None:
 
 get_env_variables()
 
-TURNSTILE_SECRET_KEY = os.environ.get("TURNSTILE_SECRET_KEY")
 ENCRYPTION_KEY = os.environ.get("ENCRYPTION_KEY")
 ADMIN_USER = os.environ.get("ADMIN_USER")
 ADMIN_PASS_HASH = os.environ.get("ADMIN_PASS_HASH")
@@ -29,10 +28,13 @@ ACCESS_TOKEN_SECRET = os.environ.get("ACCESS_TOKEN_SECRET")
 REFRESH_TOKEN_SECRET = os.environ.get("REFRESH_TOKEN_SECRET")
 TURNSTILE_SECRET_KEY = os.environ.get("TURNSTILE_SECRET_KEY")
 
-ENVIRONMENT = os.environ.get("ENVIRONMENT", "development")
+ENVIRONMENT = os.environ.get("ENVIRONMENT", "production")
 
 TOKEN_ALGORITHM = "HS256"
-TOKEN_EXPIRE_MINUTES = 43200 ## 30 days
+ACCESS_TOKEN_EXPIRE_MINUTES = int(os.environ.get("ACCESS_TOKEN_EXPIRE_MINUTES", "30"))
+if not 1 <= ACCESS_TOKEN_EXPIRE_MINUTES <= 43_200:
+    raise RuntimeError("ACCESS_TOKEN_EXPIRE_MINUTES must be between 1 and 43200")
+REFRESH_TOKEN_EXPIRE_DAYS = 30
 VERIFICATION_EXPIRATION_MINUTES = 5
 MAX_REQUESTS = 5
 MAX_REQUESTS_PER_ID = 10
@@ -68,10 +70,10 @@ __all__ = ["TURNSTILE_SECRET_KEY",
            "TOTP_SECRET", 
            "ACCESS_TOKEN_SECRET", 
            "REFRESH_TOKEN_SECRET", 
-           "TURNSTILE_SECRET_KEY", 
            "ENVIRONMENT", 
            "TOKEN_ALGORITHM", 
-           "TOKEN_EXPIRE_MINUTES", 
+           "ACCESS_TOKEN_EXPIRE_MINUTES",
+           "REFRESH_TOKEN_EXPIRE_DAYS",
            "VERIFICATION_EXPIRATION_MINUTES", 
            "MAX_REQUESTS", 
            "MAX_REQUESTS_PER_ID", 

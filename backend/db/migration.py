@@ -11,7 +11,7 @@ from sqlalchemy import Engine, text
 from sqlalchemy.inspection import inspect
 
 ## custom imports
-from db.models import User, EndpointStats
+from db.models import EndpointStats, StripePaymentFulfillment, User
 def migrate_database(engine:Engine) -> None:
 
     """
@@ -79,3 +79,16 @@ def migrate_database(engine:Engine) -> None:
 
     except Exception as e:
         logging.error(f"[Migration 3] [Failed] {str(e)}")
+
+    ## Migration 4 (2026-07-12) (Addition of Stripe payment fulfillment ledger)
+    try:
+        if(not inspector.has_table('stripe_payment_fulfillments')):
+            StripePaymentFulfillment.__table__.create(engine)
+            logging.info("[Migration 4] [1/1] [Passed] Created stripe_payment_fulfillments table")
+        else:
+            logging.info("[Migration 4] [1/1] [Skipped] stripe_payment_fulfillments table already exists")
+
+        inspector.clear_cache()
+
+    except Exception as e:
+        logging.error(f"[Migration 4] [Failed] {str(e)}")

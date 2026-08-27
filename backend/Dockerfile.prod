@@ -2,7 +2,7 @@
 ## Use of this source code is governed by an GNU Affero General Public License v3.0
 ## license that can be found in the LICENSE file.
 
-FROM python:3.11.8-slim
+FROM python:3.11-slim-bookworm
 
 WORKDIR /app
 
@@ -19,18 +19,29 @@ RUN apt-get update && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
+RUN groupadd --gid 10001 kakusui && \
+    useradd --uid 10001 --gid 10001 --home-dir /app --shell /usr/sbin/nologin kakusui
+
 ## Copy the rest of the application code
 COPY . .
 
 ## Convert line endings and make entrypoint script executable
 RUN sed -i 's/\r$//' entrypoint_prod.sh && \
-    chmod +x entrypoint_prod.sh
+    chmod +x entrypoint_prod.sh && \
+    chown -R 10001:10001 /app
 
 ## Remove unnecessary files
 RUN rm -rf __pycache__ Dockerfile.prod entrypoint_dev.sh setup.py requirements.txt Dockerfile.dev .env fly.toml
 
-ENV PYTHONPATH=/app
+ENV PYTHONPATH=/app \
+    PYTHONDONTWRITEBYTECODE=1 \
+    HOME=/tmp
+
+USER 10001:10001
 
 EXPOSE 8000
+
+HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --retries=3 \
+    CMD ["python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/', timeout=3).read()"]
 
 CMD ["./entrypoint_prod.sh"]

@@ -14,6 +14,7 @@ from routes.models import EmailRequest, FeedbackEmailRequest
 
 from auth.util import check_internal_request
 from auth.func import check_if_admin_user
+from routes.turnstile import verify_turnstile_token
 
 from email_util.common import send_email
 
@@ -63,6 +64,7 @@ async def send_email_to_all(request: Request, email_request: EmailRequest, db: S
 async def send_feedback_email(request: Request, feedback:FeedbackEmailRequest):
 
     await check_internal_request(request)
+    await verify_turnstile_token(feedback.turnstile_token, request, "feedback")
     
     try:
         smtp_envs = await get_smtp_envs()
