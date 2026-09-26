@@ -13,6 +13,7 @@ type TurnstileWidgetOptions =
     callback: (token: string) => void;
     "expired-callback": () => void;
     "error-callback": () => void;
+    "timeout-callback": () => void;
 };
 
 type TurnstileApi =
@@ -74,10 +75,15 @@ const Turnstile = ({ siteKey, action, onVerify, onExpire, onError, resetKey = 0 
                 callback: (token: string) => onVerifyRef.current(token),
                 "expired-callback": () => onExpireRef.current?.(),
                 "error-callback": () => onErrorRef.current?.(),
+                "timeout-callback": () => onExpireRef.current?.(),
             });
         };
 
-        const handleScriptError = () => onErrorRef.current?.();
+        const handleScriptError = () =>
+        {
+            document.getElementById(SCRIPT_ID)?.remove();
+            onErrorRef.current?.();
+        };
 
         if(window.turnstile)
         {

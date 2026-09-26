@@ -73,11 +73,6 @@ function KairyouPage()
         warmUpAPI();
     }, []);
 
-    const onTurnstileVerify = (token: string) => 
-    {
-        setTurnstileToken(token);
-    };
-
     const showToast = (title: string, description: string, status: "success" | "error") => 
     {
         toast({
@@ -242,7 +237,7 @@ function KairyouPage()
                     <Turnstile
                         siteKey={TURNSTILE_SITE_KEY}
                         action="kairyou"
-                        onVerify={onTurnstileVerify}
+                        onVerify={setTurnstileToken}
                         onExpire={() => setTurnstileToken(null)}
                         onError={() => setTurnstileToken(null)}
                         resetKey={resetTurnstile}

@@ -246,7 +246,7 @@ Additional instructions:
 
   const onSubmit = async (data: FormInput) => 
   {
-    if(requiresTurnstile() && !turnstileToken)
+    if(data.paymentMethod !== "credits" && requiresTurnstile() && !turnstileToken)
     {
       showToast("Verification failed", "Please complete the verification", "error");
       return;
@@ -303,7 +303,7 @@ Additional instructions:
         userAPIKey: isPrivilegedUser || data.paymentMethod === "credits" ? "" : data.userAPIKey,
         model: data.model,
         using_credits: data.paymentMethod === "credits",
-        turnstile_token: turnstileToken
+        turnstile_token: data.paymentMethod === "credits" ? null : turnstileToken
       };
 
       const response = await fetch(getURL("/proxy/easytl"), 
@@ -491,7 +491,7 @@ Additional instructions:
           </Button>
         </VStack>
 
-        {requiresTurnstile() && (
+        {selectedPaymentMethod !== "credits" && requiresTurnstile() && (
           <Center mt={4}>
             <Turnstile
               siteKey={TURNSTILE_SITE_KEY}

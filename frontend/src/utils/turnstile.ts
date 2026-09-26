@@ -8,9 +8,11 @@ const TURNSTILE_SITE_KEY = import.meta.env.VITE_TURNSTILE_SITE_KEY || DEFAULT_TU
 
 const requiresTurnstile = () =>
 {
-    const hostname = window.location.hostname;
+    const hostname = window.location.hostname.toLowerCase().replace(/\.+$/, "");
     return hostname === "kakusui.org" ||
         hostname === "kakusui-org.pages.dev" ||
+        hostname === "easytl.org" ||
+        hostname === "easytl-frontend.pages.dev" ||
         hostname.endsWith(".kakusui-org.pages.dev");
 };
 

@@ -57,13 +57,22 @@ const FeedbackModal: React.FC<FeedbackModalProps> = ({ isOpen, onClose }) =>
         }
     }, [isLoggedIn, userEmail]);
 
+    useEffect(() =>
+    {
+        if(!isOpen)
+        {
+            setTurnstileToken(null);
+            setResetTurnstile((current) => current + 1);
+        }
+    }, [isOpen]);
+
     const handleSubmit = async () =>
     {
         if (!email || !feedback)
         {
             toast({
                 title: "Error",
-                description: "Please fill in both email and feedback fields.",
+                description: "Enter your email and feedback.",
                 status: "error",
                 duration: 3000,
                 isClosable: true,
@@ -87,7 +96,6 @@ const FeedbackModal: React.FC<FeedbackModalProps> = ({ isOpen, onClose }) =>
 
         const loadingToastId = toast({
             title: "Sending feedback",
-            description: "Please wait...",
             status: "info",
             duration: null,
             isClosable: false,
@@ -113,7 +121,7 @@ const FeedbackModal: React.FC<FeedbackModalProps> = ({ isOpen, onClose }) =>
             {
                 toast({
                     title: "Success",
-                    description: "Your feedback has been sent successfully.",
+                    description: "Thanks for the feedback.",
                     status: "success",
                     duration: 3000,
                     isClosable: true,
@@ -179,7 +187,7 @@ const FeedbackModal: React.FC<FeedbackModalProps> = ({ isOpen, onClose }) =>
                             onChange={(e) => setAgreeToContact(e.target.checked)}
                             colorScheme="orange"
                         >
-                            I agree to be contacted regarding my feedback
+                            You may contact me about this feedback
                         </Checkbox>
                         <Text fontSize="sm" color="gray.400">
                             Your email is being recorded. By filling this out, you agree to our terms of service and privacy policy.
