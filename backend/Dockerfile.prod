@@ -42,6 +42,6 @@ USER 10001:10001
 EXPOSE 8000
 
 HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --retries=3 \
-    CMD ["python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/', timeout=3).read()"]
+    CMD ["python", "-c", "import os, urllib.request; path = '/' if os.environ.get('HOSTED_SERVICE_CLOSED', 'true').lower() == 'false' else '/healthz'; urllib.request.urlopen('http://127.0.0.1:8000' + path, timeout=3).read()"]
 
 CMD ["./entrypoint_prod.sh"]

@@ -1,4 +1,27 @@
 ---------------------------------------------------------------------------------------------------------------------------------------------------
+## Hosted service closure
+
+Kakusui and EasyTL hosted services have shut down effective immediately.
+Kaden Bilyeu no longer has time to run them. This repository, the
+[EasyTL frontend](https://github.com/Kakusui/EasyTL-Frontend), and the
+[EasyTL library](https://github.com/Bikatr7/EasyTL) remain open source.
+
+The default backend entry point now returns HTTP 410 with a closure message and
+source links for every HTTP route and method, regardless of authentication.
+Only `GET /healthz` and `HEAD /healthz` return 200 for process health; their
+payload explicitly reports the hosted service as closed. No request bodies,
+database connections, provider calls, payment handlers or scheduled jobs run in
+this mode. WebSocket connections are rejected. Existing data is not deleted.
+
+For independent self-hosting only, explicitly set `HOSTED_SERVICE_CLOSED=false`
+to load the original application, retained in `backend/operational_app.py`.
+Configure your own provider, payment and authentication credentials first.
+The frontend entry point renders `ServiceClosed`; the original application
+components remain in the repository for independent deployments.
+
+Closure regression tests: from `backend`, run
+`python -m unittest discover -s tests -p test_service_closed.py -v`.
+
 **Table of Contents**
 
 - [**Preface**](#preface)
