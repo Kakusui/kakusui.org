@@ -21,12 +21,12 @@ export default function ServiceClosed()
 
             <h2>Source code</h2>
             <ul>
-                <li><a href="https://github.com/Bikatr7/EasyTL">EasyTL library</a></li>
+                <li><a href="https://github.com/ktbilyeu/EasyTL">EasyTL library</a></li>
                 <li><a href="https://github.com/Kakusui/EasyTL-Frontend">EasyTL frontend</a></li>
                 <li><a href="https://github.com/Kakusui/kakusui.org">Kakusui website and shared backend</a></li>
-                <li><a href="https://github.com/Bikatr7/Kairyou">Kairyou</a></li>
+                <li><a href="https://github.com/ktbilyeu/Kairyou">Kairyou</a></li>
                 <li><a href="https://github.com/Kakusui/Elucidate">Elucidate</a></li>
-                <li><a href="https://github.com/Bikatr7/Kudasai">Kudasai</a></li>
+                <li><a href="https://github.com/ktbilyeu/Kudasai">Kudasai</a></li>
             </ul>
 
             <p className="contact">

@@ -204,7 +204,7 @@ class Toolkit():
             import json
             from distutils.version import LooseVersion
 
-            response = urlopen("https://api.github.com/repos/Bikatr7/Kudasai/releases/latest")
+            response = urlopen("https://api.github.com/repos/ktbilyeu/Kudasai/releases/latest")
             data = json.loads(response.read().decode())
 
             latest_version = str(data["tag_name"])
@@ -214,7 +214,7 @@ class Toolkit():
 
                 logging.debug("New update available: " + latest_version)
 
-                update_prompt += "There is a new update for Kudasai (" + latest_version + ")\nIt is recommended that you use the latest version of Kudasai\nYou can download it at https://github.com/Bikatr7/Kudasai/releases/latest \n"
+                update_prompt += "There is a new update for Kudasai (" + latest_version + ")\nIt is recommended that you use the latest version of Kudasai\nYou can download it at https://github.com/ktbilyeu/Kudasai/releases/latest \n"
 
                 if(release_notes):
                     update_prompt += "\nRelease notes:\n\n" + release_notes + '\n'

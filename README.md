@@ -4,7 +4,7 @@
 Kakusui and EasyTL hosted services have shut down effective immediately.
 Kaden Bilyeu no longer has time to run them. This repository, the
 [EasyTL frontend](https://github.com/Kakusui/EasyTL-Frontend), and the
-[EasyTL library](https://github.com/Bikatr7/EasyTL) remain open source.
+[EasyTL library](https://github.com/ktbilyeu/EasyTL) remain open source.
 
 The default backend entry point now returns HTTP 410 with a closure message and
 source links for every HTTP route and method, regardless of authentication.

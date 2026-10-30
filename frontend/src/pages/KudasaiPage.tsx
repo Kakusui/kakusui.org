@@ -377,7 +377,7 @@ function KudasaiPage()
             </Tabs>
 
             <HowToUseSection
-                repositoryUrl="https://github.com/Bikatr7/Kudasai"
+                repositoryUrl="https://github.com/ktbilyeu/Kudasai"
                 steps={[
                     "Select the appropriate tab for your needs (Indexing, Preprocessing, or Translation).",
                     "Upload or input the required files and text.",

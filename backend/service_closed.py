@@ -11,7 +11,7 @@ MESSAGE = (
 SOURCES = {
     "kakusui_frontend_and_backend": "https://github.com/Kakusui/kakusui.org",
     "easytl_frontend": "https://github.com/Kakusui/EasyTL-Frontend",
-    "easytl_library": "https://github.com/Bikatr7/EasyTL",
+    "easytl_library": "https://github.com/ktbilyeu/EasyTL",
 }
 ALLOWED_ORIGINS = frozenset({
     "https://kakusui.org", "https://kakusui-org.pages.dev",

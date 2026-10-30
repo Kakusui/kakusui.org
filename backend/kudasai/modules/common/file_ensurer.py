@@ -452,7 +452,7 @@ class FileEnsurer():
         traceback_msg = traceback.format_exc()
 
         logging.error(f"Kudasai has crashed "
-        f"Please send the following to the developer on github at https://github.com/Bikatr7/Kudasai/issues :"
+        f"Please send the following to the developer on github at https://github.com/ktbilyeu/Kudasai/issues :"
         f"{traceback_msg}")
 
         Toolkit.pause_console()

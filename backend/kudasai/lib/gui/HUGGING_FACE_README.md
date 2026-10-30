@@ -27,11 +27,11 @@ pinned: true
 ---------------------------------------------------------------------------------------------------------------------------------------------------
 ## **Notes**<a name="notes"></a>
 
-This readme is for the Hugging Space instance of Kudasai's WebGUI and the WebGUI itself, to run Kudasai locally or see any info on the project, please see the [GitHub Page](https://github.com/Bikatr7/Kudasai).
+This readme is for the Hugging Space instance of Kudasai's WebGUI and the WebGUI itself, to run Kudasai locally or see any info on the project, please see the [GitHub Page](https://github.com/ktbilyeu/Kudasai).
 
 Streamlining Japanese-English Translation with Advanced Preprocessing and Integrated Translation Technologies.
 
-Preprocessor and Translation logic is sourced from external packages, which I also designed, see [Kairyou](https://github.com/Bikatr7/Kairyou) and [EasyTL](https://github.com/Bikatr7/easytl) for more information.
+Preprocessor and Translation logic is sourced from external packages, which I also designed, see [Kairyou](https://github.com/ktbilyeu/Kairyou) and [EasyTL](https://github.com/ktbilyeu/easytl) for more information.
 
 Kudasai has a public trello board, you can find it [here](https://trello.com/b/Wsuwr24S/kudasai) to see what I'm working on and what's coming up.
 
@@ -60,7 +60,7 @@ This section can be skipped if you're only interested in translation or do not k
 
 Indexing is not for everyone, only use it if you have a large amount of previous text and want to flag new names. It can be a very slow and long process, especially on Hugging Face's servers. It's recommended to use a local version of Kudasai for this process.
 
-You'll need a txt file or some text to index. You'll also need a knowledge base, this can either be a single txt file or a directory of them, as well as a replacements json. Either Kudasai or Fukuin Type works. See [this](https://github.com/Bikatr7/Kairyou?tab=readme-ov-file#kairyou) for further details on replacement jsons.
+You'll need a txt file or some text to index. You'll also need a knowledge base, this can either be a single txt file or a directory of them, as well as a replacements json. Either Kudasai or Fukuin Type works. See [this](https://github.com/ktbilyeu/Kairyou?tab=readme-ov-file#kairyou) for further details on replacement jsons.
 
 Please do indexing before preprocessing, output is neater that way.
 
@@ -216,9 +216,9 @@ Please note that this information is a brief summary of the GPL. For a detailed 
 ---------------------------------------------------------------------------------------------------------------------------------------------------
 ## **Contact**<a name="contact"></a>
 
-If you have any questions, comments, or concerns, please feel free to contact me at [Bikatr7@proton.me](mailto:Bikatr7@proton.me)
+If you have any questions, comments, or concerns, please feel free to contact me at [kadenbilyeu@proton.me](mailto:kadenbilyeu@proton.me)
 
-For any bugs or suggestions please use the issues tab [here](https://github.com/Bikatr7/Kudasai/issues).
+For any bugs or suggestions please use the issues tab [here](https://github.com/ktbilyeu/Kudasai/issues).
 
 I actively encourage and welcome any feedback on this project.
 

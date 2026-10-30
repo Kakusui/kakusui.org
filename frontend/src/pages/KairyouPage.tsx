@@ -285,7 +285,7 @@ function KairyouPage()
             )}
 
             <HowToUseSection
-                repositoryUrl="https://github.com/Bikatr7/Kairyou"
+                repositoryUrl="https://github.com/ktbilyeu/Kairyou"
                 steps={[
                     "Upload or input the text you want to preprocess.",
                     "Upload or input the JSON file with replacement rules.",
