@@ -117,7 +117,7 @@ async def kairyou(request_data:KairyouRequest, request:Request, db: Session = De
         return JSONResponse(
             status_code=status.HTTP_400_BAD_REQUEST,
             content={
-                "message": "You have an invalid replacement json file. Please see https://github.com/Bikatr7/Kairyou?tab=readme-ov-file#kairyou for what the replacement json file should look like."
+                "message": "You have an invalid replacement json file. Please see https://github.com/ktbilyeu/Kairyou?tab=readme-ov-file#kairyou for what the replacement json file should look like."
             }
         )
 

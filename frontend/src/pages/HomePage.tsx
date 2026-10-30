@@ -130,7 +130,7 @@ function HomePage()
                     imageUrl={easytl_logo}
                     imageAlt="EasyTL Logo"
                     linkUrl="https://easytl.org"
-                    githubUrl="https://github.com/Bikatr7/EasyTL"
+                    githubUrl="https://github.com/ktbilyeu/EasyTL"
                     features={[
                         { heading: "Powered by AI and LLMs", text: "EasyTL is powered by AI and LLMs, enabling high-quality superior translations across multiple languages." },
                         { heading: "Customizable Translation", text: "Utilizing the power of AI and LLMs, EasyTL allows customizing translations, you can set the tone, allowing different styles of translation." },
@@ -146,7 +146,7 @@ function HomePage()
                     imageUrl={kairyou_logo}
                     imageAlt="Kairyou Logo"
                     linkUrl="/kairyou"
-                    githubUrl="https://github.com/Bikatr7/Kairyou"
+                    githubUrl="https://github.com/ktbilyeu/Kairyou"
                     reverse
                     features={[
                         { heading: "Advanced Japanese NLP", text: "Leverages SpaCy's NLP capabilities to provide robust preprocessing of Japanese text, including named entity recognition and tokenization." },
