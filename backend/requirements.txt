@@ -13,7 +13,8 @@ sqlalchemy==2.0.31
 numpy==1.26.4
 python-gnupg==0.5.2
 apscheduler==3.10.4
-pyjwt==2.13.0
+pyjwt==2.15.1
+pyasn1==0.6.5
 python-multipart==0.0.32
 werkzeug==3.1.6
 stripe==10.12.0
